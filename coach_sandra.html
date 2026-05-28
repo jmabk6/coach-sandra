@@ -708,6 +708,8 @@ async function _bootstrap(){
   _hideLogin();
   // Premier rendu (l'app ne rendait rien au chargement à l'origine)
   try { renderPoids(); } catch(e){ console.warn(e); }
+  // remonter en haut de la page (sinon elle s'ouvre scrollée au milieu)
+  setTimeout(()=>{ window.scrollTo(0,0); document.body.scrollTop=0; document.documentElement.scrollTop=0; }, 50);
 }
 
 _auth.onAuthStateChanged(async user=>{
