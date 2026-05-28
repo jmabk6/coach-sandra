@@ -172,6 +172,42 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 .btn-del { background:none; border:none; color:var(--muted); font-size:14px; cursor:pointer; }
 
 .ann-row { display:flex; align-items:center; gap:14px; margin-bottom:14px; }
+
+/* ===== Recettes v2 ===== */
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.cat-tile{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px 6px;text-align:center;cursor:pointer;transition:transform .12s,border-color .12s;}
+.cat-tile:active{transform:scale(.97);}
+.cat-tile .emoji{font-size:30px;display:block;margin-bottom:6px;}
+.cat-tile .cname{font-weight:600;font-size:13px;margin-bottom:2px;}
+.cat-tile .ccount{font-size:11px;color:var(--muted);}
+.cat-tile.add{border-style:dashed;border-color:var(--accent-light,#e8a0a5);}
+.cat-tile.add .cname,.cat-tile.add .emoji{color:var(--accent);}
+.rec-card{background:var(--surface);border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.rec-card .rnom{font-weight:700;font-size:14px;margin-bottom:4px;}
+.rchips{display:flex;gap:4px;flex-wrap:wrap;}
+.rchip{border-radius:6px;padding:2px 7px;font-size:10px;font-weight:600;}
+.rchip-kcal{background:#fff3e0;color:#e76f51;}.rchip-prot{background:#e8f5e9;color:#2d6a4f;}
+.rchip-gluc{background:#e3f2fd;color:#457b9d;}.rchip-lip{background:#fff8e1;color:#d97706;}
+.rchip-fib{background:#f1f8e9;color:#52b788;}.rchip-empty{background:#f3eaea;color:#9a7878;}
+.rec-card .rmeta{font-size:10px;color:var(--muted);margin-top:3px;}
+.rec-plus{font-size:26px;color:var(--accent);font-weight:300;}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(60,30,35,.45);z-index:500;align-items:flex-end;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal-box{background:var(--bg);width:100%;max-width:430px;border-radius:20px 20px 0 0;padding:20px;max-height:92vh;overflow-y:auto;}
+.modal-box h3{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--accent);margin:0 0 14px;}
+.flabel{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:5px;display:block;}
+.finput{width:100%;box-sizing:border-box;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;margin-bottom:14px;font-family:'Inter',sans-serif;background:var(--surface);outline:none;}
+.catcheck{display:inline-flex;align-items:center;gap:5px;padding:7px 11px;border:1.5px solid var(--border);border-radius:20px;font-size:12px;cursor:pointer;margin:0 6px 6px 0;background:var(--surface);}
+.catcheck.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+.ingline{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px;margin-bottom:6px;}
+.ingline .iname{flex:1;font-size:13px;}
+.ingline input{width:54px;background:var(--bg);border:1.5px solid var(--accent);border-radius:8px;padding:5px;font-size:13px;font-weight:700;color:var(--accent);text-align:center;outline:none;}
+.ingline .iunit{font-size:11px;color:var(--muted);min-width:28px;}
+.day-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;}
+.day-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--bg);}
+.day-row .dname{flex:1;font-size:13px;}
+.day-row input{width:54px;background:var(--bg);border:1.5px solid var(--accent);border-radius:8px;padding:5px;font-size:13px;font-weight:700;color:var(--accent);text-align:center;outline:none;}
+.day-row .dunit{font-size:11px;color:var(--muted);min-width:30px;}
 </style>
 </head>
 <body>
@@ -342,108 +378,50 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
   <div class="mode-tabs">
     <button class="mode-btn active" id="rnav-journee-btn" onclick="showRepasTab('journee')">📅 Journée</button>
-    <button class="mode-btn" id="rnav-saisie-btn" onclick="showRepasTab('saisie')">➕ Repas</button>
+    <button class="mode-btn" id="rnav-recettes-btn" onclick="showRepasTab('recettes')">🍽️ Recettes</button>
     <button class="mode-btn" id="rnav-ingr-btn" onclick="showRepasTab('ingr')">🥗 Ingréd.</button>
   </div>
 
-  <!-- JOURNÉE -->
+  <!-- ===== SOUS-ONGLET JOURNÉE ===== -->
   <div id="rtab-journee">
-    <div class="day-nav">
-      <button class="day-nav-btn" onclick="changeJour(-1)">‹</button>
-      <div class="day-nav-label" id="jour-label">Aujourd'hui</div>
-      <button class="day-nav-btn" onclick="changeJour(1)">›</button>
+    <div style="height:16px;"></div>
+    <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
+      <button class="filter-pill" style="flex:1;background:var(--accent);color:#fff;border-color:var(--accent);padding:9px 4px;" onclick="addRecetteToDay('🌅 Petit-déj')">+ 🌅 Pdj</button>
+      <button class="filter-pill" style="flex:1;background:var(--accent);color:#fff;border-color:var(--accent);padding:9px 4px;" onclick="addRecetteToDay('☀️ Déjeuner')">+ ☀️ Déj</button>
+      <button class="filter-pill" style="flex:1;background:var(--accent);color:#fff;border-color:var(--accent);padding:9px 4px;" onclick="addRecetteToDay('🍎 Collation')">+ 🍎 Coll.</button>
+      <button class="filter-pill" style="flex:1;background:var(--accent);color:#fff;border-color:var(--accent);padding:9px 4px;" onclick="addRecetteToDay('🌙 Dîner')">+ 🌙 Dîner</button>
     </div>
-    <div class="card">
-      <div class="ann-row">
-        <div class="ring-wrap">
-          <svg width="90" height="90" viewBox="0 0 90 90">
-            <circle cx="45" cy="45" r="35" fill="none" stroke="var(--border)" stroke-width="9"/>
-            <circle cx="45" cy="45" r="35" fill="none" stroke="var(--accent)" stroke-width="9"
-              stroke-dasharray="219.9" id="ring-arc" stroke-dashoffset="219.9"
-              stroke-linecap="round" transform="rotate(-90 45 45)"/>
-          </svg>
-          <div class="ring-center">
-            <div class="ring-kcal" id="jour-kcal">0</div>
-            <div class="ring-lbl">/1500 kcal</div>
-          </div>
-        </div>
-        <div style="flex:1;">
-          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;"><span style="color:var(--muted);">Restant</span><span style="font-weight:600;color:#2d6a4f;" id="jour-reste">1500 kcal</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Repas</span><span id="jour-nb-repas">0</span></div>
-        </div>
-      </div>
-      <div class="macro-bar"><div class="macro-bar-header"><span>💪 Protéines</span><span style="color:var(--muted);" id="j-prot">0g / 70g</span></div><div class="macro-bar-track"><div class="macro-bar-fill" id="j-prot-bar" style="width:0%;background:linear-gradient(90deg,#52b788,#2d6a4f);"></div></div></div>
-      <div class="macro-bar"><div class="macro-bar-header"><span>🌾 Glucides</span><span style="color:var(--muted);" id="j-gluc">0g</span></div><div class="macro-bar-track"><div class="macro-bar-fill" id="j-gluc-bar" style="width:0%;background:linear-gradient(90deg,#74c2e1,#457b9d);"></div></div></div>
-      <div class="macro-bar"><div class="macro-bar-header"><span>🥑 Lipides</span><span style="color:var(--muted);" id="j-lip">0g</span></div><div class="macro-bar-track"><div class="macro-bar-fill" id="j-lip-bar" style="width:0%;background:linear-gradient(90deg,#e9c46a,#f4a261);"></div></div></div>
-      <div class="macro-bar"><div class="macro-bar-header"><span>🌿 Fibres</span><span style="color:var(--muted);" id="j-fibres">0g</span></div><div class="macro-bar-track"><div class="macro-bar-fill" id="j-fibres-bar" style="width:0%;background:linear-gradient(90deg,#a8d5b5,#52b788);"></div></div></div>
-    </div>
-
-    <!-- Filtre + Ajouter -->
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px;flex-wrap:nowrap;">
-      <button class="filter-pill active" data-jcat="tous" onclick="selectJourCat(this)">Tous</button>
-      <button class="filter-pill" data-jcat="petit-dej" onclick="selectJourCat(this)">🌅 Pdj</button>
-      <button class="filter-pill" data-jcat="dejeuner" onclick="selectJourCat(this)">☀️ Déj.</button>
-      <button class="filter-pill" data-jcat="collation" onclick="selectJourCat(this)">🍎 Collation</button>
-      <button class="filter-pill" data-jcat="diner" onclick="selectJourCat(this)">🌙 Dîner</button>
-      <button id="btn-jour-ajouter" disabled onclick="ajouterDepuisJour()"
-        style="flex-shrink:0;background:var(--accent);color:white;border:none;border-radius:20px;padding:6px 14px;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;cursor:pointer;opacity:0.35;white-space:nowrap;">
-        + Ajouter
-      </button>
-    </div>
-
-    <div class="card">
-      <div id="jour-repas-list">
-        <div class="empty-state"><div class="empty-icon">🍽️</div><div class="empty-text">Choisis une catégorie<br>puis clique + Ajouter</div></div>
-      </div>
-    </div>
-    <button class="btn-claude" onclick="copierJourneeClaudeBtn()">📋 Copier ma journée pour Claude</button>
+    <div id="day-list"></div>
   </div>
 
-  <!-- SAISIE REPAS -->
-  <div id="rtab-saisie" style="display:none;">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-      <button onclick="showRepasTab('journee')" style="background:none;border:1px solid var(--border);border-radius:10px;padding:7px 12px;font-size:14px;cursor:pointer;color:var(--muted);">← Retour</button>
-      <div style="font-family:Cormorant Garamond,serif;font-weight:700;font-size:20px;" id="saisie-cat-title">Repas</div>
+  <!-- ===== SOUS-ONGLET RECETTES ===== -->
+  <div id="rtab-recettes" style="display:none;">
+    <div style="height:16px;"></div>
+    <div id="rec-banner" style="display:none;background:rgba(192,97,106,0.08);border:1px solid rgba(192,97,106,0.3);border-radius:12px;padding:10px 14px;margin-bottom:12px;align-items:center;gap:10px;">
+      <div style="flex:1;font-size:13px;color:var(--accent);font-weight:600;">➕ Choisis une recette (<b id="rec-banner-moment">—</b>)</div>
+      <button onclick="recCancelSelect()" style="background:none;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;white-space:nowrap;">← Retour</button>
     </div>
 
-    <div class="total-bar">
-      <div style="font-size:11px;opacity:.7;letter-spacing:1px;text-transform:uppercase;font-family:'Inter',sans-serif;margin-bottom:6px;">Nouveau repas</div>
-      <div class="total-kcal-val"><span id="saisie-kcal">0</span> <span style="font-size:14px;font-weight:400;opacity:.7;">kcal</span></div>
-      <div class="total-macros">
-        <div class="total-macro"><div class="total-macro-val" id="s-prot">0g</div><div class="total-macro-lbl">Prot.</div></div>
-        <div class="total-macro"><div class="total-macro-val" id="s-gluc">0g</div><div class="total-macro-lbl">Gluc.</div></div>
-        <div class="total-macro"><div class="total-macro-val" id="s-lip">0g</div><div class="total-macro-lbl">Lip.</div></div>
-        <div class="total-macro"><div class="total-macro-val" id="s-fibres">0g</div><div class="total-macro-lbl">Fibres</div></div>
+    <!-- étage 1 -->
+    <div id="rec-etage1">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div style="font-family:Cormorant Garamond,serif;font-weight:700;font-size:28px;">🍽️ Mes Recettes</div>
       </div>
+      <div class="cat-grid" id="rec-cat-grid"></div>
     </div>
 
-    <div class="card">
-      <div class="card-title">Ajouter un ingrédient</div>
-      <button onclick="goToIngredients()" style="width:100%;padding:14px;border-radius:12px;border:1.5px solid var(--accent);background:rgba(192,97,106,0.05);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;font-family:'Inter',sans-serif;font-size:15px;font-weight:600;color:var(--accent);">
-        🥗 Choisir dans mes ingrédients →
-      </button>
-    </div>
-
-    <div class="card">
-      <div class="card-title">Dans ce repas</div>
-      <div id="saisie-added-list">
-        <div style="font-size:13px;color:var(--muted);font-style:italic;text-align:center;padding:8px 0;">Aucun ingrédient ajouté</div>
+    <!-- étage 2 -->
+    <div id="rec-etage2" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;">
+        <button onclick="recGoEtage1()" style="background:none;border:1px solid var(--border);border-radius:10px;padding:7px 12px;font-size:14px;cursor:pointer;color:var(--muted);white-space:nowrap;">‹ Retour</button>
+        <div id="rec-cat-title" style="font-family:Cormorant Garamond,serif;font-weight:700;font-size:20px;text-align:center;flex:1;">Catégorie</div>
+        <button onclick="openRecetteForm()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:8px 14px;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap;">+ Créer</button>
       </div>
-    </div>
-
-    <button class="btn-primary" onclick="saveRepas()">💾 Enregistrer ce repas</button>
-    <button class="btn-claude" onclick="copierRepasClaudeBtn()">📋 Copier pour Claude</button>
-
-    <!-- Repas déjà enregistrés -->
-    <div class="card" style="margin-top:4px;">
-      <div class="card-title">Repas enregistrés — réutiliser</div>
-      <div id="repas-lib-list">
-        <div style="font-size:13px;color:var(--muted);font-style:italic;text-align:center;padding:8px 0;">Aucun repas enregistré</div>
-      </div>
+      <div class="search-bar" style="margin-bottom:10px;"><span style="color:var(--muted);">🔍</span><input type="text" id="rec-search" placeholder="Rechercher une recette…" oninput="renderRecetteList()"></div>
+      <div id="rec-list"></div>
     </div>
   </div>
 
-  <!-- INGRÉDIENTS -->
   <div id="rtab-ingr" style="display:none;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <div style="font-family:Cormorant Garamond,serif;font-weight:700;font-size:28px;">🥗 Mes Ingrédients</div>
@@ -509,7 +487,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
   </button>
   <button class="nav-item" onclick="showPage('repas',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 1v3M10 1v3M14 1v3"/></svg>
-    Repas
+    Recettes
   </button>
 </nav>
 
@@ -534,7 +512,7 @@ const firebaseConfig = {
 };
 
 // Clés synchronisées vers le cloud
-const SYNC_KEYS = ['sandra_poids','sandra_objectif','sandra_ingredients','sandra_repas'];
+const SYNC_KEYS = ['sandra_poids','sandra_objectif','sandra_ingredients','sandra_repas','sandra_categories','sandra_recettes','sandra_journal'];
 
 firebase.initializeApp(firebaseConfig);
 const _auth = firebase.auth();
@@ -932,6 +910,20 @@ const SANDRA_INGREDIENTS_DEFAULT = [
 
 const INGR_KEY  = 'sandra_ingredients';
 const REPAS_KEY = 'sandra_repas';
+const CAT_KEY = 'sandra_categories';
+const RECETTE_KEY = 'sandra_recettes';
+const JOURNAL_KEY = 'sandra_journal';
+
+const SANDRA_CATS_DEFAULT = [{"key": "entrees", "emoji": "🍽️", "name": "Entrées"}, {"key": "salades", "emoji": "🥗", "name": "Salades"}, {"key": "poulet", "emoji": "🍗", "name": "Poulet"}, {"key": "viandes", "emoji": "🥩", "name": "Viandes"}, {"key": "poissons", "emoji": "🐟", "name": "Poissons"}, {"key": "vege", "emoji": "🥘", "name": "Végé / mixtes"}, {"key": "desserts", "emoji": "🍰", "name": "Desserts"}];
+const SANDRA_RECETTES_DEFAULT = [{"id": 1, "nom": "Houmous", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 2, "nom": "Caviar d’aubergine", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 3, "nom": "Poivrons grillés", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 4, "nom": "Choukchouka", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 5, "nom": "Courgette à la harissa", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 6, "nom": "Carottes au cumin", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 7, "nom": "Œufs à l’israélienne", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 8, "nom": "Tomates/Concombres/Oignons", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 9, "nom": "Fenouil", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 10, "nom": "Coleslaw", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 11, "nom": "Salade de patates douces", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 12, "nom": "Pâté", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 13, "nom": "Saumon fumé", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 14, "nom": "Mechouïa au thon", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 15, "nom": "Asperges sauce mousseline", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 16, "nom": "Salade césar", "cats": ["salades"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 17, "nom": "Taboulé", "cats": ["salades"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 18, "nom": "Salade grecque", "cats": ["salades"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 19, "nom": "Salade de quinoa", "cats": ["salades"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 20, "nom": "Poulet aux olives", "cats": ["poulet"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 21, "nom": "Parguit aux champignons de papa", "cats": ["poulet"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 22, "nom": "Osso buco", "cats": ["viandes"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 23, "nom": "Rosbeef", "cats": ["viandes"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 24, "nom": "Bœuf Bourguignon", "cats": ["viandes"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 25, "nom": "Couscous", "cats": ["viandes"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 26, "nom": "Épaule d’agneau", "cats": ["viandes"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 27, "nom": "Saumon en papillote", "cats": ["poissons"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 28, "nom": "Lasagne au thon", "cats": ["poissons"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 29, "nom": "Quiche au saumon", "cats": ["poissons"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 30, "nom": "Quiche au thon", "cats": ["poissons"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 31, "nom": "Torsade au saumon", "cats": ["poissons"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 32, "nom": "Pizza maison", "cats": ["vege"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 33, "nom": "Bagel maison", "cats": ["vege"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 34, "nom": "Riz aux légumes", "cats": ["vege"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 35, "nom": "Gâteau au chocolat", "cats": ["desserts"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 36, "nom": "Tarte aux pommes", "cats": ["desserts"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 37, "nom": "Galettes de mamie", "cats": ["desserts"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 38, "nom": "Croquants", "cats": ["desserts"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 39, "nom": "Mousse au chocolat", "cats": ["desserts"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 40, "nom": "Tiramisu", "cats": ["desserts"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}];
+
+function loadCats(){ try{ let s=JSON.parse(localStorage.getItem(CAT_KEY)||'[]'); if(!s.length){ localStorage.setItem(CAT_KEY,JSON.stringify(SANDRA_CATS_DEFAULT)); return SANDRA_CATS_DEFAULT.slice(); } return s; }catch(e){ return SANDRA_CATS_DEFAULT.slice(); } }
+function saveCats(d){ localStorage.setItem(CAT_KEY, JSON.stringify(d)); }
+function loadRecettes(){ try{ let s=JSON.parse(localStorage.getItem(RECETTE_KEY)||'[]'); if(!s.length){ localStorage.setItem(RECETTE_KEY,JSON.stringify(SANDRA_RECETTES_DEFAULT)); return SANDRA_RECETTES_DEFAULT.slice(); } return s; }catch(e){ return SANDRA_RECETTES_DEFAULT.slice(); } }
+function saveRecettes(d){ localStorage.setItem(RECETTE_KEY, JSON.stringify(d)); }
+function loadJournal(){ try{ return JSON.parse(localStorage.getItem(JOURNAL_KEY)||'[]'); }catch(e){ return []; } }
+function saveJournal(d){ localStorage.setItem(JOURNAL_KEY, JSON.stringify(d)); }
+
 
 function loadIngr()      { try { let s=JSON.parse(localStorage.getItem(INGR_KEY)||'[]'); if(!s.length){localStorage.setItem(INGR_KEY,JSON.stringify(SANDRA_INGREDIENTS_DEFAULT));return SANDRA_INGREDIENTS_DEFAULT;} s=s.map(i=>{if(!i.cat){const d=SANDRA_INGREDIENTS_DEFAULT.find(d=>d.nom===i.nom);return{...i,cat:d?d.cat:'autres'};}return i;}); return s; } catch(e){return SANDRA_INGREDIENTS_DEFAULT;} }
 function saveIngr(d)     { localStorage.setItem(INGR_KEY, JSON.stringify(d)); }
@@ -940,250 +932,220 @@ function saveRepasData(d){ localStorage.setItem(REPAS_KEY, JSON.stringify(d)); }
 
 let jourOffset    = 0;
 let jourCatFilter = 'tous';
-let currentRCat   = 'petit-dej';
-let currentSaisieIngrs = [];
 let ingrSelectMode = false;
 let ingrCatFilter  = 'tous';
 
-function rCatLabel(c) { return {'petit-dej':'🌅 Petit-déj.','dejeuner':'☀️ Déjeuner','collation':'🍎 Collation','diner':'🌙 Dîner'}[c]||c; }
-
-// ---- NAVIGATION ----
+/* ============ NAVIGATION SOUS-ONGLETS ============ */
 function showRepasTab(tab) {
-  ['journee','saisie','ingr'].forEach(t => {
-    const el  = document.getElementById('rtab-'+t);
+  ['journee','recettes','ingr'].forEach(t=>{
+    const el = document.getElementById('rtab-'+t);
+    if (el) el.style.display = (t===tab) ? 'block' : 'none';
     const btn = document.getElementById('rnav-'+t+'-btn');
-    if (el)  el.style.display  = t===tab ? 'block' : 'none';
     if (btn) btn.classList.toggle('active', t===tab);
   });
-  if (tab==='journee') renderJournee();
-  if (tab==='saisie')  { if (!ingrSelectMode) currentSaisieIngrs=[]; updateSaisieTotal(); renderAddedList(); renderRepasLib(); }
-  if (tab==='ingr')    { const b=document.getElementById('ingr-select-mode-banner'); if(b) b.style.display=ingrSelectMode?'flex':'none'; renderIngredients(); }
+  if (tab==='journee')  renderDay();
+  if (tab==='recettes') { if(!recSelectMode) recGoEtage1(); }
+  if (tab==='ingr')     renderIngredients();
 }
 
-// ---- JOURNÉE ----
-function getJourDate() { const d=new Date(); d.setDate(d.getDate()+jourOffset); return d.toISOString().split('T')[0]; }
-function changeJour(delta) { if(jourOffset+delta>0) return; jourOffset+=delta; renderJournee(); }
+/* ============ DONNÉES & HELPERS RECETTES ============ */
+let recSelectMode = false;
+let recSelectMoment = null;
+let recCurrentCat = null;
+let editingRecetteId = null;
+let rfIngs = []; // ingrédients en cours dans le modal recette
 
-function selectJourCat(btn) {
-  document.querySelectorAll('[data-jcat]').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  jourCatFilter = btn.dataset.jcat;
-  const ab = document.getElementById('btn-jour-ajouter');
-  if (ab) { ab.disabled = jourCatFilter==='tous'; ab.style.opacity = jourCatFilter==='tous'?'0.35':'1'; ab.style.cursor = jourCatFilter==='tous'?'default':'pointer'; }
-  renderJourneeRepas();
+function recCountInCat(key){ return loadRecettes().filter(r=>(r.cats||[]).includes(key)).length; }
+function recCatName(key){ const c=loadCats().find(c=>c.key===key); return c?c.emoji+' '+c.name:key; }
+function recTotals(ings){
+  let t={kcal:0,prot:0,gluc:0,lip:0,fib:0};
+  (ings||[]).forEach(g=>{ const f=(g.unit==='100g')?g.qty/100:g.qty;
+    t.kcal+=(g.kcalU||0)*f; t.prot+=(g.protU||0)*f; t.gluc+=(g.glucU||0)*f; t.lip+=(g.lipU||0)*f; t.fib+=(g.fibU||0)*f; });
+  return {kcal:Math.round(t.kcal),prot:rnd(t.prot),gluc:rnd(t.gluc),lip:rnd(t.lip),fib:rnd(t.fib)};
 }
 
-function ajouterDepuisJour() {
-  if (jourCatFilter==='tous') return;
-  currentRCat = jourCatFilter;
-  // Go to saisie showing only saved repas of this category
-  showRepasTab('saisie');
-  const title = document.getElementById('saisie-cat-title');
-  if (title) title.textContent = rCatLabel(currentRCat);
-  renderRepasLib();
+/* ============ ÉTAGE 1 : VIGNETTES ============ */
+function recGoEtage1(){
+  recCurrentCat=null;
+  const e1=document.getElementById('rec-etage1'), e2=document.getElementById('rec-etage2');
+  if(e1) e1.style.display='block';
+  if(e2) e2.style.display='none';
+  renderCatGrid();
+}
+function renderCatGrid(){
+  const grid=document.getElementById('rec-cat-grid'); if(!grid) return;
+  const cats=loadCats();
+  let h = cats.map(c=>`<div class="cat-tile" onclick="recGoEtage2('${c.key}')">
+    <span class="emoji">${c.emoji}</span><div class="cname">${c.name}</div>
+    <div class="ccount">${recCountInCat(c.key)} recette${recCountInCat(c.key)>1?'s':''}</div></div>`).join('');
+  h += `<div class="cat-tile add" onclick="openCatForm()"><span class="emoji">➕</span><div class="cname">Nouvelle</div><div class="ccount">catégorie</div></div>`;
+  grid.innerHTML=h;
 }
 
-function renderJournee() {
-  const date = getJourDate();
-  const lbl  = document.getElementById('jour-label');
-  if (lbl) lbl.textContent = jourOffset===0?"Aujourd'hui":jourOffset===-1?'Hier':new Date(date+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
-  const repas = loadRepas().filter(r=>r.date===date);
-  const tot   = repas.reduce((a,r)=>({kcal:a.kcal+(r.kcal||0),prot:a.prot+(r.prot||0),gluc:a.gluc+(r.gluc||0),lip:a.lip+(r.lip||0),fibres:a.fibres+(r.fibres||0)}),{kcal:0,prot:0,gluc:0,lip:0,fibres:0});
-  const pct   = Math.min(100, tot.kcal/KCAL_OBJ*100);
-  const arc   = document.getElementById('ring-arc');
-  if (arc) arc.style.strokeDashoffset = 219.9-(219.9*pct/100);
-  const set = (id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
-  set('jour-kcal', Math.round(tot.kcal));
-  set('jour-reste', Math.max(0,KCAL_OBJ-Math.round(tot.kcal))+' kcal');
-  set('jour-nb-repas', repas.length+' repas');
-  [['prot',tot.prot,PROT_OBJ],['gluc',tot.gluc,GLUC_OBJ],['lip',tot.lip,LIP_OBJ],['fibres',tot.fibres,FIBRES_OBJ]].forEach(([k,v,t])=>{
-    const bar=document.getElementById('j-'+k+'-bar'); if(bar) bar.style.width=Math.min(100,(v/t)*100)+'%';
-    const lbl2=document.getElementById('j-'+k); if(lbl2) lbl2.textContent=rnd(v)+'g'+(k==='prot'?' / '+t+'g':'');
-  });
-  renderJourneeRepas();
+/* ============ ÉTAGE 2 : LISTE RECETTES ============ */
+function recGoEtage2(key){
+  recCurrentCat=key;
+  document.getElementById('rec-etage1').style.display='none';
+  document.getElementById('rec-etage2').style.display='block';
+  document.getElementById('rec-cat-title').textContent=recCatName(key);
+  const s=document.getElementById('rec-search'); if(s) s.value='';
+  renderRecetteList();
+}
+function renderRecetteList(){
+  const q=(document.getElementById('rec-search')?.value||'').toLowerCase();
+  let list=loadRecettes().filter(r=>(r.cats||[]).includes(recCurrentCat));
+  if(q) list=list.filter(r=>r.nom.toLowerCase().includes(q));
+  const el=document.getElementById('rec-list'); if(!el) return;
+  if(!list.length){ el.innerHTML='<div class="empty-state"><div class="empty-icon">🍽️</div><div class="empty-text">Aucune recette ici.<br>Clique “+ Créer”.</div></div>'; return; }
+  el.innerHTML=list.map(r=>{
+    const empty=!(r.ings&&r.ings.length);
+    const chips = empty ? '<span class="rchip rchip-empty">à compléter</span>'
+      : `<span class="rchip rchip-kcal">🔥${r.kcal}</span><span class="rchip rchip-prot">💪${r.prot}g</span><span class="rchip rchip-gluc">🌾${r.gluc}g</span><span class="rchip rchip-lip">🥑${r.lip}g</span><span class="rchip rchip-fib">🌿${r.fib}g</span>`;
+    const right = recSelectMode ? '<span class="rec-plus">+</span>'
+      : `<button class="btn-del" onclick="event.stopPropagation();delRecette(${r.id})">✕</button>`;
+    const click = recSelectMode ? `pickRecette(${r.id})` : `openRecetteForm(${r.id})`;
+    const nbi = r.ings? r.ings.length : 0;
+    return `<div class="rec-card" onclick="${click}">
+      <div style="flex:1;"><div class="rnom">${r.nom}</div>
+      <div class="rchips">${chips}</div>
+      <div class="rmeta">${nbi} ingrédient${nbi>1?'s':''}${(r.cats&&r.cats.length>1)?' · '+r.cats.length+' catégories':''}</div></div>${right}</div>`;
+  }).join('');
 }
 
-function renderJourneeRepas() {
-  const date  = getJourDate();
-  let repas   = loadRepas().filter(r=>r.date===date);
-  if (jourCatFilter!=='tous') repas = repas.filter(r=>r.cat===jourCatFilter);
-  const el = document.getElementById('jour-repas-list');
-  if (!el) return;
-  if (!repas.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🍽️</div><div class="empty-text">'+(jourCatFilter==='tous'?'Choisis une catégorie<br>puis clique + Ajouter':'Aucun repas pour '+rCatLabel(jourCatFilter))+'</div></div>';
-    return;
-  }
-  const catOrder = ['petit-dej','dejeuner','collation','diner'];
-  let html = '';
-  if (jourCatFilter==='tous') {
-    catOrder.forEach(cat => {
-      const g = repas.filter(r=>r.cat===cat);
-      if (!g.length) return;
-      html += '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin:10px 0 6px;">'+rCatLabel(cat)+'</div>';
-      g.forEach(r => { html += repasItemHtml(r); });
-    });
+/* ============ MODAL RECETTE ============ */
+function openRecetteForm(id){
+  editingRecetteId = (typeof id==='number') ? id : null;
+  const r = editingRecetteId ? loadRecettes().find(x=>x.id===editingRecetteId) : null;
+  document.getElementById('modal-recette-title').textContent = r ? '✏️ Modifier la recette' : 'Nouvelle recette';
+  document.getElementById('rf-nom').value = r ? r.nom : '';
+  const sel = r ? [...(r.cats||[])] : (recCurrentCat?[recCurrentCat]:[]);
+  document.getElementById('rf-cats').innerHTML = loadCats().map(c=>
+    `<span class="catcheck ${sel.includes(c.key)?'on':''}" data-k="${c.key}" onclick="this.classList.toggle('on')">${c.emoji} ${c.name}</span>`).join('');
+  rfIngs = r ? JSON.parse(JSON.stringify(r.ings||[])) : [];
+  renderRfIngs();
+  openModal('modal-recette');
+}
+function renderRfIngs(){
+  const el=document.getElementById('rf-ings');
+  if(!rfIngs.length){ el.innerHTML='<div style="font-size:12px;color:var(--muted);padding:6px 0;">Aucun ingrédient pour l\u2019instant.</div>'; return; }
+  el.innerHTML=rfIngs.map((g,i)=>`<div class="ingline"><span class="iname">${g.nom}</span>
+    <input type="number" value="${g.qty}" min="0" onchange="rfSetQty(${i},this.value)">
+    <span class="iunit">${UNIT_SHORT[g.unit]||'g'}</span>
+    <button class="btn-del" onclick="rfIngs.splice(${i},1);renderRfIngs()">✕</button></div>`).join('');
+}
+function rfSetQty(i,v){ rfIngs[i].qty=parseFloat(v)||0; }
+function rfAddIng(){
+  const lib=loadIngr();
+  if(!lib.length){ showToast('⚠️ Aucun ingrédient en bibliothèque'); return; }
+  const choix = lib.map((x,i)=>`${i+1}. ${x.nom}`).join('\n');
+  const n = prompt('Ajouter quel ingrédient ?\n'+choix+'\n\nNuméro :');
+  const idx = parseInt(n)-1;
+  if(isNaN(idx)||!lib[idx]) return;
+  const s=lib[idx]; const unit=s.unit||'100g';
+  rfIngs.push({nom:s.nom, unit, qty:(unit==='100g'?100:1),
+    kcalU:s.kcal, protU:s.prot, glucU:s.gluc, lipU:s.lip, fibU:s.fibres||0});
+  renderRfIngs();
+}
+function saveRecette(){
+  const nom=document.getElementById('rf-nom').value.trim();
+  if(!nom){ showToast('⚠️ Saisis un nom'); return; }
+  const cats=[...document.querySelectorAll('#rf-cats .catcheck.on')].map(e=>e.dataset.k);
+  if(!cats.length){ showToast('⚠️ Choisis une catégorie'); return; }
+  const t=recTotals(rfIngs);
+  let data=loadRecettes();
+  if(editingRecetteId){
+    data = data.map(r=> r.id===editingRecetteId ? {...r, nom, cats, ings:JSON.parse(JSON.stringify(rfIngs)), kcal:t.kcal,prot:t.prot,gluc:t.gluc,lip:t.lip,fib:t.fib} : r);
+    showToast('✅ Recette modifiée');
   } else {
-    repas.forEach(r => { html += repasItemHtml(r); });
+    const id=Math.max(0,...data.map(r=>r.id||0))+1;
+    data.push({id, nom, cats, ings:JSON.parse(JSON.stringify(rfIngs)), kcal:t.kcal,prot:t.prot,gluc:t.gluc,lip:t.lip,fib:t.fib});
+    showToast('✅ Recette créée');
   }
-  el.innerHTML = html;
+  saveRecettes(data);
+  closeModal('modal-recette');
+  if(recCurrentCat && !cats.includes(recCurrentCat)) recGoEtage1(); else renderRecetteList();
+}
+function delRecette(id){
+  if(!confirm('Supprimer cette recette ?')) return;
+  saveRecettes(loadRecettes().filter(r=>r.id!==id));
+  renderRecetteList(); showToast('🗑️ Supprimée');
 }
 
-function repasItemHtml(r) {
-  return '<div style="padding:10px 0;border-bottom:1px solid var(--bg);">'+
-    '<div style="display:flex;justify-content:space-between;align-items:center;">'+
-      '<div><div style="font-size:14px;font-weight:600;">'+(r.nom||'Repas')+'</div>'+
-      '<div style="font-size:11px;color:var(--muted);">'+Math.round(r.kcal||0)+' kcal · '+rnd(r.prot||0)+'g prot</div></div>'+
-      '<button class="btn-del" onclick="deleteRepas('+r.id+')">✕</button>'+
-    '</div>'+
-  '</div>';
+/* ============ MODAL CATÉGORIE ============ */
+function openCatForm(){ document.getElementById('cf-emoji').value=''; document.getElementById('cf-nom').value=''; openModal('modal-cat'); }
+function saveCat(){
+  const emoji=document.getElementById('cf-emoji').value.trim()||'🍽️';
+  const name=document.getElementById('cf-nom').value.trim();
+  if(!name){ showToast('⚠️ Nom requis'); return; }
+  const cats=loadCats();
+  cats.push({key:'cat_'+Date.now(), emoji, name});
+  saveCats(cats);
+  closeModal('modal-cat'); renderCatGrid(); showToast('✅ Catégorie créée');
 }
 
-function deleteRepas(id) {
-  saveRepasData(loadRepas().filter(r=>r.id!==id));
-  renderJournee(); showToast('🗑️ Supprimé');
+/* ============ MODE SÉLECTION (depuis Journée) ============ */
+function addRecetteToDay(moment){
+  recSelectMoment=moment; recSelectMode=true;
+  const b=document.getElementById('rec-banner'); if(b){ b.style.display='flex'; document.getElementById('rec-banner-moment').textContent=moment; }
+  showRepasTab('recettes');
+  recGoEtage1();
 }
-
-// ---- SAISIE REPAS ----
-function renderRepasLib() {
-  const el = document.getElementById('repas-lib-list');
-  if (!el) return;
-  // Show saved repas of this category (unique names)
-  const all = loadRepas();
-  const seen = new Set();
-  const unique = [];
-  all.filter(r=>r.cat===currentRCat).reverse().forEach(r=>{
-    if (r.nom && !seen.has(r.nom)) { seen.add(r.nom); unique.push(r); }
-  });
-  if (!unique.length) {
-    el.innerHTML = '<div style="font-size:13px;color:var(--muted);font-style:italic;text-align:center;padding:8px 0;">Aucun repas enregistré — crée-en un ci-dessous</div>';
-    return;
-  }
-  el.innerHTML = unique.map(r =>
-    '<div onclick="useExistingRepas('+r.id+')" style="display:flex;align-items:center;justify-content:space-between;padding:11px 12px;background:var(--bg);border-radius:10px;margin-bottom:6px;cursor:pointer;">'+
-      '<div><div style="font-size:14px;font-weight:600;">'+(r.nom||'Repas')+'</div>'+
-      '<div style="font-size:11px;color:var(--muted);">'+Math.round(r.kcal||0)+' kcal · '+rnd(r.prot||0)+'g prot</div></div>'+
-      '<span style="font-size:20px;color:var(--accent);">+</span>'+
-    '</div>'
-  ).join('');
-}
-
-function useExistingRepas(id) {
-  const r = loadRepas().find(r=>r.id===id);
-  if (!r) return;
-  const data = loadRepas();
-  data.push({...r, id:Date.now(), date:getJourDate()});
-  saveRepasData(data);
+function recCancelSelect(){
+  recSelectMode=false; recSelectMoment=null;
+  const b=document.getElementById('rec-banner'); if(b) b.style.display='none';
   showRepasTab('journee');
-  renderJournee();
-  showToast('✅ '+r.nom+' ajouté à la journée !');
+}
+function pickRecette(id){
+  const r=loadRecettes().find(x=>x.id===id); if(!r) return;
+  const ings=JSON.parse(JSON.stringify(r.ings||[]));
+  const j=loadJournal();
+  j.push({id:Date.now(), date:getJourDate(), moment:recSelectMoment||'☀️ Déjeuner', nom:r.nom, ings});
+  saveJournal(j);
+  recSelectMode=false; recSelectMoment=null;
+  const b=document.getElementById('rec-banner'); if(b) b.style.display='none';
+  showToast('➕ '+r.nom+' ajoutée');
+  showRepasTab('journee');
 }
 
-function updateSaisieTotal() {
-  const tot = currentSaisieIngrs.reduce((a,i)=>({kcal:a.kcal+i.kcal,prot:a.prot+i.prot,gluc:a.gluc+i.gluc,lip:a.lip+i.lip,fibres:a.fibres+i.fibres}),{kcal:0,prot:0,gluc:0,lip:0,fibres:0});
-  const set = (id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
-  set('saisie-kcal', Math.round(tot.kcal));
-  [['prot',tot.prot],['gluc',tot.gluc],['lip',tot.lip],['fibres',tot.fibres]].forEach(([k,v])=>set('s-'+k, rnd(v)+'g'));
+/* ============ JOURNÉE ============ */
+function renderDay(){
+  const el=document.getElementById('day-list'); if(!el) return;
+  const today=getJourDate();
+  const items=loadJournal().filter(d=>d.date===today);
+  if(!items.length){ el.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">Rien aujourd\u2019hui.<br>Ajoute une recette via les boutons ci-dessus.</div></div>'; return; }
+  el.innerHTML=items.map(d=>{
+    const t=recTotals(d.ings);
+    const rows = (d.ings&&d.ings.length) ? d.ings.map((g,gi)=>`<div class="day-row"><span class="dname">${g.nom}</span>
+      <input type="number" value="${g.qty}" min="0" onchange="setDayQty(${d.id},${gi},this.value)">
+      <span class="dunit">${UNIT_SHORT[g.unit]||'g'}</span></div>`).join('')
+      : '<div style="font-size:12px;color:var(--muted);padding:6px 0;">Recette sans ingrédients (à compléter).</div>';
+    return `<div class="day-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+        <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">${d.moment}</div>
+        <div style="font-weight:700;font-size:15px;">${d.nom}</div></div>
+        <div style="text-align:right;"><div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:18px;color:var(--accent);">${t.kcal} kcal</div>
+        <button class="btn-del" onclick="delDayItem(${d.id})">✕ retirer</button></div></div>
+      ${rows}</div>`;
+  }).join('');
+}
+function setDayQty(itemId,gi,v){
+  const j=loadJournal();
+  const it=j.find(d=>d.id===itemId); if(!it) return;
+  it.ings[gi].qty=parseFloat(v)||0;
+  saveJournal(j); renderDay();
+}
+function delDayItem(itemId){
+  saveJournal(loadJournal().filter(d=>d.id!==itemId));
+  renderDay(); showToast('🗑️ Retiré');
 }
 
-function updateQty(idx, val) {
-  const qty = parseFloat(val);
-  if (!qty||qty<=0) return;
-  const i = currentSaisieIngrs[idx];
-  const unit = i.unit || '100g';
-  const f = (unit==='100g') ? qty/100 : qty;
-  i.qty=qty; i.kcal=rnd((i.kcalPer100||0)*f); i.prot=rnd((i.protPer100||0)*f);
-  i.gluc=rnd((i.glucPer100||0)*f); i.lip=rnd((i.lipPer100||0)*f); i.fibres=rnd((i.fibresPer100||0)*f);
-  updateSaisieTotal();
-}
+/* ============ MODALS ============ */
+function openModal(id){ const m=document.getElementById(id); if(m) m.classList.add('open'); }
+function closeModal(id){ const m=document.getElementById(id); if(m) m.classList.remove('open'); }
 
-function renderAddedList() {
-  const el = document.getElementById('saisie-added-list');
-  if (!el) return;
-  if (!currentSaisieIngrs.length) { el.innerHTML='<div style="font-size:13px;color:var(--muted);font-style:italic;text-align:center;padding:8px 0;">Aucun ingrédient ajouté</div>'; return; }
-  el.innerHTML = currentSaisieIngrs.map((i,idx)=>
-    '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--bg);">'+
-      '<div style="flex:1;"><div style="font-size:14px;font-weight:600;">'+i.nom+'</div>'+
-      '<div style="font-size:11px;color:var(--muted);">'+Math.round(i.kcal)+' kcal · '+rnd(i.prot)+'g prot</div></div>'+
-      '<input type="number" value="'+i.qty+'" min="0" step="'+((i.unit&&i.unit!=='100g')?'1':'1')+'" max="2000" onchange="updateQty('+idx+',this.value)" style="width:60px;background:var(--bg);border:1.5px solid var(--accent);border-radius:8px;padding:6px;font-size:14px;font-weight:700;color:var(--accent);text-align:center;outline:none;">'+
-      '<span style="font-size:12px;color:var(--muted);min-width:34px;">'+(UNIT_SHORT[i.unit||'100g']||'g')+'</span>'+
-      '<button onclick="removeFromSaisie('+idx+')" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px;">✕</button>'+
-    '</div>'
-  ).join('');
-}
-
-function removeFromSaisie(idx) { currentSaisieIngrs.splice(idx,1); updateSaisieTotal(); renderAddedList(); }
-
-function saveRepas() {
-  if (!currentSaisieIngrs.length) { showToast('⚠️ Ajoute des ingrédients !'); return; }
-  const tot = currentSaisieIngrs.reduce((a,i)=>({kcal:a.kcal+i.kcal,prot:a.prot+i.prot,gluc:a.gluc+i.gluc,lip:a.lip+i.lip,fibres:a.fibres+i.fibres}),{kcal:0,prot:0,gluc:0,lip:0,fibres:0});
-  const nom = currentSaisieIngrs.map(i=>i.nom).slice(0,3).join(', ')+(currentSaisieIngrs.length>3?'…':'');
-  const data = loadRepas();
-  data.push({id:Date.now(), date:getJourDate(), cat:currentRCat, nom, ingredients:[...currentSaisieIngrs], ...tot});
-  saveRepasData(data);
-  currentSaisieIngrs=[];
-  updateSaisieTotal();
-  renderAddedList();
-  renderRepasLib();
-  showToast('✅ Repas enregistré !');
-}
-
-function copierRepasClaudeBtn() {
-  if (!currentSaisieIngrs.length) { showToast('⚠️ Aucun ingrédient'); return; }
-  const tot = currentSaisieIngrs.reduce((a,i)=>({kcal:a.kcal+i.kcal,prot:a.prot+i.prot,gluc:a.gluc+i.gluc,lip:a.lip+i.lip,fibres:a.fibres+i.fibres}),{kcal:0,prot:0,gluc:0,lip:0,fibres:0});
-  const texte = 'Analyse ce repas pour Sandra (femme, 1m61, objectif prise de poids).\nObjectifs : '+KCAL_OBJ+' kcal/j, '+PROT_OBJ+'g protéines.\n\nIngrédients :\n'+currentSaisieIngrs.map(i=>'- '+i.nom+' : '+i.qty+'g ('+Math.round(i.kcal)+' kcal)').join('\n')+'\n\nTotal : '+Math.round(tot.kcal)+' kcal · '+rnd(tot.prot)+'g prot\n\nDonne un score /10 et des conseils.';
-  navigator.clipboard.writeText(texte).then(()=>showToast('📋 Copié !')).catch(()=>prompt('Copie :',texte));
-}
-
-function copierJourneeClaudeBtn() {
-  const date  = getJourDate();
-  const repas = loadRepas().filter(r=>r.date===date);
-  if (!repas.length) { showToast("⚠️ Aucun repas aujourd'hui"); return; }
-  const tot = repas.reduce((a,r)=>({kcal:a.kcal+(r.kcal||0),prot:a.prot+(r.prot||0),gluc:a.gluc+(r.gluc||0),lip:a.lip+(r.lip||0),fibres:a.fibres+(r.fibres||0)}),{kcal:0,prot:0,gluc:0,lip:0,fibres:0});
-  const obj = getObjectif();
-  const texte = 'Journée de Sandra (femme, 1m61, objectif '+obj+' kg).\nObjectifs : '+KCAL_OBJ+' kcal/j, '+PROT_OBJ+'g protéines.\n\nRepas :\n'+repas.map(r=>'- '+rCatLabel(r.cat)+' : '+(r.nom||'Repas')+' ('+Math.round(r.kcal||0)+' kcal)').join('\n')+'\n\nTOTAL : '+Math.round(tot.kcal)+' kcal · '+rnd(tot.prot)+'g prot\n\nBilan et conseils ?';
-  navigator.clipboard.writeText(texte).then(()=>showToast('📋 Copié !')).catch(()=>prompt('Copie :',texte));
-}
-
-// ---- INGRÉDIENTS ----
-function goToIngredients() {
-  ingrSelectMode = true;
-  ['journee','saisie','ingr'].forEach(t => {
-    const el  = document.getElementById('rtab-'+t);
-    const btn = document.getElementById('rnav-'+t+'-btn');
-    if (el)  el.style.display  = t==='ingr' ? 'block' : 'none';
-    if (btn) btn.classList.toggle('active', t==='ingr');
-  });
-  const b = document.getElementById('ingr-select-mode-banner');
-  if (b) b.style.display = 'flex';
-  renderIngredients();
-}
-
-function cancelIngrSelect() {
-  ingrSelectMode = false;
-  const b = document.getElementById('ingr-select-mode-banner');
-  if (b) b.style.display = 'none';
-  showRepasTab('saisie');
-}
-
-function selectIngrFromLib(id) {
-  let ingr = loadIngr().find(i => String(i.id)===String(id));
-  if (!ingr) return;
-  const unit = ingr.unit || '100g';
-  const defQty = (unit==='100g') ? 100 : 1;
-  const f0 = (unit==='100g') ? defQty/100 : defQty;
-  currentSaisieIngrs.push({
-    nom:ingr.nom, qty:defQty, unit:unit,
-    kcalPer100:ingr.kcal, protPer100:ingr.prot, glucPer100:ingr.gluc, lipPer100:ingr.lip, fibresPer100:ingr.fibres||0,
-    kcal:rnd(ingr.kcal*f0), prot:rnd(ingr.prot*f0), gluc:rnd(ingr.gluc*f0), lip:rnd(ingr.lip*f0), fibres:rnd((ingr.fibres||0)*f0)
-  });
-  const b = document.getElementById('ingr-select-mode-banner');
-  if (b) b.style.display = 'none';
-  showRepasTab('saisie');
-  ingrSelectMode = false;
-  updateSaisieTotal();
-  renderAddedList();
-  showToast('✅ '+ingr.nom+' ajouté !');
-}
+/* compat : ancien mode sélection d'ingrédient (désormais inutilisé) */
+function selectIngrFromLib(id){ /* no-op : on ajoute les ingrédients via le modal recette */ }
+function cancelIngrSelect(){ ingrSelectMode=false; const b=document.getElementById('ingr-select-mode-banner'); if(b) b.style.display='none'; renderIngredients(); }
 
 function filterIngr(btn) {
   document.querySelectorAll('[data-icat]').forEach(b=>b.classList.remove('active'));
@@ -1326,7 +1288,41 @@ function selectIngr() {}
 function addIngrToSaisie() {}
 function showSaisieSource() {}
 function renderSaisieTypes() {}
-function renderRepasAll() { renderJournee(); }
+function renderRepasAll() { renderDay(); }
 </script>
+
+<!-- MODAL recette -->
+<div class="modal-bg" id="modal-recette">
+  <div class="modal-box">
+    <h3 id="modal-recette-title">Nouvelle recette</h3>
+    <label class="flabel">Nom de la recette</label>
+    <input class="finput" id="rf-nom" placeholder="ex. Quiche au saumon">
+    <label class="flabel">Catégorie(s) — une ou plusieurs</label>
+    <div id="rf-cats" style="margin-bottom:14px;"></div>
+    <label class="flabel">Ingrédients (optionnel)</label>
+    <div id="rf-ings"></div>
+    <button class="filter-pill" style="width:100%;margin-top:4px;padding:10px;" onclick="rfAddIng()">+ Ajouter un ingrédient</button>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button class="filter-pill" style="flex:1;padding:11px;" onclick="closeModal('modal-recette')">Annuler</button>
+      <button class="filter-pill" style="flex:1;padding:11px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="saveRecette()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL catégorie -->
+<div class="modal-bg" id="modal-cat">
+  <div class="modal-box">
+    <h3>Nouvelle catégorie</h3>
+    <label class="flabel">Emoji</label>
+    <input class="finput" id="cf-emoji" placeholder="🍕" maxlength="2" style="font-size:22px;text-align:center;">
+    <label class="flabel">Nom</label>
+    <input class="finput" id="cf-nom" placeholder="ex. Pizzas">
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="filter-pill" style="flex:1;padding:11px;" onclick="closeModal('modal-cat')">Annuler</button>
+      <button class="filter-pill" style="flex:1;padding:11px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="saveCat()">💾 Créer</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
