@@ -395,10 +395,10 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
   <div id="rtab-journee">
     <div style="height:16px;"></div>
     <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
-      <button class="filter-pill" style="flex:1;background:var(--accent);color:#fff;border-color:var(--accent);padding:9px 4px;" onclick="addRecetteToDay('🌅 Petit-déj')">+ 🌅 Pdj</button>
-      <button class="filter-pill" style="flex:1;background:var(--accent);color:#fff;border-color:var(--accent);padding:9px 4px;" onclick="addRecetteToDay('☀️ Déjeuner')">+ ☀️ Déj</button>
-      <button class="filter-pill" style="flex:1;background:var(--accent);color:#fff;border-color:var(--accent);padding:9px 4px;" onclick="addRecetteToDay('🍎 Collation')">+ 🍎 Coll.</button>
-      <button class="filter-pill" style="flex:1;background:var(--accent);color:#fff;border-color:var(--accent);padding:9px 4px;" onclick="addRecetteToDay('🌙 Dîner')">+ 🌙 Dîner</button>
+      <button class="filter-pill" style="flex:1;background:var(--accent);color:#fff;border-color:var(--accent);padding:9px 4px;" onclick="openAddChoice('🌅 Petit-déj')">+ 🌅 Pdj</button>
+      <button class="filter-pill" style="flex:1;background:var(--accent);color:#fff;border-color:var(--accent);padding:9px 4px;" onclick="openAddChoice('☀️ Déjeuner')">+ ☀️ Déj</button>
+      <button class="filter-pill" style="flex:1;background:var(--accent);color:#fff;border-color:var(--accent);padding:9px 4px;" onclick="openAddChoice('🍎 Collation')">+ 🍎 Coll.</button>
+      <button class="filter-pill" style="flex:1;background:var(--accent);color:#fff;border-color:var(--accent);padding:9px 4px;" onclick="openAddChoice('🌙 Dîner')">+ 🌙 Dîner</button>
     </div>
     <div id="day-list"></div>
   </div>
@@ -462,7 +462,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
       <button class="filter-pill" style="width:100%;margin-top:4px;padding:10px;" onclick="rfAddIng()">+ Ajouter un ingrédient</button>
 
       <label class="flabel" style="margin-top:14px;">Recette (préparation, notes…)</label>
-      <textarea id="rf-texte" class="finput" rows="15" placeholder="Étapes de préparation, astuces, remarques…" style="resize:vertical;font-family:'Inter',sans-serif;min-height:330px;"></textarea>
+      <textarea id="rf-texte" class="finput" rows="6" placeholder="Étapes de préparation, astuces, remarques…" style="resize:none;overflow:hidden;font-family:'Inter',sans-serif;min-height:140px;" oninput="autoGrow(this)"></textarea>
 
       <div style="display:flex;gap:8px;margin-top:12px;">
         <button class="filter-pill" style="flex:1;padding:11px;" onclick="closeRecetteForm()">Annuler</button>
@@ -1080,7 +1080,7 @@ function openRecetteForm(id){
   const csel = document.getElementById('rf-cat-select');
   if(csel) csel.innerHTML = loadCats().map(c=>
     `<option value="${c.key}" ${c.key===selKey?'selected':''}>${c.emoji} ${c.name}</option>`).join('');
-  const txt=document.getElementById('rf-texte'); if(txt) txt.value = r && r.texte ? r.texte : '';
+  const txt=document.getElementById('rf-texte'); if(txt){ txt.value = r && r.texte ? r.texte : ''; autoGrow(txt); }
   const np=document.getElementById('rf-nb-pers'); if(np) np.value = (r && r.nbPers) ? r.nbPers : 4;
   rfIngs = r ? JSON.parse(JSON.stringify(r.ings||[])) : [];
   rfPhoto = r && r.photo ? r.photo : null;
@@ -1230,6 +1230,31 @@ function deleteCat(){
 }
 
 /* ============ MODE SÉLECTION (depuis Journée) ============ */
+let dayAddMoment = null; // moment en cours d'ajout
+let ingrToDayMode = false; // true quand on choisit un ingrédient POUR la journée
+
+function openAddChoice(moment){
+  dayAddMoment = moment;
+  document.getElementById('choix-moment').textContent = moment;
+  openModal('modal-choix');
+}
+function choixRecette(){
+  closeModal('modal-choix');
+  addRecetteToDay(dayAddMoment);
+}
+function choixIngredient(){
+  closeModal('modal-choix');
+  addIngredientToDay(dayAddMoment);
+}
+function addIngredientToDay(moment){
+  recSelectMoment = moment;
+  ingrToDayMode = true;
+  ingrSelectMode = true;
+  showRepasTab('ingr');
+  const b=document.getElementById('ingr-select-mode-banner'); if(b) b.style.display='flex';
+  renderIngredients();
+}
+
 function addRecetteToDay(moment){
   recSelectMoment=moment; recSelectMode=true;
   const b=document.getElementById('rec-banner'); if(b){ b.style.display='flex'; document.getElementById('rec-banner-moment').textContent=moment; }
@@ -1258,9 +1283,22 @@ function renderDay(){
   const el=document.getElementById('day-list'); if(!el) return;
   const today=getJourDate();
   const items=loadJournal().filter(d=>d.date===today);
-  if(!items.length){ el.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">Rien aujourd\u2019hui.<br>Ajoute une recette via les boutons ci-dessus.</div></div>'; return; }
+  if(!items.length){ el.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">Rien aujourd\u2019hui.<br>Ajoute une recette ou un ingrédient via les boutons ci-dessus.</div></div>'; return; }
   el.innerHTML=items.map(d=>{
     const t=recTotals(d.ings);
+    if(d.type==='ingredient'){
+      // ligne simple (carte légère)
+      const g=d.ings[0]||{};
+      return `<div class="day-card" style="padding:10px 14px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;min-width:62px;">${d.moment}</div>
+          <span style="flex:1;font-weight:600;font-size:14px;">🥗 ${d.nom}</span>
+          <input type="number" value="${g.qty}" min="0" onchange="setDayQty(${d.id},0,this.value)" style="width:54px;background:var(--bg);border:1.5px solid var(--accent);border-radius:8px;padding:5px;font-size:13px;font-weight:700;color:var(--accent);text-align:center;outline:none;">
+          <span style="font-size:11px;color:var(--muted);min-width:28px;">${UNIT_SHORT[g.unit]||'g'}</span>
+          <span style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--accent);min-width:54px;text-align:right;">${t.kcal}</span>
+          <button class="btn-del" onclick="delDayItem(${d.id})">✕</button>
+        </div></div>`;
+    }
     const rows = (d.ings&&d.ings.length) ? d.ings.map((g,gi)=>`<div class="day-row"><span class="dname">${g.nom}</span>
       <input type="number" value="${g.qty}" min="0" onchange="setDayQty(${d.id},${gi},this.value)">
       <span class="dunit">${UNIT_SHORT[g.unit]||'g'}</span></div>`).join('')
@@ -1288,10 +1326,28 @@ function delDayItem(itemId){
 /* ============ MODALS ============ */
 function openModal(id){ const m=document.getElementById(id); if(m) m.classList.add('open'); }
 function closeModal(id){ const m=document.getElementById(id); if(m) m.classList.remove('open'); }
+function autoGrow(el){ if(!el) return; el.style.height='auto'; el.style.height=(el.scrollHeight+4)+'px'; }
 
 /* compat : ancien mode sélection d'ingrédient (désormais inutilisé) */
 function selectIngrFromLib(id){
-  // Retour depuis la page Ingrédients vers le formulaire recette
+  // Cas 1 : ajout d'un ingrédient seul à la JOURNÉE
+  if(ingrToDayMode){
+    const s = loadIngr().find(i=>String(i.id)===String(id));
+    if(s){
+      const unit=s.unit||'100g';
+      const qty=(unit==='100g'?100:1);
+      const ing={nom:s.nom, unit, qty, kcalU:s.kcal, protU:s.prot, glucU:s.gluc, lipU:s.lip, fibU:s.fibres||0};
+      const j=loadJournal();
+      j.push({id:Date.now(), date:getJourDate(), moment:recSelectMoment||'☀️ Déjeuner', nom:s.nom, type:'ingredient', ings:[ing]});
+      saveJournal(j);
+    }
+    ingrToDayMode=false; ingrSelectMode=false;
+    const b=document.getElementById('ingr-select-mode-banner'); if(b) b.style.display='none';
+    showRepasTab('journee');
+    if(s) showToast('➕ '+s.nom+' ajouté');
+    return;
+  }
+  // Cas 2 : retour vers le formulaire recette
   if(!rfFromForm) return;
   const s = loadIngr().find(i=>String(i.id)===String(id));
   if(s){
@@ -1314,6 +1370,11 @@ function selectIngrFromLib(id){
 function cancelIngrSelect(){
   ingrSelectMode=false;
   const b=document.getElementById('ingr-select-mode-banner'); if(b) b.style.display='none';
+  if(ingrToDayMode){
+    ingrToDayMode=false;
+    showRepasTab('journee');
+    return;
+  }
   if(rfFromForm){
     // on annule le choix et on revient au formulaire recette tel quel
     rfFromForm=false;
@@ -1476,6 +1537,18 @@ function renderRepasAll() { renderDay(); }
 </div>
 
 <!-- MODAL catégorie -->
+<div class="modal-bg" id="modal-choix">
+  <div class="modal-box">
+    <h3 id="choix-title">Ajouter à <span id="choix-moment">—</span></h3>
+    <p style="font-size:13px;color:var(--muted);margin:0 0 16px;">Que veux-tu ajouter ?</p>
+    <div style="display:flex;gap:10px;">
+      <button class="filter-pill" style="flex:1;padding:18px 10px;font-size:14px;flex-direction:column;display:flex;gap:6px;" onclick="choixRecette()"><span style="font-size:26px;">🍽️</span>Une recette</button>
+      <button class="filter-pill" style="flex:1;padding:18px 10px;font-size:14px;flex-direction:column;display:flex;gap:6px;" onclick="choixIngredient()"><span style="font-size:26px;">🥗</span>Un ingrédient</button>
+    </div>
+    <button class="filter-pill" style="width:100%;padding:11px;margin-top:12px;" onclick="closeModal('modal-choix')">Annuler</button>
+  </div>
+</div>
+
 <div class="modal-bg" id="modal-cat">
   <div class="modal-box">
     <h3 id="cf-title">Nouvelle catégorie</h3>
