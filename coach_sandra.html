@@ -173,9 +173,6 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 .ann-row { display:flex; align-items:center; gap:14px; margin-bottom:14px; }
 </style>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#c0616a">
-<link rel="apple-touch-icon" href="icon-192.png">
 </head>
 <body>
 
@@ -883,6 +880,50 @@ function copierPoidsClaudeBtn() {
 }
 
 // ==================== REPAS ====================
+// ===== Liste par défaut des 33 ingrédients (valeurs pour 100 g) =====
+const SANDRA_INGREDIENTS_DEFAULT = [
+  // Laitiers / œufs
+  {id:1,  nom:"Œuf entier",        cat:"laitiers",   kcal:143, prot:13,   gluc:0.7, lip:9.5,  fibres:0},
+  {id:2,  nom:"Saint-Morêt",       cat:"laitiers",   kcal:255, prot:6,    gluc:3,   lip:24,   fibres:0},
+  {id:3,  nom:"Fromage frais",     cat:"laitiers",   kcal:98,  prot:8,    gluc:4,   lip:5,    fibres:0},
+  // Poissons / produits de la mer
+  {id:4,  nom:"Saumon fumé",       cat:"poissons",   kcal:182, prot:25,   gluc:0,   lip:9,    fibres:0},
+  {id:5,  nom:"Saumon cru",        cat:"poissons",   kcal:208, prot:20,   gluc:0,   lip:13,   fibres:0},
+  {id:6,  nom:"Bar",               cat:"poissons",   kcal:97,  prot:18,   gluc:0,   lip:2.5,  fibres:0},
+  {id:7,  nom:"Cabillaud",         cat:"poissons",   kcal:82,  prot:18,   gluc:0,   lip:0.7,  fibres:0},
+  {id:8,  nom:"Thon",              cat:"poissons",   kcal:144, prot:23,   gluc:0,   lip:5,    fibres:0},
+  {id:9,  nom:"Surimi",            cat:"poissons",   kcal:95,  prot:8,    gluc:14,  lip:1,    fibres:0},
+  // Viandes
+  {id:10, nom:"Blanc de poulet",   cat:"viandes",    kcal:121, prot:23,   gluc:0,   lip:3,    fibres:0},
+  {id:11, nom:"Dinde fumée",       cat:"viandes",    kcal:104, prot:18,   gluc:1,   lip:3,    fibres:0},
+  // Légumes
+  {id:12, nom:"Champignons",       cat:"legumes",    kcal:22,  prot:3,    gluc:1,   lip:0.3,  fibres:2},
+  {id:13, nom:"Oignon",            cat:"legumes",    kcal:40,  prot:1.1,  gluc:7.6, lip:0.1,  fibres:1.7},
+  {id:14, nom:"Tomate",            cat:"legumes",    kcal:18,  prot:0.9,  gluc:2.9, lip:0.2,  fibres:1.2},
+  {id:15, nom:"Poivron",           cat:"legumes",    kcal:26,  prot:1,    gluc:4.6, lip:0.3,  fibres:2},
+  {id:16, nom:"Courgette",         cat:"legumes",    kcal:17,  prot:1.2,  gluc:2.1, lip:0.3,  fibres:1.1},
+  {id:17, nom:"Carotte",           cat:"legumes",    kcal:41,  prot:0.9,  gluc:7,   lip:0.2,  fibres:2.8},
+  {id:18, nom:"Céleri rave",       cat:"legumes",    kcal:42,  prot:1.5,  gluc:7,   lip:0.3,  fibres:1.8},
+  {id:19, nom:"Fenouil",           cat:"legumes",    kcal:31,  prot:1.2,  gluc:4,   lip:0.2,  fibres:3.1},
+  {id:20, nom:"Haricots verts",    cat:"legumes",    kcal:31,  prot:1.8,  gluc:4,   lip:0.2,  fibres:3},
+  {id:21, nom:"Chou blanc",        cat:"legumes",    kcal:25,  prot:1.3,  gluc:4,   lip:0.1,  fibres:2.5},
+  {id:22, nom:"Radis",             cat:"legumes",    kcal:16,  prot:0.7,  gluc:2,   lip:0.1,  fibres:1.6},
+  // Fruits
+  {id:23, nom:"Grenade",           cat:"fruits",     kcal:83,  prot:1.7,  gluc:14,  lip:1.2,  fibres:4},
+  {id:24, nom:"Citron vert",       cat:"fruits",     kcal:30,  prot:0.7,  gluc:8,   lip:0.2,  fibres:2.8},
+  {id:25, nom:"Lait de coco",      cat:"fruits",     kcal:197, prot:2,    gluc:3,   lip:20,   fibres:1},
+  // Féculents
+  {id:26, nom:"Pain complet",      cat:"feculents",  kcal:247, prot:9,    gluc:41,  lip:3.5,  fibres:7},
+  {id:27, nom:"Toasts melba",      cat:"feculents",  kcal:380, prot:12,   gluc:73,  lip:4,    fibres:5},
+  {id:28, nom:"Pâtes de konjac",   cat:"feculents",  kcal:9,   prot:0.2,  gluc:1,   lip:0,    fibres:3},
+  // Condiments / matières grasses
+  {id:29, nom:"Moutarde",          cat:"condiments", kcal:66,  prot:4,    gluc:5,   lip:4,    fibres:1},
+  {id:30, nom:"Harissa",           cat:"condiments", kcal:90,  prot:3,    gluc:9,   lip:5,    fibres:3},
+  {id:31, nom:"Huile d'olive",     cat:"condiments", kcal:899, prot:0,    gluc:0,   lip:100,  fibres:0},
+  {id:32, nom:"Sauce tomate",      cat:"condiments", kcal:35,  prot:1.5,  gluc:6,   lip:0.5,  fibres:1.2},
+  {id:33, nom:"Ail",               cat:"condiments", kcal:131, prot:6,    gluc:28,  lip:0.5,  fibres:2.1}
+];
+
 const INGR_KEY  = 'sandra_ingredients';
 const REPAS_KEY = 'sandra_repas';
 
@@ -1215,11 +1256,6 @@ function addIngrToSaisie() {}
 function showSaisieSource() {}
 function renderSaisieTypes() {}
 function renderRepasAll() { renderJournee(); }
-</script>
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
-}
 </script>
 </body>
 </html>
