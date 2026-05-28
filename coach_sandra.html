@@ -476,7 +476,13 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
         <option value="feculents">🍞 Féculents</option>
         <option value="condiments">🫒 Condiments</option>
       </select>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-family:'Inter',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Pour 100g</div>
+      <select id="ingr-unit" class="form-input" style="margin-bottom:8px;appearance:none;" onchange="updateUnitLabel()">
+        <option value="100g">⚖️ Pour 100 g (poids)</option>
+        <option value="unite">🥚 Par unité (1 pièce)</option>
+        <option value="cas">🥄 Par cuillère à soupe</option>
+        <option value="cac">🥄 Par cuillère à café</option>
+      </select>
+      <div id="ingr-unit-label" style="font-size:11px;color:var(--muted);margin-bottom:8px;font-family:'Inter',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Pour 100g</div>
       <div class="macros-grid-form">
         <div><div class="macro-field-label" style="color:#e76f51;">🔥 Calories</div><div class="macro-input-wrap"><input type="number" id="ingr-kcal" class="macro-input" placeholder="0"><span class="macro-unit">kcal</span></div></div>
         <div><div class="macro-field-label" style="color:#2d6a4f;">💪 Protéines</div><div class="macro-input-wrap"><input type="number" id="ingr-prot" class="macro-input" placeholder="0"><span class="macro-unit">g</span></div></div>
@@ -883,7 +889,7 @@ function copierPoidsClaudeBtn() {
 // ===== Liste par défaut des 33 ingrédients (valeurs pour 100 g) =====
 const SANDRA_INGREDIENTS_DEFAULT = [
   // Laitiers / œufs
-  {id:1,  nom:"Œuf entier",        cat:"laitiers",   kcal:143, prot:13,   gluc:0.7, lip:9.5,  fibres:0},
+  {id:1,  nom:"Œuf entier",        cat:"laitiers",   unit:"unite", kcal:72,  prot:6.5,  gluc:0.4, lip:4.8,  fibres:0},
   {id:2,  nom:"Saint-Morêt",       cat:"laitiers",   kcal:255, prot:6,    gluc:3,   lip:24,   fibres:0},
   {id:3,  nom:"Fromage frais",     cat:"laitiers",   kcal:98,  prot:8,    gluc:4,   lip:5,    fibres:0},
   // Poissons / produits de la mer
@@ -919,7 +925,7 @@ const SANDRA_INGREDIENTS_DEFAULT = [
   // Condiments / matières grasses
   {id:29, nom:"Moutarde",          cat:"condiments", kcal:66,  prot:4,    gluc:5,   lip:4,    fibres:1},
   {id:30, nom:"Harissa",           cat:"condiments", kcal:90,  prot:3,    gluc:9,   lip:5,    fibres:3},
-  {id:31, nom:"Huile d'olive",     cat:"condiments", kcal:899, prot:0,    gluc:0,   lip:100,  fibres:0},
+  {id:31, nom:"Huile d'olive",     cat:"condiments", unit:"cas",   kcal:90,  prot:0,    gluc:0,   lip:10,   fibres:0},
   {id:32, nom:"Sauce tomate",      cat:"condiments", kcal:35,  prot:1.5,  gluc:6,   lip:0.5,  fibres:1.2},
   {id:33, nom:"Ail",               cat:"condiments", kcal:131, prot:6,    gluc:28,  lip:0.5,  fibres:2.1}
 ];
@@ -1083,7 +1089,8 @@ function updateQty(idx, val) {
   const qty = parseFloat(val);
   if (!qty||qty<=0) return;
   const i = currentSaisieIngrs[idx];
-  const f = qty/100;
+  const unit = i.unit || '100g';
+  const f = (unit==='100g') ? qty/100 : qty;
   i.qty=qty; i.kcal=rnd((i.kcalPer100||0)*f); i.prot=rnd((i.protPer100||0)*f);
   i.gluc=rnd((i.glucPer100||0)*f); i.lip=rnd((i.lipPer100||0)*f); i.fibres=rnd((i.fibresPer100||0)*f);
   updateSaisieTotal();
@@ -1097,8 +1104,8 @@ function renderAddedList() {
     '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--bg);">'+
       '<div style="flex:1;"><div style="font-size:14px;font-weight:600;">'+i.nom+'</div>'+
       '<div style="font-size:11px;color:var(--muted);">'+Math.round(i.kcal)+' kcal · '+rnd(i.prot)+'g prot</div></div>'+
-      '<input type="number" value="'+i.qty+'" min="1" max="2000" onchange="updateQty('+idx+',this.value)" style="width:60px;background:var(--bg);border:1.5px solid var(--accent);border-radius:8px;padding:6px;font-size:14px;font-weight:700;color:var(--accent);text-align:center;outline:none;">'+
-      '<span style="font-size:12px;color:var(--muted);">g</span>'+
+      '<input type="number" value="'+i.qty+'" min="0" step="'+((i.unit&&i.unit!=='100g')?'1':'1')+'" max="2000" onchange="updateQty('+idx+',this.value)" style="width:60px;background:var(--bg);border:1.5px solid var(--accent);border-radius:8px;padding:6px;font-size:14px;font-weight:700;color:var(--accent);text-align:center;outline:none;">'+
+      '<span style="font-size:12px;color:var(--muted);min-width:34px;">'+(UNIT_SHORT[i.unit||'100g']||'g')+'</span>'+
       '<button onclick="removeFromSaisie('+idx+')" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px;">✕</button>'+
     '</div>'
   ).join('');
@@ -1161,10 +1168,13 @@ function cancelIngrSelect() {
 function selectIngrFromLib(id) {
   let ingr = loadIngr().find(i => String(i.id)===String(id));
   if (!ingr) return;
+  const unit = ingr.unit || '100g';
+  const defQty = (unit==='100g') ? 100 : 1;
+  const f0 = (unit==='100g') ? defQty/100 : defQty;
   currentSaisieIngrs.push({
-    nom:ingr.nom, qty:100,
+    nom:ingr.nom, qty:defQty, unit:unit,
     kcalPer100:ingr.kcal, protPer100:ingr.prot, glucPer100:ingr.gluc, lipPer100:ingr.lip, fibresPer100:ingr.fibres||0,
-    kcal:ingr.kcal, prot:ingr.prot, gluc:ingr.gluc, lip:ingr.lip, fibres:ingr.fibres||0
+    kcal:rnd(ingr.kcal*f0), prot:rnd(ingr.prot*f0), gluc:rnd(ingr.gluc*f0), lip:rnd(ingr.lip*f0), fibres:rnd((ingr.fibres||0)*f0)
   });
   const b = document.getElementById('ingr-select-mode-banner');
   if (b) b.style.display = 'none';
@@ -1201,7 +1211,7 @@ function renderIngredients() {
       html += '<div data-ingrid="'+i.id+'" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--surface);border-radius:12px;border:1.5px solid rgba(192,97,106,0.4);margin-bottom:6px;cursor:pointer;">'+
         '<div><div style="font-size:15px;font-weight:600;">'+i.nom+'</div>'+
         '<div style="font-size:11px;color:var(--muted);font-style:italic;">'+catLabels[i.cat]+'</div>'+
-        '<div style="font-size:11px;color:var(--muted);">'+i.kcal+' kcal · '+i.prot+'g prot / 100g</div></div>'+
+        '<div style="font-size:11px;color:var(--muted);">'+i.kcal+' kcal · '+i.prot+'g prot / '+(UNIT_LABELS[i.unit||'100g'])+'</div></div>'+
         '<span style="font-size:26px;color:var(--accent);font-weight:300;line-height:1;">+</span>'+
       '</div>';
     } else {
@@ -1216,7 +1226,7 @@ function renderIngredients() {
             '<span style="background:#fff8e1;color:#d97706;border-radius:6px;padding:2px 7px;font-size:10px;">🥑'+i.lip+'g</span>'+
             '<span style="background:#f1f8e9;color:#52b788;border-radius:6px;padding:2px 7px;font-size:10px;">🌿'+(i.fibres||0)+'g</span>'+
           '</div>'+
-          '<div style="font-size:10px;color:var(--muted);margin-top:2px;">pour 100g</div>'+
+          '<div style="font-size:10px;color:var(--muted);margin-top:2px;">pour '+(UNIT_LABELS[i.unit||'100g'])+'</div>'+
         '</div>'+
         '<button class="btn-del" onclick="event.stopPropagation();deleteIngr('+i.id+')">✕</button>'+
       '</div>';
@@ -1241,6 +1251,8 @@ function toggleFormIngr() {
     // Ouverture via "+ Créer" → on force le mode création (formulaire vierge)
     editingIngrId = null;
     ['ingr-nom','ingr-kcal','ingr-prot','ingr-gluc','ingr-lip','ingr-fibres'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+    const us=document.getElementById('ingr-unit'); if(us) us.value='100g';
+    updateUnitLabel();
     const t=document.querySelector('#form-ingr .card-title'); if(t) t.textContent='➕ Nouvel ingrédient';
     f.style.display='block';
   } else {
@@ -1256,6 +1268,7 @@ function saveIngredient() {
   const vals = {
     nom,
     cat:  document.getElementById('ingr-cat')?.value||'autres',
+    unit: document.getElementById('ingr-unit')?.value||'100g',
     kcal: parseFloat(document.getElementById('ingr-kcal')?.value)||0,
     prot: parseFloat(document.getElementById('ingr-prot')?.value)||0,
     gluc: parseFloat(document.getElementById('ingr-gluc')?.value)||0,
@@ -1281,6 +1294,14 @@ function saveIngredient() {
   renderIngredients(); showToast(msg);
 }
 
+const UNIT_LABELS = {'100g':'100g','unite':'1 unité','cas':'1 c. à soupe','cac':'1 c. à café'};
+const UNIT_SHORT  = {'100g':'g','unite':'u','cas':'c.à.s','cac':'c.à.c'};
+function updateUnitLabel() {
+  const u = document.getElementById('ingr-unit')?.value || '100g';
+  const lbl = document.getElementById('ingr-unit-label');
+  if (lbl) lbl.textContent = 'Pour ' + (UNIT_LABELS[u]||'100g');
+}
+
 function editIngr(id) {
   const ingr = loadIngr().find(i => i.id===id);
   if (!ingr) return;
@@ -1288,6 +1309,8 @@ function editIngr(id) {
   const set=(k,v)=>{const e=document.getElementById(k); if(e) e.value=v;};
   set('ingr-nom', ingr.nom);
   const catSel=document.getElementById('ingr-cat'); if(catSel) catSel.value=ingr.cat||'autres';
+  const unitSel=document.getElementById('ingr-unit'); if(unitSel) unitSel.value=ingr.unit||'100g';
+  updateUnitLabel();
   set('ingr-kcal', ingr.kcal); set('ingr-prot', ingr.prot);
   set('ingr-gluc', ingr.gluc); set('ingr-lip', ingr.lip); set('ingr-fibres', ingr.fibres||0);
   const t=document.querySelector('#form-ingr .card-title'); if(t) t.textContent='✏️ Modifier l\'ingrédient';
