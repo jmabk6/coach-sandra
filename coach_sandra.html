@@ -1364,33 +1364,48 @@ function renderDay(){
   const today=getJourDate();
   const items=loadJournal().filter(d=>d.date===today);
   if(!items.length){ el.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">Rien aujourd\u2019hui.<br>Ajoute une recette ou un ingrédient via les boutons ci-dessus.</div></div>'; return; }
-  el.innerHTML=items.map(d=>{
-    const t=recTotals(d.ings);
-    if(d.type==='ingredient'){
-      // ligne simple (carte légère)
-      const g=d.ings[0]||{};
-      return `<div class="day-card" style="padding:10px 14px;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;min-width:62px;">${d.moment}</div>
-          <span style="flex:1;font-weight:600;font-size:14px;">🥗 ${d.nom}</span>
-          <input type="number" value="${g.qty}" min="0" onchange="setDayQty(${d.id},0,this.value)" style="width:54px;background:var(--bg);border:1.5px solid var(--accent);border-radius:8px;padding:5px;font-size:13px;font-weight:700;color:var(--accent);text-align:center;outline:none;">
-          <span style="font-size:11px;color:var(--muted);min-width:28px;">${UNIT_SHORT[g.unit]||'g'}</span>
-          <span style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--accent);min-width:54px;text-align:right;">${t.kcal}</span>
-          <button class="btn-del" onclick="delDayItem(${d.id})">✕</button>
-        </div></div>`;
-    }
-    const rows = (d.ings&&d.ings.length) ? d.ings.map((g,gi)=>`<div class="day-row"><span class="dname">${g.nom}</span>
-      <input type="number" value="${g.qty}" min="0" onchange="setDayQty(${d.id},${gi},this.value)">
-      <span class="dunit">${UNIT_SHORT[g.unit]||'g'}</span></div>`).join('')
-      : '<div style="font-size:12px;color:var(--muted);padding:6px 0;">Recette sans ingrédients (à compléter).</div>';
-    return `<div class="day-card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
-        <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;">${d.moment}</div>
-        <div style="font-weight:700;font-size:15px;">${d.nom}</div></div>
-        <div style="text-align:right;"><div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:18px;color:var(--accent);">${t.kcal} kcal</div>
-        <button class="btn-del" onclick="delDayItem(${d.id})">✕ retirer</button></div></div>
-      ${rows}</div>`;
-  }).join('');
+
+  // Ordre logique des moments
+  const ordre=['🌅 Petit-déj','☀️ Déjeuner','🍎 Collation','🌙 Dîner'];
+  const moments = ordre.filter(m=>items.some(d=>d.moment===m));
+  // Ajoute d'éventuels moments non listés (sécurité)
+  items.forEach(d=>{ if(!moments.includes(d.moment)) moments.push(d.moment); });
+
+  let html='';
+  moments.forEach(moment=>{
+    const its=items.filter(d=>d.moment===moment);
+    const mKcal=its.reduce((s,d)=>s+recTotals(d.ings).kcal,0);
+    html += `<div style="display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 8px;">
+      <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:20px;color:var(--accent);">${moment}</div>
+      <div style="font-size:12px;color:var(--muted);font-weight:600;">${Math.round(mKcal)} kcal</div></div>`;
+    html += its.map(d=>renderDayItem(d)).join('');
+  });
+  el.innerHTML=html;
+}
+
+function renderDayItem(d){
+  const t=recTotals(d.ings);
+  if(d.type==='ingredient'){
+    const g=d.ings[0]||{};
+    return `<div class="day-card" style="padding:10px 14px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="flex:1;font-weight:600;font-size:14px;">🥗 ${d.nom}</span>
+        <input type="number" value="${g.qty}" min="0" onchange="setDayQty(${d.id},0,this.value)" style="width:54px;background:var(--bg);border:1.5px solid var(--accent);border-radius:8px;padding:5px;font-size:13px;font-weight:700;color:var(--accent);text-align:center;outline:none;">
+        <span style="font-size:11px;color:var(--muted);min-width:28px;">${UNIT_SHORT[g.unit]||'g'}</span>
+        <span style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--accent);min-width:46px;text-align:right;">${t.kcal}</span>
+        <button class="btn-del" onclick="delDayItem(${d.id})">✕</button>
+      </div></div>`;
+  }
+  const rows = (d.ings&&d.ings.length) ? d.ings.map((g,gi)=>`<div class="day-row"><span class="dname">${g.nom}</span>
+    <input type="number" value="${g.qty}" min="0" onchange="setDayQty(${d.id},${gi},this.value)">
+    <span class="dunit">${UNIT_SHORT[g.unit]||'g'}</span></div>`).join('')
+    : '<div style="font-size:12px;color:var(--muted);padding:6px 0;">Recette sans ingrédients (à compléter).</div>';
+  return `<div class="day-card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+      <div style="font-weight:700;font-size:15px;">${d.nom}</div>
+      <div style="text-align:right;"><div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:18px;color:var(--accent);">${t.kcal} kcal</div>
+      <button class="btn-del" onclick="delDayItem(${d.id})">✕ retirer</button></div></div>
+    ${rows}</div>`;
 }
 function setDayQty(itemId,gi,v){
   const j=loadJournal();
