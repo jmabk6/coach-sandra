@@ -432,7 +432,17 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
         <div id="form-recette-title" style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--accent);margin-bottom:12px;">➕ Nouvelle recette</div>
         <label class="flabel">Nom de la recette</label>
         <input class="finput" id="rf-nom" placeholder="ex. Quiche au saumon">
-        <label class="flabel">Catégorie(s) — une ou plusieurs</label>
+        <label class="flabel">Photo (optionnel)</label>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+          <div id="rf-photo-preview" style="width:64px;height:64px;border-radius:12px;background:var(--bg);border:1.5px solid var(--border);background-size:cover;background-position:center;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--muted);">🍽️</div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+            <label class="filter-pill" style="text-align:center;padding:9px;cursor:pointer;margin:0;">📷 Choisir une photo
+              <input type="file" accept="image/*" style="display:none;" onchange="rfPhotoSelected(this)">
+            </label>
+            <button type="button" id="rf-photo-del" style="display:none;background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;text-decoration:underline;" onclick="rfPhotoRemove()">Retirer la photo</button>
+          </div>
+        </div>
+        <label class="flabel">Catégorie</label>
         <div id="rf-cats" style="margin-bottom:14px;"></div>
         <label class="flabel">Ingrédients</label>
         <div id="rf-ings"></div>
@@ -1030,10 +1040,14 @@ function renderRecetteList(){
       : `<button class="btn-del" onclick="event.stopPropagation();delRecette(${r.id})">✕</button>`;
     const click = recSelectMode ? `pickRecette(${r.id})` : `openRecetteForm(${r.id})`;
     const nbi = r.ings? r.ings.length : 0;
+    const avatar = r.photo
+      ? `<div style="width:46px;height:46px;border-radius:50%;background-image:url('${r.photo}');background-size:cover;background-position:center;flex-shrink:0;margin-right:12px;border:1.5px solid var(--border);"></div>`
+      : '';
     return `<div class="rec-card" onclick="${click}">
+      ${avatar}
       <div style="flex:1;"><div class="rnom">${r.nom}</div>
       <div class="rchips">${chips}</div>
-      <div class="rmeta">${nbi} ingrédient${nbi>1?'s':''}${(r.cats&&r.cats.length>1)?' · '+r.cats.length+' catégories':''}</div></div>${right}</div>`;
+      <div class="rmeta">${nbi} ingrédient${nbi>1?'s':''}</div></div>${right}</div>`;
   }).join('');
 }
 
@@ -1045,13 +1059,16 @@ function openRecetteForm(id){
   document.getElementById('rf-nom').value = r ? r.nom : '';
   const sel = r ? [...(r.cats||[])] : (recCurrentCat?[recCurrentCat]:[]);
   document.getElementById('rf-cats').innerHTML = loadCats().map(c=>
-    `<span class="catcheck ${sel.includes(c.key)?'on':''}" data-k="${c.key}" onclick="this.classList.toggle('on')">${c.emoji} ${c.name}</span>`).join('');
+    `<span class="catcheck ${sel.includes(c.key)?'on':''}" data-k="${c.key}" onclick="rfPickCat(this)">${c.emoji} ${c.name}</span>`).join('');
   rfIngs = r ? JSON.parse(JSON.stringify(r.ings||[])) : [];
+  rfPhoto = r && r.photo ? r.photo : null;
+  rfSetPhotoPreview(rfPhoto);
   renderRfIngs();
   const f=document.getElementById('form-recette'); if(f){ f.style.display='block'; f.scrollIntoView({behavior:'smooth',block:'start'}); }
 }
 function closeRecetteForm(){
-  editingRecetteId=null; rfIngs=[];
+  editingRecetteId=null; rfIngs=[]; rfPhoto=null;
+  rfSetPhotoPreview(null);
   const f=document.getElementById('form-recette'); if(f) f.style.display='none';
 }
 function renderRfIngs(){
@@ -1073,19 +1090,62 @@ function rfAddIng(){
   renderIngredients();
   const top=document.getElementById('rtab-ingr'); if(top) top.scrollIntoView({behavior:'smooth',block:'start'});
 }
+function rfPickCat(el){
+  // sélection exclusive : une seule catégorie active
+  document.querySelectorAll('#rf-cats .catcheck').forEach(e=>e.classList.remove('on'));
+  el.classList.add('on');
+}
+
+let rfPhoto = null; // dataURL de la photo en cours (compressée)
+function rfSetPhotoPreview(dataUrl){
+  const p=document.getElementById('rf-photo-preview');
+  const del=document.getElementById('rf-photo-del');
+  if(dataUrl){
+    p.style.backgroundImage='url('+dataUrl+')'; p.textContent='';
+    if(del) del.style.display='block';
+  } else {
+    p.style.backgroundImage=''; p.textContent='🍽️';
+    if(del) del.style.display='none';
+  }
+}
+function rfPhotoRemove(){ rfPhoto=null; rfSetPhotoPreview(null); }
+function rfPhotoSelected(input){
+  const file = input.files && input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      // compression : redimensionne à max 400px, qualité jpeg 0.7
+      const MAX=400;
+      let w=img.width, h=img.height;
+      if(w>h){ if(w>MAX){ h=Math.round(h*MAX/w); w=MAX; } }
+      else   { if(h>MAX){ w=Math.round(w*MAX/h); h=MAX; } }
+      const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      rfPhoto = cv.toDataURL('image/jpeg', 0.7);
+      rfSetPhotoPreview(rfPhoto);
+      showToast('📷 Photo ajoutée');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  input.value=''; // permet de re-choisir le même fichier
+}
 function saveRecette(){
   const nom=document.getElementById('rf-nom').value.trim();
   if(!nom){ showToast('⚠️ Saisis un nom'); return; }
-  const cats=[...document.querySelectorAll('#rf-cats .catcheck.on')].map(e=>e.dataset.k);
-  if(!cats.length){ showToast('⚠️ Choisis une catégorie'); return; }
+  const sel=document.querySelector('#rf-cats .catcheck.on');
+  if(!sel){ showToast('⚠️ Choisis une catégorie'); return; }
+  const cats=[sel.dataset.k];
   const t=recTotals(rfIngs);
   let data=loadRecettes();
   if(editingRecetteId){
-    data = data.map(r=> r.id===editingRecetteId ? {...r, nom, cats, ings:JSON.parse(JSON.stringify(rfIngs)), kcal:t.kcal,prot:t.prot,gluc:t.gluc,lip:t.lip,fib:t.fib} : r);
+    data = data.map(r=> r.id===editingRecetteId ? {...r, nom, cats, photo:rfPhoto||null, ings:JSON.parse(JSON.stringify(rfIngs)), kcal:t.kcal,prot:t.prot,gluc:t.gluc,lip:t.lip,fib:t.fib} : r);
     showToast('✅ Recette modifiée');
   } else {
     const id=Math.max(0,...data.map(r=>r.id||0))+1;
-    data.push({id, nom, cats, ings:JSON.parse(JSON.stringify(rfIngs)), kcal:t.kcal,prot:t.prot,gluc:t.gluc,lip:t.lip,fib:t.fib});
+    data.push({id, nom, cats, photo:rfPhoto||null, ings:JSON.parse(JSON.stringify(rfIngs)), kcal:t.kcal,prot:t.prot,gluc:t.gluc,lip:t.lip,fib:t.fib});
     showToast('✅ Recette créée');
   }
   saveRecettes(data);
