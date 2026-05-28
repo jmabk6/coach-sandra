@@ -418,6 +418,21 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
         <button onclick="openRecetteForm()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:8px 14px;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap;">+ Créer</button>
       </div>
       <div class="search-bar" style="margin-bottom:10px;"><span style="color:var(--muted);">🔍</span><input type="text" id="rec-search" placeholder="Rechercher une recette…" oninput="renderRecetteList()"></div>
+      <!-- formulaire recette in-page (création/édition) -->
+      <div id="form-recette" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px;">
+        <div id="form-recette-title" style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--accent);margin-bottom:12px;">➕ Nouvelle recette</div>
+        <label class="flabel">Nom de la recette</label>
+        <input class="finput" id="rf-nom" placeholder="ex. Quiche au saumon">
+        <label class="flabel">Catégorie(s) — une ou plusieurs</label>
+        <div id="rf-cats" style="margin-bottom:14px;"></div>
+        <label class="flabel">Ingrédients</label>
+        <div id="rf-ings"></div>
+        <button class="filter-pill" style="width:100%;margin-top:4px;padding:10px;" onclick="rfAddIng()">+ Ajouter un ingrédient</button>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="filter-pill" style="flex:1;padding:11px;" onclick="closeRecetteForm()">Annuler</button>
+          <button class="filter-pill" style="flex:1;padding:11px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="saveRecette()">💾 Enregistrer</button>
+        </div>
+      </div>
       <div id="rec-list"></div>
     </div>
   </div>
@@ -953,7 +968,8 @@ let recSelectMode = false;
 let recSelectMoment = null;
 let recCurrentCat = null;
 let editingRecetteId = null;
-let rfIngs = []; // ingrédients en cours dans le modal recette
+let rfIngs = []; // ingrédients en cours dans le formulaire recette
+let rfFromForm = false; // true quand on choisit un ingrédient depuis le formulaire recette
 
 function recCountInCat(key){ return loadRecettes().filter(r=>(r.cats||[]).includes(key)).length; }
 function recCatName(key){ const c=loadCats().find(c=>c.key===key); return c?c.emoji+' '+c.name:key; }
@@ -1016,14 +1032,18 @@ function renderRecetteList(){
 function openRecetteForm(id){
   editingRecetteId = (typeof id==='number') ? id : null;
   const r = editingRecetteId ? loadRecettes().find(x=>x.id===editingRecetteId) : null;
-  document.getElementById('modal-recette-title').textContent = r ? '✏️ Modifier la recette' : 'Nouvelle recette';
+  const t=document.getElementById('form-recette-title'); if(t) t.textContent = r ? '✏️ Modifier la recette' : '➕ Nouvelle recette';
   document.getElementById('rf-nom').value = r ? r.nom : '';
   const sel = r ? [...(r.cats||[])] : (recCurrentCat?[recCurrentCat]:[]);
   document.getElementById('rf-cats').innerHTML = loadCats().map(c=>
     `<span class="catcheck ${sel.includes(c.key)?'on':''}" data-k="${c.key}" onclick="this.classList.toggle('on')">${c.emoji} ${c.name}</span>`).join('');
   rfIngs = r ? JSON.parse(JSON.stringify(r.ings||[])) : [];
   renderRfIngs();
-  openModal('modal-recette');
+  const f=document.getElementById('form-recette'); if(f){ f.style.display='block'; f.scrollIntoView({behavior:'smooth',block:'start'}); }
+}
+function closeRecetteForm(){
+  editingRecetteId=null; rfIngs=[];
+  const f=document.getElementById('form-recette'); if(f) f.style.display='none';
 }
 function renderRfIngs(){
   const el=document.getElementById('rf-ings');
@@ -1035,16 +1055,14 @@ function renderRfIngs(){
 }
 function rfSetQty(i,v){ rfIngs[i].qty=parseFloat(v)||0; }
 function rfAddIng(){
-  const lib=loadIngr();
-  if(!lib.length){ showToast('⚠️ Aucun ingrédient en bibliothèque'); return; }
-  const choix = lib.map((x,i)=>`${i+1}. ${x.nom}`).join('\n');
-  const n = prompt('Ajouter quel ingrédient ?\n'+choix+'\n\nNuméro :');
-  const idx = parseInt(n)-1;
-  if(isNaN(idx)||!lib[idx]) return;
-  const s=lib[idx]; const unit=s.unit||'100g';
-  rfIngs.push({nom:s.nom, unit, qty:(unit==='100g'?100:1),
-    kcalU:s.kcal, protU:s.prot, glucU:s.gluc, lipU:s.lip, fibU:s.fibres||0});
-  renderRfIngs();
+  // On garde le formulaire recette ouvert en arrière-plan et on va choisir un ingrédient
+  rfFromForm = true;
+  ingrSelectMode = true;
+  showRepasTab('ingr');
+  const b=document.getElementById('ingr-select-mode-banner');
+  if(b){ b.style.display='flex'; }
+  renderIngredients();
+  const top=document.getElementById('rtab-ingr'); if(top) top.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function saveRecette(){
   const nom=document.getElementById('rf-nom').value.trim();
@@ -1062,7 +1080,7 @@ function saveRecette(){
     showToast('✅ Recette créée');
   }
   saveRecettes(data);
-  closeModal('modal-recette');
+  closeRecetteForm();
   if(recCurrentCat && !cats.includes(recCurrentCat)) recGoEtage1(); else renderRecetteList();
 }
 function delRecette(id){
@@ -1144,8 +1162,45 @@ function openModal(id){ const m=document.getElementById(id); if(m) m.classList.a
 function closeModal(id){ const m=document.getElementById(id); if(m) m.classList.remove('open'); }
 
 /* compat : ancien mode sélection d'ingrédient (désormais inutilisé) */
-function selectIngrFromLib(id){ /* no-op : on ajoute les ingrédients via le modal recette */ }
-function cancelIngrSelect(){ ingrSelectMode=false; const b=document.getElementById('ingr-select-mode-banner'); if(b) b.style.display='none'; renderIngredients(); }
+function selectIngrFromLib(id){
+  // Retour depuis la page Ingrédients vers le formulaire recette
+  if(!rfFromForm) return;
+  const s = loadIngr().find(i=>String(i.id)===String(id));
+  if(s){
+    const unit=s.unit||'100g';
+    rfIngs.push({nom:s.nom, unit, qty:(unit==='100g'?100:1),
+      kcalU:s.kcal, protU:s.prot, glucU:s.gluc, lipU:s.lip, fibU:s.fibres||0});
+  }
+  rfFromForm=false; ingrSelectMode=false;
+  const b=document.getElementById('ingr-select-mode-banner'); if(b) b.style.display='none';
+  // revenir à l'onglet recettes SANS réinitialiser l'étage 2 ni le formulaire
+  ['journee','recettes','ingr'].forEach(t=>{
+    const el=document.getElementById('rtab-'+t); if(el) el.style.display=(t==='recettes')?'block':'none';
+    const btn=document.getElementById('rnav-'+t+'-btn'); if(btn) btn.classList.toggle('active', t==='recettes');
+  });
+  document.getElementById('rec-etage1').style.display='none';
+  document.getElementById('rec-etage2').style.display='block';
+  renderRfIngs();
+  const f=document.getElementById('form-recette'); if(f){ f.style.display='block'; f.scrollIntoView({behavior:'smooth',block:'start'}); }
+  if(s) showToast('✅ '+s.nom+' ajouté');
+}
+function cancelIngrSelect(){
+  ingrSelectMode=false;
+  const b=document.getElementById('ingr-select-mode-banner'); if(b) b.style.display='none';
+  if(rfFromForm){
+    // on annule le choix et on revient au formulaire recette tel quel
+    rfFromForm=false;
+    ['journee','recettes','ingr'].forEach(t=>{
+      const el=document.getElementById('rtab-'+t); if(el) el.style.display=(t==='recettes')?'block':'none';
+      const btn=document.getElementById('rnav-'+t+'-btn'); if(btn) btn.classList.toggle('active', t==='recettes');
+    });
+    document.getElementById('rec-etage1').style.display='none';
+    document.getElementById('rec-etage2').style.display='block';
+    const f=document.getElementById('form-recette'); if(f){ f.style.display='block'; f.scrollIntoView({behavior:'smooth',block:'start'}); }
+    return;
+  }
+  renderIngredients();
+}
 
 function filterIngr(btn) {
   document.querySelectorAll('[data-icat]').forEach(b=>b.classList.remove('active'));
@@ -1292,21 +1347,6 @@ function renderRepasAll() { renderDay(); }
 </script>
 
 <!-- MODAL recette -->
-<div class="modal-bg" id="modal-recette">
-  <div class="modal-box">
-    <h3 id="modal-recette-title">Nouvelle recette</h3>
-    <label class="flabel">Nom de la recette</label>
-    <input class="finput" id="rf-nom" placeholder="ex. Quiche au saumon">
-    <label class="flabel">Catégorie(s) — une ou plusieurs</label>
-    <div id="rf-cats" style="margin-bottom:14px;"></div>
-    <label class="flabel">Ingrédients (optionnel)</label>
-    <div id="rf-ings"></div>
-    <button class="filter-pill" style="width:100%;margin-top:4px;padding:10px;" onclick="rfAddIng()">+ Ajouter un ingrédient</button>
-    <div style="display:flex;gap:8px;margin-top:12px;">
-      <button class="filter-pill" style="flex:1;padding:11px;" onclick="closeModal('modal-recette')">Annuler</button>
-      <button class="filter-pill" style="flex:1;padding:11px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="saveRecette()">💾 Enregistrer</button>
-    </div>
-  </div>
 </div>
 
 <!-- MODAL catégorie -->
