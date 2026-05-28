@@ -217,6 +217,11 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 .day-row .dname{flex:1;font-size:13px;}
 .day-row input{width:54px;background:var(--bg);border:1.5px solid var(--accent);border-radius:8px;padding:5px;font-size:13px;font-weight:700;color:var(--accent);text-align:center;outline:none;}
 .day-row .dunit{font-size:11px;color:var(--muted);min-width:30px;}
+
+/* jour passé en lecture seule */
+.day-readonly input{ pointer-events:none; opacity:.7; border-color:var(--border)!important; }
+.day-readonly .btn-del{ display:none!important; }
+.day-readonly button{ pointer-events:none; opacity:.5; }
 </style>
 </head>
 <body>
@@ -393,7 +398,15 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
   <!-- ===== SOUS-ONGLET JOURNÉE ===== -->
   <div id="rtab-journee">
+    <div id="day-main">
     <div style="height:16px;"></div>
+
+    <!-- BARRE DE DATE -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;">
+      <button onclick="dayShiftDate(-1)" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;width:40px;height:40px;font-size:18px;cursor:pointer;color:var(--accent);">‹</button>
+      <button id="day-date-label" onclick="openCalendar()" style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:16px;color:var(--accent);cursor:pointer;">Aujourd'hui</button>
+      <button onclick="dayShiftDate(1)" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;width:40px;height:40px;font-size:18px;cursor:pointer;color:var(--accent);">›</button>
+    </div>
 
     <!-- RÉCAP NUTRITIONNEL DU JOUR -->
     <div id="day-recap" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;">
@@ -426,7 +439,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
       <div id="recap-macros"></div>
     </div>
 
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:14px;">
+    <div id="day-add-block" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:14px;">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px;">1. Choisis le moment</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
         <button class="day-moment-btn filter-pill" style="flex:1;padding:9px 4px;" data-moment="🌅 Petit-déj" onclick="pickMoment(this)">🌅 Pdj</button>
@@ -443,9 +456,20 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
       </div>
     </div>
     <div id="day-list"></div>
-  </div>
+    </div><!-- /day-main -->
 
-  <!-- ===== SOUS-ONGLET RECETTES ===== -->
+    <!-- ÉCRAN CALENDRIER -->
+    <div id="day-calendar" style="display:none;">
+      <div style="height:16px;"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;">
+        <button onclick="calShiftMonth(-1)" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;width:40px;height:40px;font-size:18px;cursor:pointer;color:var(--accent);">‹</button>
+        <div id="cal-month-label" style="flex:1;text-align:center;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:20px;color:var(--accent);">Mois</div>
+        <button onclick="calShiftMonth(1)" style="background:var(--surface);border:1px solid var(--border);border-radius:10px;width:40px;height:40px;font-size:18px;cursor:pointer;color:var(--accent);">›</button>
+      </div>
+      <div id="cal-grid"></div>
+      <button class="filter-pill" style="width:100%;margin-top:14px;padding:11px;" onclick="closeCalendar()">‹ Retour à la journée</button>
+    </div>
+  </div>
   <div id="rtab-recettes" style="display:none;">
     <div style="height:16px;"></div>
     <div id="rec-banner" style="display:none;background:rgba(192,97,106,0.08);border:1px solid rgba(192,97,106,0.3);border-radius:12px;padding:10px 14px;margin-bottom:12px;align-items:center;gap:10px;">
@@ -1036,7 +1060,11 @@ function showRepasTab(tab) {
     const btn = document.getElementById('rnav-'+t+'-btn');
     if (btn) btn.classList.toggle('active', t===tab);
   });
-  if (tab==='journee')  renderDay();
+  if (tab==='journee')  {
+    const cal=document.getElementById('day-calendar'); if(cal) cal.style.display='none';
+    const main=document.getElementById('day-main'); if(main) main.style.display='block';
+    renderDay();
+  }
   if (tab==='recettes') { if(!recSelectMode) recGoEtage1(); }
   if (tab==='ingr')     renderIngredients();
 }
@@ -1316,11 +1344,75 @@ function recCancelSelect(){
   showRepasTab('journee');
 }
 function getJourDate(){ return new Date().toISOString().split('T')[0]; }
+let selectedDate = getJourDate();
+let calMonth = new Date();
+function dayIsPast(){ return selectedDate < getJourDate(); }
+function fmtDateLabel(iso){
+  const today=getJourDate();
+  const d=new Date(iso+'T12:00:00');
+  if(iso===today) return "Aujourd'hui";
+  const y=new Date(); y.setDate(y.getDate()-1);
+  if(iso===y.toISOString().split('T')[0]) return "Hier";
+  const t=new Date(); t.setDate(t.getDate()+1);
+  if(iso===t.toISOString().split('T')[0]) return "Demain";
+  return d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+}
+function updateDateLabel(){
+  const el=document.getElementById('day-date-label');
+  if(el) el.textContent = fmtDateLabel(selectedDate) + ' ▾';
+}
+function dayShiftDate(delta){
+  const d=new Date(selectedDate+'T12:00:00');
+  d.setDate(d.getDate()+delta);
+  selectedDate=d.toISOString().split('T')[0];
+  renderDay();
+}
+function openCalendar(){
+  calMonth=new Date(selectedDate+'T12:00:00');
+  document.getElementById('day-main').style.display='none';
+  document.getElementById('day-calendar').style.display='block';
+  renderCalendar();
+}
+function closeCalendar(){
+  document.getElementById('day-calendar').style.display='none';
+  document.getElementById('day-main').style.display='block';
+  renderDay();
+}
+function calShiftMonth(delta){ calMonth.setMonth(calMonth.getMonth()+delta); renderCalendar(); }
+function renderCalendar(){
+  const lbl=document.getElementById('cal-month-label');
+  if(lbl) lbl.textContent=calMonth.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+  const year=calMonth.getFullYear(), month=calMonth.getMonth();
+  const startDow=(new Date(year,month,1).getDay()+6)%7;
+  const nbDays=new Date(year,month+1,0).getDate();
+  const today=getJourDate();
+  const kcalByDate={};
+  loadJournal().forEach(d=>{ if(!d.date)return; kcalByDate[d.date]=(kcalByDate[d.date]||0)+recTotals(d.ings).kcal; });
+  const jours=['L','M','M','J','V','S','D'];
+  let html='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;">';
+  html+=jours.map(j=>`<div style="text-align:center;font-size:11px;color:var(--muted);font-weight:600;">${j}</div>`).join('');
+  html+='</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;">';
+  for(let i=0;i<startDow;i++) html+='<div></div>';
+  for(let day=1;day<=nbDays;day++){
+    const iso=`${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const kc=Math.round(kcalByDate[iso]||0);
+    const isToday=(iso===today), isSel=(iso===selectedDate);
+    const border=isSel?'2px solid var(--accent)':(isToday?'1.5px dashed var(--accent)':'1px solid var(--border)');
+    html+=`<div onclick="calPickDate('${iso}')" style="cursor:pointer;border:${border};border-radius:10px;padding:6px 2px;text-align:center;background:var(--surface);min-height:48px;">
+      <div style="font-size:13px;font-weight:600;">${day}</div>
+      ${kc>0?`<div style="width:5px;height:5px;border-radius:50%;background:var(--accent);margin:2px auto 1px;"></div><div style="font-size:9px;color:var(--muted);">${kc}</div>`:''}
+    </div>`;
+  }
+  html+='</div>';
+  const g=document.getElementById('cal-grid'); if(g) g.innerHTML=html;
+}
+function calPickDate(iso){ selectedDate=iso; closeCalendar(); }
+
 function pickRecette(id){
   const r=loadRecettes().find(x=>x.id===id); if(!r) return;
   const ings=JSON.parse(JSON.stringify(r.ings||[]));
   const j=loadJournal();
-  j.push({id:Date.now(), date:getJourDate(), moment:recSelectMoment||'☀️ Déjeuner', nom:r.nom, ings, collapsed:false});
+  j.push({id:Date.now(), date:selectedDate, moment:recSelectMoment||'☀️ Déjeuner', nom:r.nom, ings, collapsed:false});
   saveJournal(j);
   recSelectMode=false; recSelectMoment=null;
   const b=document.getElementById('rec-banner'); if(b) b.style.display='none';
@@ -1330,8 +1422,7 @@ function pickRecette(id){
 
 /* ============ JOURNÉE ============ */
 function renderDayRecap(){
-  const today=getJourDate();
-  const items=loadJournal().filter(d=>d.date===today);
+  const items=loadJournal().filter(d=>d.date===selectedDate);
   let tot={kcal:0,prot:0,gluc:0,lip:0,fib:0};
   items.forEach(d=>{ const t=recTotals(d.ings); tot.kcal+=t.kcal; tot.prot+=t.prot; tot.gluc+=t.gluc; tot.lip+=t.lip; tot.fib+=t.fib; });
   const kcal=Math.round(tot.kcal);
@@ -1362,10 +1453,15 @@ function renderDayRecap(){
 }
 function renderDay(){
   renderDayRecap();
+  updateDateLabel();
   const el=document.getElementById('day-list'); if(!el) return;
-  const today=getJourDate();
-  const items=loadJournal().filter(d=>d.date===today);
-  if(!items.length){ el.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">Rien aujourd\u2019hui.<br>Ajoute une recette ou un ingrédient via les boutons ci-dessus.</div></div>'; return; }
+  const items=loadJournal().filter(d=>d.date===selectedDate);
+  // gestion lecture seule (jours passés) : masquer le bloc d'ajout
+  const past=dayIsPast();
+  const addBlock=document.getElementById('day-add-block');
+  if(addBlock) addBlock.style.display = past ? 'none' : 'block';
+  el.classList.toggle('day-readonly', past);
+  if(!items.length){ el.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">'+(past?'Aucun repas ce jour-là.':'Rien pour ce jour.<br>Ajoute une recette ou un ingrédient ci-dessus.')+'</div></div>'; return; }
 
   // Ordre logique des moments
   const ordre=['🌅 Petit-déj','☀️ Déjeuner','🍎 Collation','🌙 Dîner'];
@@ -1468,7 +1564,7 @@ function selectIngrFromLib(id){
       const qty=(unit==='100g'?100:1);
       const ing={nom:s.nom, unit, qty, kcalU:s.kcal, protU:s.prot, glucU:s.gluc, lipU:s.lip, fibU:s.fibres||0};
       const j=loadJournal();
-      j.push({id:Date.now(), date:getJourDate(), moment:recSelectMoment||'☀️ Déjeuner', nom:s.nom, type:'ingredient', ings:[ing], collapsed:false});
+      j.push({id:Date.now(), date:selectedDate, moment:recSelectMoment||'☀️ Déjeuner', nom:s.nom, type:'ingredient', ings:[ing], collapsed:false});
       saveJournal(j);
     }
     ingrToDayMode=false; ingrSelectMode=false;
