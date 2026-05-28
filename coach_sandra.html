@@ -411,7 +411,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
       <button onclick="recCancelSelect()" style="background:none;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;white-space:nowrap;">← Retour</button>
     </div>
 
-    <!-- étage 1 -->
+    <!-- ÉCRAN 1 : vignettes -->
     <div id="rec-etage1">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
         <div style="font-family:Cormorant Garamond,serif;font-weight:700;font-size:28px;">🍽️ Mes Recettes</div>
@@ -419,7 +419,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
       <div class="cat-grid" id="rec-cat-grid"></div>
     </div>
 
-    <!-- étage 2 -->
+    <!-- ÉCRAN 2 : liste des recettes -->
     <div id="rec-etage2" style="display:none;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;">
         <button onclick="recGoEtage1()" style="background:none;border:1px solid var(--border);border-radius:10px;padding:7px 12px;font-size:14px;cursor:pointer;color:var(--muted);white-space:nowrap;">‹ Retour</button>
@@ -427,40 +427,45 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
         <button onclick="openRecetteForm()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:8px 14px;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap;">+ Créer</button>
       </div>
       <div class="search-bar" style="margin-bottom:10px;"><span style="color:var(--muted);">🔍</span><input type="text" id="rec-search" placeholder="Rechercher une recette…" oninput="renderRecetteList()"></div>
-      <!-- formulaire recette in-page (création/édition) -->
-      <div id="form-recette" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px;">
-        <div id="form-recette-title" style="font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--accent);margin-bottom:12px;">➕ Nouvelle recette</div>
-        <label class="flabel">Nom de la recette</label>
-        <input class="finput" id="rf-nom" placeholder="ex. Quiche au saumon">
+      <div id="rec-list"></div>
+    </div>
 
-        <div style="display:flex;gap:14px;margin-bottom:14px;align-items:stretch;">
-          <!-- Photo grande à gauche -->
-          <div style="display:flex;flex-direction:column;gap:6px;width:130px;flex-shrink:0;">
-            <div id="rf-photo-preview" style="width:130px;height:130px;border-radius:14px;background:var(--bg);border:1.5px solid var(--border);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:44px;color:var(--muted);">🍽️</div>
-            <label class="filter-pill" style="text-align:center;padding:7px;cursor:pointer;margin:0;font-size:12px;">📷 Photo
-              <input type="file" accept="image/*" style="display:none;" onchange="rfPhotoSelected(this)">
-            </label>
-            <button type="button" id="rf-photo-del" style="display:none;background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;text-decoration:underline;" onclick="rfPhotoRemove()">Retirer</button>
-          </div>
-          <!-- Catégorie en combobox à droite -->
-          <div style="flex:1;display:flex;flex-direction:column;">
-            <label class="flabel">Catégorie</label>
-            <select id="rf-cat-select" class="finput" style="appearance:none;margin-bottom:0;"></select>
-          </div>
+    <!-- ÉCRAN 3 : création / modification -->
+    <div id="rec-etage3" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:8px;">
+        <button onclick="closeRecetteForm()" style="background:none;border:1px solid var(--border);border-radius:10px;padding:7px 12px;font-size:14px;cursor:pointer;color:var(--muted);white-space:nowrap;">‹ Retour</button>
+        <div id="form-recette-title" style="font-family:Cormorant Garamond,serif;font-weight:700;font-size:20px;text-align:center;flex:1;">Nouvelle recette</div>
+        <div style="width:64px;"></div>
+      </div>
+
+      <label class="flabel">Nom de la recette</label>
+      <input class="finput" id="rf-nom" placeholder="ex. Quiche au saumon">
+
+      <div style="display:flex;gap:14px;margin-bottom:14px;align-items:stretch;">
+        <div style="display:flex;flex-direction:column;gap:6px;width:130px;flex-shrink:0;">
+          <div id="rf-photo-preview" style="width:130px;height:130px;border-radius:14px;background:var(--bg);border:1.5px solid var(--border);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:44px;color:var(--muted);">🍽️</div>
+          <label class="filter-pill" style="text-align:center;padding:7px;cursor:pointer;margin:0;font-size:12px;">📷 Photo
+            <input type="file" accept="image/*" style="display:none;" onchange="rfPhotoSelected(this)">
+          </label>
+          <button type="button" id="rf-photo-del" style="display:none;background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;text-decoration:underline;" onclick="rfPhotoRemove()">Retirer</button>
         </div>
-
-        <label class="flabel">Ingrédients</label>
-        <div id="rf-ings"></div>
-        <button class="filter-pill" style="width:100%;margin-top:4px;padding:10px;" onclick="rfAddIng()">+ Ajouter un ingrédient</button>
-
-        <label class="flabel" style="margin-top:14px;">Recette (préparation, notes…)</label>
-        <textarea id="rf-texte" class="finput" rows="5" placeholder="Étapes de préparation, astuces, remarques…" style="resize:vertical;font-family:'Inter',sans-serif;"></textarea>
-        <div style="display:flex;gap:8px;margin-top:12px;">
-          <button class="filter-pill" style="flex:1;padding:11px;" onclick="closeRecetteForm()">Annuler</button>
-          <button class="filter-pill" style="flex:1;padding:11px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="saveRecette()">💾 Enregistrer</button>
+        <div style="flex:1;display:flex;flex-direction:column;">
+          <label class="flabel">Catégorie</label>
+          <select id="rf-cat-select" class="finput" style="appearance:none;margin-bottom:0;"></select>
         </div>
       </div>
-      <div id="rec-list"></div>
+
+      <label class="flabel">Ingrédients</label>
+      <div id="rf-ings"></div>
+      <button class="filter-pill" style="width:100%;margin-top:4px;padding:10px;" onclick="rfAddIng()">+ Ajouter un ingrédient</button>
+
+      <label class="flabel" style="margin-top:14px;">Recette (préparation, notes…)</label>
+      <textarea id="rf-texte" class="finput" rows="5" placeholder="Étapes de préparation, astuces, remarques…" style="resize:vertical;font-family:'Inter',sans-serif;"></textarea>
+
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <button class="filter-pill" style="flex:1;padding:11px;" onclick="closeRecetteForm()">Annuler</button>
+        <button class="filter-pill" style="flex:1;padding:11px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="saveRecette()">💾 Enregistrer</button>
+      </div>
     </div>
   </div>
 
@@ -1008,11 +1013,14 @@ function recTotals(ings){
 }
 
 /* ============ ÉTAGE 1 : VIGNETTES ============ */
+function recShow(n){
+  document.getElementById('rec-etage1').style.display = (n===1)?'block':'none';
+  document.getElementById('rec-etage2').style.display = (n===2)?'block':'none';
+  document.getElementById('rec-etage3').style.display = (n===3)?'block':'none';
+}
 function recGoEtage1(){
   recCurrentCat=null;
-  const e1=document.getElementById('rec-etage1'), e2=document.getElementById('rec-etage2');
-  if(e1) e1.style.display='block';
-  if(e2) e2.style.display='none';
+  recShow(1);
   renderCatGrid();
 }
 function renderCatGrid(){
@@ -1027,10 +1035,9 @@ function renderCatGrid(){
 
 /* ============ ÉTAGE 2 : LISTE RECETTES ============ */
 function recGoEtage2(key){
-  recCurrentCat=key;
-  document.getElementById('rec-etage1').style.display='none';
-  document.getElementById('rec-etage2').style.display='block';
-  document.getElementById('rec-cat-title').textContent=recCatName(key);
+  if(key) recCurrentCat=key;
+  recShow(2);
+  document.getElementById('rec-cat-title').textContent=recCatName(recCurrentCat);
   const s=document.getElementById('rec-search'); if(s) s.value='';
   renderRecetteList();
 }
@@ -1075,13 +1082,14 @@ function openRecetteForm(id){
   rfPhoto = r && r.photo ? r.photo : null;
   rfSetPhotoPreview(rfPhoto);
   renderRfIngs();
-  const f=document.getElementById('form-recette'); if(f){ f.style.display='block'; f.scrollIntoView({behavior:'smooth',block:'start'}); }
+  recShow(3);
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 function closeRecetteForm(){
   editingRecetteId=null; rfIngs=[]; rfPhoto=null;
   rfSetPhotoPreview(null);
   const txt=document.getElementById('rf-texte'); if(txt) txt.value='';
-  const f=document.getElementById('form-recette'); if(f) f.style.display='none';
+  recGoEtage2(); // retour à la liste de la catégorie
 }
 function renderRfIngs(){
   const el=document.getElementById('rf-ings');
@@ -1157,8 +1165,9 @@ function saveRecette(){
     showToast('✅ Recette créée');
   }
   saveRecettes(data);
+  // retour à la liste : si la catégorie a changé, on bascule sur la nouvelle
+  recCurrentCat = cats[0];
   closeRecetteForm();
-  if(recCurrentCat && !cats.includes(recCurrentCat)) recGoEtage1(); else renderRecetteList();
 }
 function delRecette(id){
   if(!confirm('Supprimer cette recette ?')) return;
@@ -1250,15 +1259,14 @@ function selectIngrFromLib(id){
   }
   rfFromForm=false; ingrSelectMode=false;
   const b=document.getElementById('ingr-select-mode-banner'); if(b) b.style.display='none';
-  // revenir à l'onglet recettes SANS réinitialiser l'étage 2 ni le formulaire
+  // revenir à l'onglet recettes, écran 3 (formulaire) toujours rempli
   ['journee','recettes','ingr'].forEach(t=>{
     const el=document.getElementById('rtab-'+t); if(el) el.style.display=(t==='recettes')?'block':'none';
     const btn=document.getElementById('rnav-'+t+'-btn'); if(btn) btn.classList.toggle('active', t==='recettes');
   });
-  document.getElementById('rec-etage1').style.display='none';
-  document.getElementById('rec-etage2').style.display='block';
+  recShow(3);
   renderRfIngs();
-  const f=document.getElementById('form-recette'); if(f){ f.style.display='block'; f.scrollIntoView({behavior:'smooth',block:'start'}); }
+  window.scrollTo({top:0,behavior:'smooth'});
   if(s) showToast('✅ '+s.nom+' ajouté');
 }
 function cancelIngrSelect(){
@@ -1271,9 +1279,8 @@ function cancelIngrSelect(){
       const el=document.getElementById('rtab-'+t); if(el) el.style.display=(t==='recettes')?'block':'none';
       const btn=document.getElementById('rnav-'+t+'-btn'); if(btn) btn.classList.toggle('active', t==='recettes');
     });
-    document.getElementById('rec-etage1').style.display='none';
-    document.getElementById('rec-etage2').style.display='block';
-    const f=document.getElementById('form-recette'); if(f){ f.style.display='block'; f.scrollIntoView({behavior:'smooth',block:'start'}); }
+    recShow(3);
+    window.scrollTo({top:0,behavior:'smooth'});
     return;
   }
   renderIngredients();
