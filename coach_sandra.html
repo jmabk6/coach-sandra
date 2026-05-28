@@ -1281,6 +1281,7 @@ function recCancelSelect(){
   const b=document.getElementById('rec-banner'); if(b) b.style.display='none';
   showRepasTab('journee');
 }
+function getJourDate(){ return new Date().toISOString().split('T')[0]; }
 function pickRecette(id){
   const r=loadRecettes().find(x=>x.id===id); if(!r) return;
   const ings=JSON.parse(JSON.stringify(r.ings||[]));
