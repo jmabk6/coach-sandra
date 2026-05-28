@@ -394,6 +394,16 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
   <!-- ===== SOUS-ONGLET JOURNÉE ===== -->
   <div id="rtab-journee">
     <div style="height:16px;"></div>
+
+    <!-- RÉCAP NUTRITIONNEL DU JOUR -->
+    <div id="day-recap" style="background:var(--accent);border-radius:16px;padding:16px;margin-bottom:14px;color:#fff;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;">
+        <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:20px;">Aujourd'hui</div>
+        <div><span id="recap-kcal" style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:26px;">0</span><span id="recap-kcal-obj" style="opacity:.8;font-size:14px;"> / 1500 kcal</span></div>
+      </div>
+      <div id="recap-macros"></div>
+    </div>
+
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:14px;">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px;">1. Choisis le moment</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
@@ -1295,7 +1305,32 @@ function pickRecette(id){
 }
 
 /* ============ JOURNÉE ============ */
+function renderDayRecap(){
+  const today=getJourDate();
+  const items=loadJournal().filter(d=>d.date===today);
+  let tot={kcal:0,prot:0,gluc:0,lip:0,fib:0};
+  items.forEach(d=>{ const t=recTotals(d.ings); tot.kcal+=t.kcal; tot.prot+=t.prot; tot.gluc+=t.gluc; tot.lip+=t.lip; tot.fib+=t.fib; });
+  const kc=document.getElementById('recap-kcal'); if(kc) kc.textContent=Math.round(tot.kcal);
+  const kco=document.getElementById('recap-kcal-obj'); if(kco) kco.textContent=' / '+KCAL_OBJ+' kcal';
+  const macros=[
+    {lbl:'Protéines', val:tot.prot, obj:PROT_OBJ, col:'#a8e6cf'},
+    {lbl:'Glucides',  val:tot.gluc, obj:GLUC_OBJ, col:'#cde7fb'},
+    {lbl:'Lipides',   val:tot.lip,  obj:LIP_OBJ,  col:'#ffe0b2'},
+    {lbl:'Fibres',    val:tot.fib,  obj:FIBRES_OBJ, col:'#dcedc8'}
+  ];
+  const el=document.getElementById('recap-macros');
+  if(el) el.innerHTML = macros.map(m=>{
+    const pct=Math.min(100, m.obj? Math.round(m.val/m.obj*100):0);
+    return `<div style="margin-bottom:7px;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;opacity:.95;">
+        <span>${m.lbl}</span><span>${Math.round(m.val)} / ${m.obj} g</span></div>
+      <div style="height:6px;background:rgba(255,255,255,.25);border-radius:6px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:${m.col};border-radius:6px;transition:width .4s;"></div></div>
+    </div>`;
+  }).join('');
+}
 function renderDay(){
+  renderDayRecap();
   const el=document.getElementById('day-list'); if(!el) return;
   const today=getJourDate();
   const items=loadJournal().filter(d=>d.date===today);
