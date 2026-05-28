@@ -394,11 +394,21 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
   <!-- ===== SOUS-ONGLET JOURNÉE ===== -->
   <div id="rtab-journee">
     <div style="height:16px;"></div>
-    <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
-      <button class="filter-pill" style="flex:1;background:var(--accent);color:#fff;border-color:var(--accent);padding:9px 4px;" onclick="openAddChoice('🌅 Petit-déj')">+ 🌅 Pdj</button>
-      <button class="filter-pill" style="flex:1;background:var(--accent);color:#fff;border-color:var(--accent);padding:9px 4px;" onclick="openAddChoice('☀️ Déjeuner')">+ ☀️ Déj</button>
-      <button class="filter-pill" style="flex:1;background:var(--accent);color:#fff;border-color:var(--accent);padding:9px 4px;" onclick="openAddChoice('🍎 Collation')">+ 🍎 Coll.</button>
-      <button class="filter-pill" style="flex:1;background:var(--accent);color:#fff;border-color:var(--accent);padding:9px 4px;" onclick="openAddChoice('🌙 Dîner')">+ 🌙 Dîner</button>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:14px;">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px;">1. Choisis le moment</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+        <button class="day-moment-btn filter-pill" style="flex:1;padding:9px 4px;" data-moment="🌅 Petit-déj" onclick="pickMoment(this)">🌅 Pdj</button>
+        <button class="day-moment-btn filter-pill" style="flex:1;padding:9px 4px;" data-moment="☀️ Déjeuner" onclick="pickMoment(this)">☀️ Déj</button>
+        <button class="day-moment-btn filter-pill" style="flex:1;padding:9px 4px;" data-moment="🍎 Collation" onclick="pickMoment(this)">🍎 Coll.</button>
+        <button class="day-moment-btn filter-pill" style="flex:1;padding:9px 4px;" data-moment="🌙 Dîner" onclick="pickMoment(this)">🌙 Dîner</button>
+      </div>
+      <div id="day-add-actions" style="display:none;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px;">2. Ajoute…</div>
+        <div style="display:flex;gap:8px;">
+          <button class="filter-pill" style="flex:1;padding:12px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="dayAddRecette()">🍽️ Une recette</button>
+          <button class="filter-pill" style="flex:1;padding:12px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="dayAddIngredient()">🥗 Un ingrédient</button>
+        </div>
+      </div>
     </div>
     <div id="day-list"></div>
   </div>
@@ -1230,20 +1240,25 @@ function deleteCat(){
 }
 
 /* ============ MODE SÉLECTION (depuis Journée) ============ */
-let dayAddMoment = null; // moment en cours d'ajout
+let dayAddMoment = null; // moment sélectionné dans le bloc Journée
 let ingrToDayMode = false; // true quand on choisit un ingrédient POUR la journée
 
-function openAddChoice(moment){
-  dayAddMoment = moment;
-  document.getElementById('choix-moment').textContent = moment;
-  openModal('modal-choix');
+function pickMoment(btn){
+  dayAddMoment = btn.dataset.moment;
+  document.querySelectorAll('.day-moment-btn').forEach(b=>{
+    const on = (b===btn);
+    b.style.background = on ? 'var(--accent)' : '';
+    b.style.color = on ? '#fff' : '';
+    b.style.borderColor = on ? 'var(--accent)' : '';
+  });
+  const act=document.getElementById('day-add-actions'); if(act) act.style.display='block';
 }
-function choixRecette(){
-  closeModal('modal-choix');
+function dayAddRecette(){
+  if(!dayAddMoment) return;
   addRecetteToDay(dayAddMoment);
 }
-function choixIngredient(){
-  closeModal('modal-choix');
+function dayAddIngredient(){
+  if(!dayAddMoment) return;
   addIngredientToDay(dayAddMoment);
 }
 function addIngredientToDay(moment){
@@ -1537,18 +1552,6 @@ function renderRepasAll() { renderDay(); }
 </div>
 
 <!-- MODAL catégorie -->
-<div class="modal-bg" id="modal-choix">
-  <div class="modal-box">
-    <h3 id="choix-title">Ajouter à <span id="choix-moment">—</span></h3>
-    <p style="font-size:13px;color:var(--muted);margin:0 0 16px;">Que veux-tu ajouter ?</p>
-    <div style="display:flex;gap:10px;">
-      <button class="filter-pill" style="flex:1;padding:18px 10px;font-size:14px;flex-direction:column;display:flex;gap:6px;" onclick="choixRecette()"><span style="font-size:26px;">🍽️</span>Une recette</button>
-      <button class="filter-pill" style="flex:1;padding:18px 10px;font-size:14px;flex-direction:column;display:flex;gap:6px;" onclick="choixIngredient()"><span style="font-size:26px;">🥗</span>Un ingrédient</button>
-    </div>
-    <button class="filter-pill" style="width:100%;padding:11px;margin-top:12px;" onclick="closeModal('modal-choix')">Annuler</button>
-  </div>
-</div>
-
 <div class="modal-bg" id="modal-cat">
   <div class="modal-box">
     <h3 id="cf-title">Nouvelle catégorie</h3>
