@@ -1026,7 +1026,8 @@ function recGoEtage1(){
 function renderCatGrid(){
   const grid=document.getElementById('rec-cat-grid'); if(!grid) return;
   const cats=loadCats();
-  let h = cats.map(c=>`<div class="cat-tile" onclick="recGoEtage2('${c.key}')">
+  let h = cats.map(c=>`<div class="cat-tile" onclick="recGoEtage2('${c.key}')" style="position:relative;">
+    <button onclick="event.stopPropagation();editCatForm('${c.key}')" style="position:absolute;top:4px;right:4px;background:rgba(255,255,255,.85);border:1px solid var(--border);border-radius:8px;width:24px;height:24px;font-size:12px;cursor:pointer;padding:0;line-height:1;">✎</button>
     <span class="emoji">${c.emoji}</span><div class="cname">${c.name}</div>
     <div class="ccount">${recCountInCat(c.key)} recette${recCountInCat(c.key)>1?'s':''}</div></div>`).join('');
   h += `<div class="cat-tile add" onclick="openCatForm()"><span class="emoji">➕</span><div class="cname">Nouvelle</div><div class="ccount">catégorie</div></div>`;
@@ -1176,15 +1177,52 @@ function delRecette(id){
 }
 
 /* ============ MODAL CATÉGORIE ============ */
-function openCatForm(){ document.getElementById('cf-emoji').value=''; document.getElementById('cf-nom').value=''; openModal('modal-cat'); }
+let editingCatKey = null;
+function openCatForm(){
+  editingCatKey = null;
+  document.getElementById('cf-title').textContent = 'Nouvelle catégorie';
+  document.getElementById('cf-emoji').value='';
+  document.getElementById('cf-nom').value='';
+  document.getElementById('cf-delete').style.display='none';
+  openModal('modal-cat');
+}
+function editCatForm(key){
+  const c = loadCats().find(x=>x.key===key);
+  if(!c) return;
+  editingCatKey = key;
+  document.getElementById('cf-title').textContent = 'Modifier la catégorie';
+  document.getElementById('cf-emoji').value = c.emoji;
+  document.getElementById('cf-nom').value = c.name;
+  document.getElementById('cf-delete').style.display='block';
+  openModal('modal-cat');
+}
 function saveCat(){
   const emoji=document.getElementById('cf-emoji').value.trim()||'🍽️';
   const name=document.getElementById('cf-nom').value.trim();
   if(!name){ showToast('⚠️ Nom requis'); return; }
-  const cats=loadCats();
-  cats.push({key:'cat_'+Date.now(), emoji, name});
+  let cats=loadCats();
+  if(editingCatKey){
+    cats = cats.map(c=> c.key===editingCatKey ? {...c, emoji, name} : c);
+    showToast('✅ Catégorie modifiée');
+  } else {
+    cats.push({key:'cat_'+Date.now(), emoji, name});
+    showToast('✅ Catégorie créée');
+  }
   saveCats(cats);
-  closeModal('modal-cat'); renderCatGrid(); showToast('✅ Catégorie créée');
+  editingCatKey=null;
+  closeModal('modal-cat'); renderCatGrid();
+}
+function deleteCat(){
+  if(!editingCatKey) return;
+  const n = recCountInCat(editingCatKey);
+  if(n>0){
+    showToast('⚠️ Vide-la d\u2019abord ('+n+' recette'+(n>1?'s':'')+')');
+    return;
+  }
+  if(!confirm('Supprimer cette catégorie vide ?')) return;
+  saveCats(loadCats().filter(c=>c.key!==editingCatKey));
+  editingCatKey=null;
+  closeModal('modal-cat'); renderCatGrid(); showToast('🗑️ Catégorie supprimée');
 }
 
 /* ============ MODE SÉLECTION (depuis Journée) ============ */
@@ -1436,15 +1474,16 @@ function renderRepasAll() { renderDay(); }
 <!-- MODAL catégorie -->
 <div class="modal-bg" id="modal-cat">
   <div class="modal-box">
-    <h3>Nouvelle catégorie</h3>
+    <h3 id="cf-title">Nouvelle catégorie</h3>
     <label class="flabel">Emoji</label>
     <input class="finput" id="cf-emoji" placeholder="🍕" maxlength="2" style="font-size:22px;text-align:center;">
     <label class="flabel">Nom</label>
     <input class="finput" id="cf-nom" placeholder="ex. Pizzas">
     <div style="display:flex;gap:8px;margin-top:4px;">
       <button class="filter-pill" style="flex:1;padding:11px;" onclick="closeModal('modal-cat')">Annuler</button>
-      <button class="filter-pill" style="flex:1;padding:11px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="saveCat()">💾 Créer</button>
+      <button class="filter-pill" style="flex:1;padding:11px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="saveCat()">💾 Enregistrer</button>
     </div>
+    <button id="cf-delete" style="display:none;width:100%;margin-top:10px;background:none;border:none;color:var(--accent);font-size:13px;cursor:pointer;text-decoration:underline;" onclick="deleteCat()">🗑️ Supprimer cette catégorie</button>
   </div>
 </div>
 
