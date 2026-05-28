@@ -4,6 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Coach Sandra</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#c0616a">
+<link rel="apple-touch-icon" href="icon-192.png?v=2">
+<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png?v=2">
+<link rel="apple-touch-icon" sizes="512x512" href="icon-512.png?v=2">
+<link rel="icon" type="image/png" href="icon-192.png?v=2">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Coach Sandra">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <!-- ===== FIREBASE (sync cloud, persistance anti-purge iOS) ===== -->
@@ -1364,5 +1373,10 @@ function renderRepasAll() { renderDay(); }
   </div>
 </div>
 
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
+</script>
 </body>
 </html>
