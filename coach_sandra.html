@@ -1318,7 +1318,7 @@ function pickRecette(id){
   const r=loadRecettes().find(x=>x.id===id); if(!r) return;
   const ings=JSON.parse(JSON.stringify(r.ings||[]));
   const j=loadJournal();
-  j.push({id:Date.now(), date:getJourDate(), moment:recSelectMoment||'☀️ Déjeuner', nom:r.nom, ings});
+  j.push({id:Date.now(), date:getJourDate(), moment:recSelectMoment||'☀️ Déjeuner', nom:r.nom, ings, collapsed:false});
   saveJournal(j);
   recSelectMode=false; recSelectMoment=null;
   const b=document.getElementById('rec-banner'); if(b) b.style.display='none';
@@ -1383,29 +1383,62 @@ function renderDay(){
   el.innerHTML=html;
 }
 
+function toggleDayItem(itemId){
+  const j=loadJournal();
+  const it=j.find(d=>d.id===itemId); if(!it) return;
+  it.collapsed = !it.collapsed;
+  saveJournal(j); renderDay();
+}
 function renderDayItem(d){
   const t=recTotals(d.ings);
+  const collapsed = !!d.collapsed;
+
   if(d.type==='ingredient'){
     const g=d.ings[0]||{};
+    if(collapsed){
+      // replié : titre + kcal, pas de quantité ; clic = déplier
+      return `<div class="day-card" style="padding:10px 14px;cursor:pointer;" onclick="toggleDayItem(${d.id})">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="flex:1;font-weight:600;font-size:14px;">🥗 ${d.nom}</span>
+          <span style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--accent);">${t.kcal} kcal</span>
+          <button class="btn-del" onclick="event.stopPropagation();delDayItem(${d.id})">✕</button>
+        </div></div>`;
+    }
+    // déplié : quantité visible/modifiable + bouton valider
     return `<div class="day-card" style="padding:10px 14px;">
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="flex:1;font-weight:600;font-size:14px;">🥗 ${d.nom}</span>
         <input type="number" value="${g.qty}" min="0" onchange="setDayQty(${d.id},0,this.value)" style="width:54px;background:var(--bg);border:1.5px solid var(--accent);border-radius:8px;padding:5px;font-size:13px;font-weight:700;color:var(--accent);text-align:center;outline:none;">
         <span style="font-size:11px;color:var(--muted);min-width:28px;">${UNIT_SHORT[g.unit]||'g'}</span>
-        <span style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:15px;color:var(--accent);min-width:46px;text-align:right;">${t.kcal}</span>
+        <button onclick="toggleDayItem(${d.id})" title="Valider" style="background:var(--accent);color:#fff;border:none;border-radius:8px;width:30px;height:30px;font-size:14px;cursor:pointer;padding:0;">✓</button>
         <button class="btn-del" onclick="delDayItem(${d.id})">✕</button>
       </div></div>`;
   }
+
+  // RECETTE
+  if(collapsed){
+    // replié : titre cliquable + kcal
+    return `<div class="day-card" style="cursor:pointer;" onclick="toggleDayItem(${d.id})">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-weight:700;font-size:15px;">▸ ${d.nom}</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:18px;color:var(--accent);">${t.kcal} kcal</span>
+          <button class="btn-del" onclick="event.stopPropagation();delDayItem(${d.id})">✕</button>
+        </div></div></div>`;
+  }
+  // déplié : ingrédients + grammages + bouton Valider
   const rows = (d.ings&&d.ings.length) ? d.ings.map((g,gi)=>`<div class="day-row"><span class="dname">${g.nom}</span>
     <input type="number" value="${g.qty}" min="0" onchange="setDayQty(${d.id},${gi},this.value)">
     <span class="dunit">${UNIT_SHORT[g.unit]||'g'}</span></div>`).join('')
     : '<div style="font-size:12px;color:var(--muted);padding:6px 0;">Recette sans ingrédients (à compléter).</div>';
   return `<div class="day-card">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
-      <div style="font-weight:700;font-size:15px;">${d.nom}</div>
+      <div style="font-weight:700;font-size:15px;cursor:pointer;" onclick="toggleDayItem(${d.id})">▾ ${d.nom}</div>
       <div style="text-align:right;"><div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:18px;color:var(--accent);">${t.kcal} kcal</div>
       <button class="btn-del" onclick="delDayItem(${d.id})">✕ retirer</button></div></div>
-    ${rows}</div>`;
+    ${rows}
+    <button class="filter-pill" style="width:100%;margin-top:10px;padding:9px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="toggleDayItem(${d.id})">✓ Valider</button>
+  </div>`;
 }
 function setDayQty(itemId,gi,v){
   const j=loadJournal();
@@ -1433,7 +1466,7 @@ function selectIngrFromLib(id){
       const qty=(unit==='100g'?100:1);
       const ing={nom:s.nom, unit, qty, kcalU:s.kcal, protU:s.prot, glucU:s.gluc, lipU:s.lip, fibU:s.fibres||0};
       const j=loadJournal();
-      j.push({id:Date.now(), date:getJourDate(), moment:recSelectMoment||'☀️ Déjeuner', nom:s.nom, type:'ingredient', ings:[ing]});
+      j.push({id:Date.now(), date:getJourDate(), moment:recSelectMoment||'☀️ Déjeuner', nom:s.nom, type:'ingredient', ings:[ing], collapsed:false});
       saveJournal(j);
     }
     ingrToDayMode=false; ingrSelectMode=false;
