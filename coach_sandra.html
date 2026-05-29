@@ -546,7 +546,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
       <div style="flex:1;font-size:13px;color:var(--accent);font-weight:600;">👇 Clique sur un ingrédient pour l'ajouter</div>
       <button onclick="cancelIngrSelect()" style="background:none;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;white-space:nowrap;">← Retour</button>
     </div>
-    <div class="search-bar" style="margin-bottom:10px;"><span style="color:var(--muted);">🔍</span><input type="text" id="ingr-lib-search" placeholder="Rechercher…" oninput="renderIngredients()"></div>
+    <div class="search-bar" style="margin-bottom:10px;"><span style="color:var(--muted);">🔍</span><input type="text" id="ingr-lib-search" placeholder="Rechercher…" oninput="onIngrSearchInput()" onfocus="onIngrSearchFocus()"><button id="ingr-search-clear" onclick="clearIngrSearch()" style="display:none;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;line-height:1;">✕</button></div>
     <div class="filter-wrap" style="margin-bottom:12px;">
       <button class="filter-pill active" data-icat="tous" onclick="filterIngr(this)">Tous</button>
       <button class="filter-pill" data-icat="laitiers" onclick="filterIngr(this)">🥚 Laitiers</button>
@@ -1619,6 +1619,29 @@ function filterIngr(btn) {
   document.querySelectorAll('[data-icat]').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   ingrCatFilter = btn.dataset.icat;
+  // (1) vider la barre de recherche quand on clique une catégorie
+  const s=document.getElementById('ingr-lib-search'); if(s) s.value='';
+  const x=document.getElementById('ingr-search-clear'); if(x) x.style.display='none';
+  renderIngredients();
+}
+function onIngrSearchInput(){
+  // (3) afficher/masquer la croix selon le contenu
+  const s=document.getElementById('ingr-lib-search');
+  const x=document.getElementById('ingr-search-clear');
+  if(x && s) x.style.display = s.value ? 'inline' : 'none';
+  renderIngredients();
+}
+function onIngrSearchFocus(){
+  // (2) cliquer dans la barre repasse le filtre catégorie sur "Tous"
+  if(ingrCatFilter !== 'tous'){
+    ingrCatFilter='tous';
+    document.querySelectorAll('[data-icat]').forEach(b=>b.classList.toggle('active', b.dataset.icat==='tous'));
+    renderIngredients();
+  }
+}
+function clearIngrSearch(){
+  const s=document.getElementById('ingr-lib-search'); if(s){ s.value=''; s.focus(); }
+  const x=document.getElementById('ingr-search-clear'); if(x) x.style.display='none';
   renderIngredients();
 }
 
