@@ -1152,7 +1152,7 @@ function openRecetteForm(id){
   const csel = document.getElementById('rf-cat-select');
   if(csel) csel.innerHTML = loadCats().map(c=>
     `<option value="${c.key}" ${c.key===selKey?'selected':''}>${c.emoji} ${c.name}</option>`).join('');
-  const txt=document.getElementById('rf-texte'); if(txt){ txt.value = r && r.texte ? r.texte : ''; autoGrow(txt); }
+  const txt=document.getElementById('rf-texte'); if(txt){ txt.value = r && r.texte ? r.texte : ''; }
   const np=document.getElementById('rf-nb-pers'); if(np) np.value = (r && r.nbPers) ? r.nbPers : 4;
   rfIngs = r ? JSON.parse(JSON.stringify(r.ings||[])) : [];
   rfPhoto = r && r.photo ? r.photo : null;
@@ -1160,6 +1160,8 @@ function openRecetteForm(id){
   renderRfIngs();
   recShow(3);
   window.scrollTo({top:0,behavior:'smooth'});
+  // autoGrow APRÈS l'affichage : le textarea doit être visible pour que scrollHeight soit correct
+  setTimeout(()=>{ const t=document.getElementById('rf-texte'); if(t) autoGrow(t); }, 30);
 }
 function closeRecetteForm(){
   editingRecetteId=null; rfIngs=[]; rfPhoto=null;
