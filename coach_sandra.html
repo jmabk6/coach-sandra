@@ -494,17 +494,32 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
     </div>
   </div>
   <div id="rtab-ingr" style="display:none;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <div style="font-family:Cormorant Garamond,serif;font-weight:700;font-size:28px;">🥗 Mes Aliments</div>
-      <button onclick="toggleFormIngr()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:8px 14px;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;">+ Créer</button>
-    </div>
     <div id="ingr-select-mode-banner" style="display:none;background:rgba(192,97,106,0.08);border:1px solid rgba(192,97,106,0.3);border-radius:12px;padding:10px 14px;margin-bottom:12px;align-items:center;gap:10px;">
-      <div style="flex:1;font-size:13px;color:var(--accent);font-weight:600;">👇 Clique sur un aliment pour l'ajouter</div>
+      <div style="flex:1;font-size:13px;color:var(--accent);font-weight:600;">👇 Choisis un aliment à ajouter</div>
       <button onclick="cancelIngrSelect()" style="background:none;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;white-space:nowrap;">← Retour</button>
     </div>
-    <div class="search-bar" style="margin-bottom:10px;"><span style="color:var(--muted);">🔍</span><input type="text" id="ingr-lib-search" placeholder="Rechercher…" oninput="onIngrSearchInput()" onfocus="onIngrSearchFocus()"><button id="ingr-search-clear" onclick="clearIngrSearch()" style="display:none;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;line-height:1;">✕</button></div>
-    <div class="filter-wrap" id="ingr-cat-filters" style="margin-bottom:6px;"></div>
-    <button onclick="openACatManager()" style="background:none;border:none;color:var(--accent);font-size:12px;cursor:pointer;text-decoration:underline;margin-bottom:12px;padding:0;">✎ Gérer les catégories</button>
+
+    <!-- ÉCRAN 1 : vignettes catégories -->
+    <div id="ing-etage1">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;">
+        <div style="font-family:Cormorant Garamond,serif;font-weight:700;font-size:28px;">🥗 Mes Aliments</div>
+        <button onclick="openFormIngrNew()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:8px 14px;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap;">+ Créer</button>
+      </div>
+      <div class="search-bar" style="margin-bottom:12px;"><span style="color:var(--muted);">🔍</span><input type="text" id="ing-search-all" placeholder="Rechercher un aliment…" oninput="renderIngSearchAll()"><button id="ing-search-all-clear" onclick="clearIngSearchAll()" style="display:none;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;line-height:1;">✕</button></div>
+      <div id="ing-search-results" style="display:none;"></div>
+      <div class="cat-grid" id="ing-cat-grid"></div>
+      <button onclick="openACatManager()" style="background:none;border:none;color:var(--accent);font-size:12px;cursor:pointer;text-decoration:underline;margin-top:12px;padding:0;">✎ Gérer les catégories</button>
+    </div>
+
+    <!-- ÉCRAN 2 : liste des aliments d'une catégorie -->
+    <div id="ing-etage2" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;">
+        <button onclick="ingGoEtage1()" style="background:none;border:1px solid var(--border);border-radius:10px;padding:7px 12px;font-size:14px;cursor:pointer;color:var(--muted);white-space:nowrap;">‹ Retour</button>
+        <div id="ing-cat-title" style="font-family:Cormorant Garamond,serif;font-weight:700;font-size:20px;text-align:center;flex:1;">Catégorie</div>
+        <button onclick="openFormIngrNew()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:8px 14px;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap;">+ Créer</button>
+      </div>
+      <div class="search-bar" style="margin-bottom:10px;"><span style="color:var(--muted);">🔍</span><input type="text" id="ingr-lib-search" placeholder="Rechercher…" oninput="onIngrSearchInput()"><button id="ingr-search-clear" onclick="clearIngrSearch()" style="display:none;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;line-height:1;">✕</button></div>
+    </div>
     <div class="card" id="form-ingr" style="display:none;">
       <div class="card-title" style="color:var(--accent);">➕ Nouvel aliment</div>
       <input type="text" id="ingr-nom" class="form-input" placeholder="Nom de l'aliment" style="margin-bottom:8px;">
@@ -1131,7 +1146,7 @@ function showRepasTab(tab) {
     const main=document.getElementById('day-main'); if(main) main.style.display='block';
     renderDay();
   }
-  if (tab==='ingr')     renderIngredients();
+  if (tab==='ingr')     ingGoEtage1();
 }
 
 /* ============ DONNÉES & HELPERS RECETTES ============ */
@@ -1284,7 +1299,6 @@ function rfAddIng(){
   showPage('repas'); showRepasTab('ingr');
   const b=document.getElementById('ingr-select-mode-banner');
   if(b){ b.style.display='flex'; }
-  renderIngredients();
   const top=document.getElementById('rtab-ingr'); if(top) top.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
@@ -1429,7 +1443,6 @@ function addIngredientToDay(moment){
   ingrSelectMode = true;
   showPage('repas'); showRepasTab('ingr');
   const b=document.getElementById('ingr-select-mode-banner'); if(b) b.style.display='flex';
-  renderIngredients();
 }
 
 function addRecetteToDay(moment){
@@ -1706,18 +1719,10 @@ function cancelIngrSelect(){
     window.scrollTo({top:0,behavior:'smooth'});
     return;
   }
-  renderIngredients();
+  ingGoEtage1();
 }
 
-function filterIngr(btn) {
-  document.querySelectorAll('[data-icat]').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  ingrCatFilter = btn.dataset.icat;
-  // (1) vider la barre de recherche quand on clique une catégorie
-  const s=document.getElementById('ingr-lib-search'); if(s) s.value='';
-  const x=document.getElementById('ingr-search-clear'); if(x) x.style.display='none';
-  renderIngredients();
-}
+function filterIngr(btn){ /* obsolète (remplacé par vignettes) */ }
 function onIngrSearchInput(){
   // (3) afficher/masquer la croix selon le contenu
   const s=document.getElementById('ingr-lib-search');
@@ -1725,82 +1730,118 @@ function onIngrSearchInput(){
   if(x && s) x.style.display = s.value ? 'inline' : 'none';
   renderIngredients();
 }
-function onIngrSearchFocus(){
-  // (2) cliquer dans la barre repasse le filtre catégorie sur "Tous"
-  if(ingrCatFilter !== 'tous'){
-    ingrCatFilter='tous';
-    document.querySelectorAll('[data-icat]').forEach(b=>b.classList.toggle('active', b.dataset.icat==='tous'));
-    renderIngredients();
-  }
-}
+function onIngrSearchFocus(){ /* écran 2 : recherche dans la catégorie courante */ }
 function clearIngrSearch(){
   const s=document.getElementById('ingr-lib-search'); if(s){ s.value=''; s.focus(); }
   const x=document.getElementById('ingr-search-clear'); if(x) x.style.display='none';
   renderIngredients();
 }
 
+function refreshIngScreen(){
+  const e2=document.getElementById('ing-etage2');
+  if(e2 && e2.style.display!=='none'){ renderIngredients(); }
+  else { renderIngCatGrid(); const i=document.getElementById('ing-search-all'); if(i&&i.value.trim()) renderIngSearchAll(); }
+}
 let editingIngrId = null;
-function renderIngrCatFilters(){
-  const wrap=document.getElementById('ingr-cat-filters'); if(!wrap) return;
+function ingShow(n){
+  const e1=document.getElementById('ing-etage1'); if(e1) e1.style.display=(n===1)?'block':'none';
+  const e2=document.getElementById('ing-etage2'); if(e2) e2.style.display=(n===2)?'block':'none';
+}
+function ingGoEtage1(){
+  ingrCatFilter='tous';
+  ingShow(1);
+  const i=document.getElementById('ing-search-all'); if(i) i.value='';
+  const res=document.getElementById('ing-search-results'); if(res){ res.style.display='none'; res.innerHTML=''; }
+  const grid=document.getElementById('ing-cat-grid'); if(grid) grid.style.display='grid';
+  const x=document.getElementById('ing-search-all-clear'); if(x) x.style.display='none';
+  const f=document.getElementById('form-ingr'); if(f) f.style.display='none';
+  renderIngCatGrid();
+}
+function ingGoEtage2(key){
+  if(key) ingrCatFilter=key;
+  ingShow(2);
+  const t=document.getElementById('ing-cat-title'); if(t) t.textContent=aCatLabel(ingrCatFilter);
+  const s2=document.getElementById('ingr-lib-search'); if(s2) s2.value='';
+  const f=document.getElementById('form-ingr'); if(f) f.style.display='none';
+  renderIngredients();
+}
+function renderIngCatGrid(){
+  const grid=document.getElementById('ing-cat-grid'); if(!grid) return;
   const cats=loadACats();
-  let h='<button class="filter-pill '+(ingrCatFilter==='tous'?'active':'')+'" data-icat="tous" onclick="filterIngr(this)">Tous</button>';
-  h+=cats.map(c=>'<button class="filter-pill '+(ingrCatFilter===c.key?'active':'')+'" data-icat="'+c.key+'" onclick="filterIngr(this)">'+c.emoji+' '+c.name+'</button>').join('');
-  wrap.innerHTML=h;
+  let h=cats.map(c=>'<div class="cat-tile" onclick="ingGoEtage2(\''+c.key+'\')" style="position:relative;">'+
+    '<span class="emoji">'+c.emoji+'</span><div class="cname">'+c.name+'</div>'+
+    '<div class="ccount">'+aCatCount(c.key)+' aliment'+(aCatCount(c.key)>1?'s':'')+'</div></div>').join('');
+  grid.innerHTML=h;
+}
+function openFormIngrNew(){
+  // ouvre le formulaire de création ; si on est dans une catégorie, pré-sélectionne-la
+  editingIngrId=null;
+  ['ingr-nom','ingr-kcal','ingr-prot','ingr-gluc','ingr-lip','ingr-fibres'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  renderIngrCatSelect(ingrCatFilter!=='tous'?ingrCatFilter:'');
+  const us=document.getElementById('ingr-unit'); if(us) us.value='100g';
+  updateUnitLabel();
+  const t=document.querySelector('#form-ingr .card-title'); if(t) t.textContent='➕ Nouvel aliment';
+  const f=document.getElementById('form-ingr'); if(f){ f.style.display='block'; f.scrollIntoView({behavior:'smooth',block:'center'}); }
+}
+function clearIngSearchAll(){ const i=document.getElementById('ing-search-all'); if(i) i.value=''; renderIngSearchAll(); }
+function renderIngSearchAll(){
+  const i=document.getElementById('ing-search-all'); const q=(i?i.value:'').trim().toLowerCase();
+  const x=document.getElementById('ing-search-all-clear'); if(x) x.style.display=q?'inline':'none';
+  const grid=document.getElementById('ing-cat-grid');
+  const res=document.getElementById('ing-search-results');
+  if(!q){ if(res){res.style.display='none';res.innerHTML='';} if(grid) grid.style.display='grid'; return; }
+  if(grid) grid.style.display='none';
+  const list=loadIngr().filter(a=>a.nom.toLowerCase().includes(q));
+  if(res){
+    res.style.display='block';
+    res.innerHTML = list.length ? list.map(i=>ingCardHTML(i)).join('') : '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">Aucun aliment trouvé.</div></div>';
+    bindIngCards(res);
+  }
+}
+function ingCardHTML(i){
+  const catLabels={}; loadACats().forEach(c=>catLabels[c.key]=c.emoji+' '+c.name);
+  if(ingrSelectMode){
+    return '<div data-ingrid="'+i.id+'" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--surface);border-radius:12px;border:1.5px solid rgba(192,97,106,0.4);margin-bottom:6px;cursor:pointer;">'+
+      '<div><div style="font-size:15px;font-weight:600;">'+i.nom+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);font-style:italic;">'+(catLabels[i.cat]||'')+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);">'+i.kcal+' kcal · '+i.prot+'g prot / '+(UNIT_LABELS[i.unit||'100g'])+'</div></div>'+
+      '<span style="font-size:26px;color:var(--accent);font-weight:300;line-height:1;">+</span></div>';
+  }
+  return '<div class="ingr-lib-card" data-editid="'+i.id+'" style="cursor:pointer;">'+
+    '<div style="flex:1;">'+
+      '<div style="font-weight:700;font-size:14px;margin-bottom:1px;">'+i.nom+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);font-style:italic;margin-bottom:4px;">'+(catLabels[i.cat]||'')+'</div>'+
+      '<div style="display:flex;gap:4px;flex-wrap:wrap;">'+
+        '<span style="background:#fff3e0;color:#e76f51;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:600;">🔥'+i.kcal+'</span>'+
+        '<span style="background:#e8f5e9;color:#2d6a4f;border-radius:6px;padding:2px 7px;font-size:10px;">💪'+i.prot+'g</span>'+
+        '<span style="background:#e3f2fd;color:#457b9d;border-radius:6px;padding:2px 7px;font-size:10px;">🌾'+i.gluc+'g</span>'+
+        '<span style="background:#fff8e1;color:#d97706;border-radius:6px;padding:2px 7px;font-size:10px;">🥑'+i.lip+'g</span>'+
+        '<span style="background:#f1f8e9;color:#52b788;border-radius:6px;padding:2px 7px;font-size:10px;">🌿'+(i.fibres||0)+'g</span>'+
+      '</div>'+
+      '<div style="font-size:10px;color:var(--muted);margin-top:2px;">pour '+(UNIT_LABELS[i.unit||'100g'])+'</div>'+
+    '</div>'+
+    '<button class="btn-del" onclick="event.stopPropagation();deleteIngr('+i.id+')">✕</button></div>';
+}
+function bindIngCards(container){
+  if(ingrSelectMode){
+    container.querySelectorAll('[data-ingrid]').forEach(div=>div.addEventListener('click',function(){ selectIngrFromLib(this.dataset.ingrid); }));
+  } else {
+    container.querySelectorAll('[data-editid]').forEach(div=>div.addEventListener('click',function(){ editIngr(Number(this.dataset.editid)); }));
+  }
 }
 function renderIngrCatSelect(sel){
   const el=document.getElementById('ingr-cat'); if(!el) return;
   el.innerHTML=loadACats().map(c=>'<option value="'+c.key+'" '+(c.key===sel?'selected':'')+'>'+c.emoji+' '+c.name+'</option>').join('');
 }
 function renderIngredients() {
-  renderIngrCatFilters();
-  const search = (document.getElementById('ingr-lib-search')?.value||'').toLowerCase();
-  let data = loadIngr();
-  if (ingrCatFilter!=='tous') data = data.filter(i=>i.cat===ingrCatFilter);
-  if (search) data = data.filter(i=>i.nom.toLowerCase().includes(search));
-  const el = document.getElementById('ingredients-list');
-  if (!el) return;
-  if (!data.length) { el.innerHTML='<div class="empty-state"><div class="empty-icon">🥗</div><div class="empty-text">Aucun aliment.</div></div>'; return; }
-  const catLabels = {}; loadACats().forEach(c=>catLabels[c.key]=c.emoji+' '+c.name);
-  let html='', lastCat='';
-  data.forEach(i => {
-    if (ingrCatFilter==='tous' && i.cat && i.cat!==lastCat) {
-      lastCat = i.cat;
-    }
-    if (ingrSelectMode) {
-      html += '<div data-ingrid="'+i.id+'" style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--surface);border-radius:12px;border:1.5px solid rgba(192,97,106,0.4);margin-bottom:6px;cursor:pointer;">'+
-        '<div><div style="font-size:15px;font-weight:600;">'+i.nom+'</div>'+
-        '<div style="font-size:11px;color:var(--muted);font-style:italic;">'+catLabels[i.cat]+'</div>'+
-        '<div style="font-size:11px;color:var(--muted);">'+i.kcal+' kcal · '+i.prot+'g prot / '+(UNIT_LABELS[i.unit||'100g'])+'</div></div>'+
-        '<span style="font-size:26px;color:var(--accent);font-weight:300;line-height:1;">+</span>'+
-      '</div>';
-    } else {
-      html += '<div class="ingr-lib-card" data-editid="'+i.id+'" style="cursor:pointer;">'+
-        '<div style="flex:1;">'+
-          '<div style="font-weight:700;font-size:14px;margin-bottom:1px;">'+i.nom+'</div>'+
-          '<div style="font-size:11px;color:var(--muted);font-style:italic;margin-bottom:4px;">'+(catLabels[i.cat]||'')+'</div>'+
-          '<div style="display:flex;gap:4px;flex-wrap:wrap;">'+
-            '<span style="background:#fff3e0;color:#e76f51;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:600;">🔥'+i.kcal+'</span>'+
-            '<span style="background:#e8f5e9;color:#2d6a4f;border-radius:6px;padding:2px 7px;font-size:10px;">💪'+i.prot+'g</span>'+
-            '<span style="background:#e3f2fd;color:#457b9d;border-radius:6px;padding:2px 7px;font-size:10px;">🌾'+i.gluc+'g</span>'+
-            '<span style="background:#fff8e1;color:#d97706;border-radius:6px;padding:2px 7px;font-size:10px;">🥑'+i.lip+'g</span>'+
-            '<span style="background:#f1f8e9;color:#52b788;border-radius:6px;padding:2px 7px;font-size:10px;">🌿'+(i.fibres||0)+'g</span>'+
-          '</div>'+
-          '<div style="font-size:10px;color:var(--muted);margin-top:2px;">pour '+(UNIT_LABELS[i.unit||'100g'])+'</div>'+
-        '</div>'+
-        '<button class="btn-del" onclick="event.stopPropagation();deleteIngr('+i.id+')">✕</button>'+
-      '</div>';
-    }
-  });
-  el.innerHTML = html;
-  if (ingrSelectMode) {
-    el.querySelectorAll('[data-ingrid]').forEach(div => {
-      div.addEventListener('click', function() { selectIngrFromLib(this.dataset.ingrid); });
-    });
-  } else {
-    el.querySelectorAll('[data-editid]').forEach(div => {
-      div.addEventListener('click', function() { editIngr(Number(this.dataset.editid)); });
-    });
-  }
+  const search=(document.getElementById('ingr-lib-search')?.value||'').toLowerCase();
+  let data=loadIngr().filter(i=>i.cat===ingrCatFilter);
+  if(search) data=data.filter(i=>i.nom.toLowerCase().includes(search));
+  const el=document.getElementById('ingredients-list');
+  if(!el) return;
+  if(!data.length){ el.innerHTML='<div class="empty-state"><div class="empty-icon">🥗</div><div class="empty-text">Aucun aliment ici.<br>Clique « + Créer ».</div></div>'; return; }
+  el.innerHTML=data.map(i=>ingCardHTML(i)).join('');
+  bindIngCards(el);
 }
 
 function toggleFormIngr() {
@@ -1851,7 +1892,7 @@ function saveIngredient() {
   editingIngrId = null;
   const t=document.querySelector('#form-ingr .card-title'); if(t) t.textContent='➕ Nouvel aliment';
   const f=document.getElementById('form-ingr'); if(f) f.style.display='none';
-  renderIngredients(); showToast(msg);
+  refreshIngScreen(); showToast(msg);
 }
 
 const UNIT_LABELS = {'100g':'100g','unite':'1 unité','cas':'1 c. à soupe','cac':'1 c. à café','portion':'1 portion','tranche':'1 tranche','bol':'1 bol','verre':'1 verre','piece':'1 pièce','poignee':'1 poignée','pot':'1 pot'};
@@ -1922,17 +1963,17 @@ function saveACat(){
     showToast('✅ Catégorie créée');
   }
   saveACats(cats); editingACatKey=null;
-  acatBack(); renderIngredients();
+  acatBack(); refreshIngScreen();
 }
 function deleteACat(key){
   const n=aCatCount(key);
   if(n>0){ showToast('⚠️ Vide-la d\u2019abord ('+n+' aliment'+(n>1?'s':'')+')'); return; }
   if(!confirm('Supprimer cette catégorie vide ?')) return;
   saveACats(loadACats().filter(c=>c.key!==key));
-  renderACatList(); renderIngredients(); showToast('🗑️ Catégorie supprimée');
+  renderACatList(); refreshIngScreen(); showToast('🗑️ Catégorie supprimée');
 }
 
-function deleteIngr(id) { saveIngr(loadIngr().filter(i=>i.id!==id)); renderIngredients(); showToast('🗑️ Supprimé'); }
+function deleteIngr(id) { saveIngr(loadIngr().filter(i=>i.id!==id)); refreshIngScreen(); showToast('🗑️ Supprimé'); }
 
 // Compat stubs
 function renderSaisieIngrs() {}
