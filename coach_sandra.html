@@ -508,7 +508,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
       <div class="search-bar" style="margin-bottom:12px;"><span style="color:var(--muted);">🔍</span><input type="text" id="ing-search-all" placeholder="Rechercher un aliment…" oninput="renderIngSearchAll()"><button id="ing-search-all-clear" onclick="clearIngSearchAll()" style="display:none;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;line-height:1;">✕</button></div>
       <div id="ing-search-results" style="display:none;"></div>
       <div class="cat-grid" id="ing-cat-grid"></div>
-      <button onclick="openACatManager()" style="background:none;border:none;color:var(--accent);font-size:12px;cursor:pointer;text-decoration:underline;margin-top:12px;padding:0;">✎ Gérer les catégories</button>
+
     </div>
 
     <!-- ÉCRAN 2 : liste des aliments d'une catégorie -->
@@ -519,7 +519,6 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
         <button onclick="openFormIngrNew()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:8px 14px;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap;">+ Créer</button>
       </div>
       <div class="search-bar" style="margin-bottom:10px;"><span style="color:var(--muted);">🔍</span><input type="text" id="ingr-lib-search" placeholder="Rechercher…" oninput="onIngrSearchInput()"><button id="ingr-search-clear" onclick="clearIngrSearch()" style="display:none;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;line-height:1;">✕</button></div>
-    </div>
     <div class="card" id="form-ingr" style="display:none;">
       <div class="card-title" style="color:var(--accent);">➕ Nouvel aliment</div>
       <input type="text" id="ingr-nom" class="form-input" placeholder="Nom de l'aliment" style="margin-bottom:8px;">
@@ -557,6 +556,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
       </div>
     </div>
     <div id="ingredients-list"></div>
+    </div>
   </div>
 
 </div>
@@ -1769,8 +1769,10 @@ function renderIngCatGrid(){
   const grid=document.getElementById('ing-cat-grid'); if(!grid) return;
   const cats=loadACats();
   let h=cats.map(c=>'<div class="cat-tile" onclick="ingGoEtage2(\''+c.key+'\')" style="position:relative;">'+
+    '<button onclick="event.stopPropagation();editACatForm(\''+c.key+'\')" style="position:absolute;top:4px;right:4px;background:rgba(255,255,255,.85);border:1px solid var(--border);border-radius:8px;width:24px;height:24px;font-size:12px;cursor:pointer;padding:0;line-height:1;">✎</button>'+
     '<span class="emoji">'+c.emoji+'</span><div class="cname">'+c.name+'</div>'+
     '<div class="ccount">'+aCatCount(c.key)+' aliment'+(aCatCount(c.key)>1?'s':'')+'</div></div>').join('');
+  h+='<div class="cat-tile add" onclick="editACatForm(null)"><span class="emoji">➕</span><div class="cname">Nouvelle</div><div class="ccount">catégorie</div></div>';
   grid.innerHTML=h;
 }
 function openFormIngrNew(){
@@ -1922,7 +1924,7 @@ function editIngr(id) {
 
 /* ===== Gestion des catégories d'ALIMENTS ===== */
 let editingACatKey = null;
-function openACatManager(){ renderACatList(); openModal('modal-acat'); }
+function openACatManager(){ editACatForm(null); }
 function renderACatList(){
   const el=document.getElementById('acat-list'); if(!el) return;
   el.innerHTML = loadACats().map(c=>{
@@ -1942,13 +1944,8 @@ function editACatForm(key){
   const e=document.getElementById('acatf-emoji'); if(e) e.value = c?c.emoji:'';
   const nm=document.getElementById('acatf-nom'); if(nm) nm.value = c?c.name:'';
   const t=document.getElementById('acatf-title'); if(t) t.textContent = c?'Modifier la catégorie':'Nouvelle catégorie';
-  document.getElementById('acat-list-wrap').style.display='none';
-  document.getElementById('acat-form-wrap').style.display='block';
-}
-function acatBack(){
-  document.getElementById('acat-form-wrap').style.display='none';
-  document.getElementById('acat-list-wrap').style.display='block';
-  renderACatList();
+  const del=document.getElementById('acatf-delete'); if(del) del.style.display = c?'block':'none';
+  openModal('modal-acat');
 }
 function saveACat(){
   const emoji=(document.getElementById('acatf-emoji').value.trim())||'🍽️';
@@ -1963,14 +1960,16 @@ function saveACat(){
     showToast('✅ Catégorie créée');
   }
   saveACats(cats); editingACatKey=null;
-  acatBack(); refreshIngScreen();
+  closeModal('modal-acat'); refreshIngScreen();
 }
-function deleteACat(key){
-  const n=aCatCount(key);
+function deleteACat(){
+  if(!editingACatKey) return;
+  const n=aCatCount(editingACatKey);
   if(n>0){ showToast('⚠️ Vide-la d\u2019abord ('+n+' aliment'+(n>1?'s':'')+')'); return; }
   if(!confirm('Supprimer cette catégorie vide ?')) return;
-  saveACats(loadACats().filter(c=>c.key!==key));
-  renderACatList(); refreshIngScreen(); showToast('🗑️ Catégorie supprimée');
+  saveACats(loadACats().filter(c=>c.key!==editingACatKey));
+  editingACatKey=null;
+  closeModal('modal-acat'); refreshIngScreen(); showToast('🗑️ Catégorie supprimée');
 }
 
 function deleteIngr(id) { saveIngr(loadIngr().filter(i=>i.id!==id)); refreshIngScreen(); showToast('🗑️ Supprimé'); }
@@ -1990,22 +1989,16 @@ function renderRepasAll() { renderDay(); }
 <!-- MODAL catégorie -->
 <div class="modal-bg" id="modal-acat">
   <div class="modal-box">
-    <div id="acat-list-wrap">
-      <h3>Catégories d'aliments</h3>
-      <div id="acat-list"></div>
-      <button class="filter-pill" style="width:100%;padding:11px;margin-top:10px;" onclick="closeModal('modal-acat')">Fermer</button>
+    <h3 id="acatf-title">Nouvelle catégorie</h3>
+    <label class="flabel">Emoji</label>
+    <input class="finput" id="acatf-emoji" placeholder="🥦" maxlength="2" style="font-size:22px;text-align:center;">
+    <label class="flabel">Nom</label>
+    <input class="finput" id="acatf-nom" placeholder="ex. Boissons">
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="filter-pill" style="flex:1;padding:11px;" onclick="closeModal('modal-acat')">Annuler</button>
+      <button class="filter-pill" style="flex:1;padding:11px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="saveACat()">💾 Enregistrer</button>
     </div>
-    <div id="acat-form-wrap" style="display:none;">
-      <h3 id="acatf-title">Nouvelle catégorie</h3>
-      <label class="flabel">Emoji</label>
-      <input class="finput" id="acatf-emoji" placeholder="🥦" maxlength="2" style="font-size:22px;text-align:center;">
-      <label class="flabel">Nom</label>
-      <input class="finput" id="acatf-nom" placeholder="ex. Boissons">
-      <div style="display:flex;gap:8px;margin-top:4px;">
-        <button class="filter-pill" style="flex:1;padding:11px;" onclick="acatBack()">‹ Retour</button>
-        <button class="filter-pill" style="flex:1;padding:11px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="saveACat()">💾 Enregistrer</button>
-      </div>
-    </div>
+    <button id="acatf-delete" style="display:none;width:100%;margin-top:10px;background:none;border:none;color:var(--accent);font-size:13px;cursor:pointer;text-decoration:underline;" onclick="deleteACat()">🗑️ Supprimer cette catégorie</button>
   </div>
 </div>
 
