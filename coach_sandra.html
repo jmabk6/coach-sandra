@@ -420,7 +420,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
   <div class="mode-tabs">
     <button class="mode-btn active" id="rnav-journee-btn" onclick="showRepasTab('journee')">📅 Journée</button>
-    <button class="mode-btn" id="rnav-ingr-btn" onclick="showRepasTab('ingr')">🥗 Ingréd.</button>
+    <button class="mode-btn" id="rnav-ingr-btn" onclick="showRepasTab('ingr')">🥗 Aliments</button>
   </div>
 
   <!-- ===== SOUS-ONGLET JOURNÉE ===== -->
@@ -472,7 +472,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px;">2. Ajoute…</div>
         <div style="display:flex;gap:8px;">
           <button class="filter-pill" style="flex:1;padding:12px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="dayAddRecette()">🍽️ Une recette</button>
-          <button class="filter-pill" style="flex:1;padding:12px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="dayAddIngredient()">🥗 Un ingrédient</button>
+          <button class="filter-pill" style="flex:1;padding:12px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="dayAddIngredient()">🥗 Un aliment</button>
         </div>
       </div>
     </div>
@@ -493,11 +493,11 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
   </div>
   <div id="rtab-ingr" style="display:none;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <div style="font-family:Cormorant Garamond,serif;font-weight:700;font-size:28px;">🥗 Mes Ingrédients</div>
+      <div style="font-family:Cormorant Garamond,serif;font-weight:700;font-size:28px;">🥗 Mes Aliments</div>
       <button onclick="toggleFormIngr()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:8px 14px;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;">+ Créer</button>
     </div>
     <div id="ingr-select-mode-banner" style="display:none;background:rgba(192,97,106,0.08);border:1px solid rgba(192,97,106,0.3);border-radius:12px;padding:10px 14px;margin-bottom:12px;align-items:center;gap:10px;">
-      <div style="flex:1;font-size:13px;color:var(--accent);font-weight:600;">👇 Clique sur un ingrédient pour l'ajouter</div>
+      <div style="flex:1;font-size:13px;color:var(--accent);font-weight:600;">👇 Clique sur un aliment pour l'ajouter</div>
       <button onclick="cancelIngrSelect()" style="background:none;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;white-space:nowrap;">← Retour</button>
     </div>
     <div class="search-bar" style="margin-bottom:10px;"><span style="color:var(--muted);">🔍</span><input type="text" id="ingr-lib-search" placeholder="Rechercher…" oninput="onIngrSearchInput()" onfocus="onIngrSearchFocus()"><button id="ingr-search-clear" onclick="clearIngrSearch()" style="display:none;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;line-height:1;">✕</button></div>
@@ -512,8 +512,8 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
       <button class="filter-pill" data-icat="condiments" onclick="filterIngr(this)">🫒 Condiments</button>
     </div>
     <div class="card" id="form-ingr" style="display:none;">
-      <div class="card-title" style="color:var(--accent);">➕ Nouvel ingrédient</div>
-      <input type="text" id="ingr-nom" class="form-input" placeholder="Nom de l'ingrédient" style="margin-bottom:8px;">
+      <div class="card-title" style="color:var(--accent);">➕ Nouvel aliment</div>
+      <input type="text" id="ingr-nom" class="form-input" placeholder="Nom de l'aliment" style="margin-bottom:8px;">
       <select id="ingr-cat" class="form-input" style="margin-bottom:8px;appearance:none;">
         <option value="laitiers">🥚 Laitiers</option>
         <option value="poissons">🐟 Poissons</option>
@@ -524,10 +524,23 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
         <option value="condiments">🫒 Condiments</option>
       </select>
       <select id="ingr-unit" class="form-input" style="margin-bottom:8px;appearance:none;" onchange="updateUnitLabel()">
-        <option value="100g">⚖️ Pour 100 g (poids)</option>
-        <option value="unite">🥚 Par unité (1 pièce)</option>
-        <option value="cas">🥄 Par cuillère à soupe</option>
-        <option value="cac">🥄 Par cuillère à café</option>
+        <optgroup label="Portions (recommandé)">
+          <option value="portion">🍽️ Par portion (1 assiette)</option>
+          <option value="tranche">🍞 Par tranche</option>
+          <option value="bol">🍚 Par bol</option>
+          <option value="verre">🥛 Par verre</option>
+          <option value="piece">🍎 Par pièce</option>
+          <option value="poignee">🌰 Par poignée</option>
+          <option value="pot">🥛 Par pot</option>
+        </optgroup>
+        <optgroup label="Cuillères">
+          <option value="cas">🥄 Par cuillère à soupe</option>
+          <option value="cac">🥄 Par cuillère à café</option>
+        </optgroup>
+        <optgroup label="Au poids">
+          <option value="unite">🥚 Par unité (1 pièce)</option>
+          <option value="100g">⚖️ Pour 100 g (poids)</option>
+        </optgroup>
       </select>
       <div id="ingr-unit-label" style="font-size:11px;color:var(--muted);margin-bottom:8px;font-family:'Inter',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Pour 100g</div>
       <div class="macros-grid-form">
@@ -1517,7 +1530,7 @@ function renderDay(){
   const addBlock=document.getElementById('day-add-block');
   if(addBlock) addBlock.style.display = past ? 'none' : 'block';
   el.classList.toggle('day-readonly', past);
-  if(!items.length){ el.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">'+(past?'Aucun repas ce jour-là.':'Rien pour ce jour.<br>Ajoute une recette ou un ingrédient ci-dessus.')+'</div></div>'; return; }
+  if(!items.length){ el.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">'+(past?'Aucun repas ce jour-là.':'Rien pour ce jour.<br>Ajoute une recette ou un aliment ci-dessus.')+'</div></div>'; return; }
 
   // Ordre logique des moments
   const ordre=['🌅 Petit-déj','☀️ Déjeuner','🍎 Collation','🌙 Dîner'];
@@ -1703,7 +1716,7 @@ function renderIngredients() {
   if (search) data = data.filter(i=>i.nom.toLowerCase().includes(search));
   const el = document.getElementById('ingredients-list');
   if (!el) return;
-  if (!data.length) { el.innerHTML='<div class="empty-state"><div class="empty-icon">🥗</div><div class="empty-text">Aucun ingrédient.</div></div>'; return; }
+  if (!data.length) { el.innerHTML='<div class="empty-state"><div class="empty-icon">🥗</div><div class="empty-text">Aucun aliment.</div></div>'; return; }
   const catLabels = {laitiers:'🥚 Laitiers',poissons:'🐟 Poissons',viandes:'🍗 Viandes',legumes:'🥦 Légumes',fruits:'🍋 Fruits',feculents:'🍞 Féculents',condiments:'🫒 Condiments'};
   let html='', lastCat='';
   data.forEach(i => {
@@ -1756,11 +1769,11 @@ function toggleFormIngr() {
     ['ingr-nom','ingr-kcal','ingr-prot','ingr-gluc','ingr-lip','ingr-fibres'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
     const us=document.getElementById('ingr-unit'); if(us) us.value='100g';
     updateUnitLabel();
-    const t=document.querySelector('#form-ingr .card-title'); if(t) t.textContent='➕ Nouvel ingrédient';
+    const t=document.querySelector('#form-ingr .card-title'); if(t) t.textContent='➕ Nouvel aliment';
     f.style.display='block';
   } else {
     editingIngrId = null;
-    const t=document.querySelector('#form-ingr .card-title'); if(t) t.textContent='➕ Nouvel ingrédient';
+    const t=document.querySelector('#form-ingr .card-title'); if(t) t.textContent='➕ Nouvel aliment';
     f.style.display='none';
   }
 }
@@ -1783,22 +1796,22 @@ function saveIngredient() {
   if (editingIngrId !== null) {
     // ÉDITION : on met à jour l'ingrédient existant (on garde son id)
     data = data.map(i => (i.id===editingIngrId ? {...i, ...vals} : i));
-    msg = '✅ Ingrédient modifié !';
+    msg = '✅ Aliment modifié !';
   } else {
     // CRÉATION
     data.push({id:Date.now(), ...vals});
-    msg = '✅ Ingrédient créé !';
+    msg = '✅ Aliment créé !';
   }
   saveIngr(data);
   ['ingr-nom','ingr-kcal','ingr-prot','ingr-gluc','ingr-lip','ingr-fibres'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   editingIngrId = null;
-  const t=document.querySelector('#form-ingr .card-title'); if(t) t.textContent='➕ Nouvel ingrédient';
+  const t=document.querySelector('#form-ingr .card-title'); if(t) t.textContent='➕ Nouvel aliment';
   const f=document.getElementById('form-ingr'); if(f) f.style.display='none';
   renderIngredients(); showToast(msg);
 }
 
-const UNIT_LABELS = {'100g':'100g','unite':'1 unité','cas':'1 c. à soupe','cac':'1 c. à café'};
-const UNIT_SHORT  = {'100g':'g','unite':'u','cas':'c.à.s','cac':'c.à.c'};
+const UNIT_LABELS = {'100g':'100g','unite':'1 unité','cas':'1 c. à soupe','cac':'1 c. à café','portion':'1 portion','tranche':'1 tranche','bol':'1 bol','verre':'1 verre','piece':'1 pièce','poignee':'1 poignée','pot':'1 pot'};
+const UNIT_SHORT  = {'100g':'g','unite':'u','cas':'c.à.s','cac':'c.à.c','portion':'portion','tranche':'tranche','bol':'bol','verre':'verre','piece':'pièce','poignee':'poignée','pot':'pot'};
 function updateUnitLabel() {
   const u = document.getElementById('ingr-unit')?.value || '100g';
   const lbl = document.getElementById('ingr-unit-label');
@@ -1816,7 +1829,7 @@ function editIngr(id) {
   updateUnitLabel();
   set('ingr-kcal', ingr.kcal); set('ingr-prot', ingr.prot);
   set('ingr-gluc', ingr.gluc); set('ingr-lip', ingr.lip); set('ingr-fibres', ingr.fibres||0);
-  const t=document.querySelector('#form-ingr .card-title'); if(t) t.textContent='✏️ Modifier l\'ingrédient';
+  const t=document.querySelector('#form-ingr .card-title'); if(t) t.textContent='✏️ Modifier l\'aliment';
   const f=document.getElementById('form-ingr'); if(f) f.style.display='block';
   f && f.scrollIntoView({behavior:'smooth', block:'center'});
 }
