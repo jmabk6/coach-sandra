@@ -218,6 +218,20 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 .day-row input{width:54px;background:var(--bg);border:1.5px solid var(--accent);border-radius:8px;padding:5px;font-size:13px;font-weight:700;color:var(--accent);text-align:center;outline:none;}
 .day-row .dunit{font-size:11px;color:var(--muted);min-width:30px;}
 
+/* ===== Journée — look épuré ===== */
+.recapx{background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:18px;margin-bottom:14px;box-shadow:0 6px 22px rgba(192,97,106,.06);}
+.recapx-top{display:flex;align-items:center;gap:16px;margin-bottom:14px;}
+.recapx-pills{display:flex;gap:8px;}
+.recapx-pill{flex:1;background:rgba(192,97,106,0.08);border-radius:14px;padding:8px 10px;text-align:center;}
+.recapx-pill .l{font-size:11px;color:var(--accent);font-weight:700;}
+.recapx-pill .v{font-family:'Cormorant Garamond',serif;font-weight:800;font-size:22px;color:var(--text);line-height:1.1;}
+.recapx-pill .u{font-size:10px;color:var(--muted);}
+.moments-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.moment-card{border:1.5px solid var(--border);background:var(--surface);color:var(--text);border-radius:16px;padding:12px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;transition:all .18s;font-family:'Inter',sans-serif;}
+.moment-card .mi{font-size:22px;line-height:1;}
+.moment-card .ml{font-size:12px;font-weight:600;}
+.moment-card.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+
 /* ===== Compo recette (joli bloc) ===== */
 .compo-box{background:linear-gradient(160deg,#fff,#fdf0f0);border:1.5px solid var(--accent-light);border-radius:18px;padding:16px;margin-top:14px;box-shadow:0 6px 20px rgba(192,97,106,.08);}
 .compo-head{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
@@ -422,31 +436,25 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
     </div>
 
     <!-- RÉCAP NUTRITIONNEL DU JOUR -->
-    <div id="day-recap" style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px;">
-      <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;">
+    <div id="day-recap" class="recapx">
+      <div class="recapx-top">
         <!-- anneau -->
-        <div style="position:relative;width:84px;height:84px;flex-shrink:0;">
-          <svg width="84" height="84" viewBox="0 0 84 84">
-            <circle cx="42" cy="42" r="36" fill="none" stroke="var(--bg)" stroke-width="8"/>
-            <circle id="recap-ring" cx="42" cy="42" r="36" fill="none" stroke="var(--accent)" stroke-width="8"
-              stroke-linecap="round" stroke-dasharray="226" stroke-dashoffset="226"
-              transform="rotate(-90 42 42)" style="transition:stroke-dashoffset .5s;"/>
+        <div style="position:relative;width:96px;height:96px;flex-shrink:0;">
+          <svg width="96" height="96" viewBox="0 0 96 96">
+            <circle cx="48" cy="48" r="40" fill="none" stroke="rgba(192,97,106,0.12)" stroke-width="9"/>
+            <circle id="recap-ring" cx="48" cy="48" r="40" fill="none" stroke="var(--accent)" stroke-width="9"
+              stroke-linecap="round" stroke-dasharray="251" stroke-dashoffset="251"
+              transform="rotate(-90 48 48)" style="transition:stroke-dashoffset .5s;"/>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <span id="recap-kcal" style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:20px;color:var(--accent);line-height:1;">0</span>
-            <span style="font-size:9px;color:var(--muted);">/1500 kcal</span>
+            <span id="recap-kcal" style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:24px;color:var(--accent);line-height:1;">0</span>
+            <span style="font-size:10px;color:var(--muted);">/1500 kcal</span>
           </div>
         </div>
-        <!-- restant / repas -->
-        <div style="flex:1;">
-          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
-            <span style="font-size:13px;color:var(--muted);">Restant</span>
-            <span id="recap-restant" style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:18px;color:var(--accent);">1500 kcal</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:baseline;">
-            <span style="font-size:13px;color:var(--muted);">Repas</span>
-            <span id="recap-nb" style="font-weight:600;font-size:15px;">0 repas</span>
-          </div>
+        <!-- pastilles restant / repas -->
+        <div style="flex:1;" class="recapx-pills">
+          <div class="recapx-pill"><div class="l">Restant</div><div class="v" id="recap-restant">1500</div><div class="u">kcal</div></div>
+          <div class="recapx-pill"><div class="l">Repas</div><div class="v" id="recap-nb">0</div><div class="u">pris</div></div>
         </div>
       </div>
       <div id="recap-macros"></div>
@@ -454,11 +462,11 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
     <div id="day-add-block" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:14px;">
       <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px;">1. Choisis le moment</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
-        <button class="day-moment-btn filter-pill" style="flex:1;padding:9px 4px;" data-moment="🌅 Petit-déj" onclick="pickMoment(this)">🌅 Pdj</button>
-        <button class="day-moment-btn filter-pill" style="flex:1;padding:9px 4px;" data-moment="☀️ Déjeuner" onclick="pickMoment(this)">☀️ Déj</button>
-        <button class="day-moment-btn filter-pill" style="flex:1;padding:9px 4px;" data-moment="🍎 Collation" onclick="pickMoment(this)">🍎 Coll.</button>
-        <button class="day-moment-btn filter-pill" style="flex:1;padding:9px 4px;" data-moment="🌙 Dîner" onclick="pickMoment(this)">🌙 Dîner</button>
+      <div class="moments-grid" style="margin-bottom:12px;">
+        <button class="day-moment-btn moment-card" data-moment="🌅 Petit-déj" onclick="pickMoment(this)"><span class="mi">☕</span><span class="ml">Pdj</span></button>
+        <button class="day-moment-btn moment-card" data-moment="☀️ Déjeuner" onclick="pickMoment(this)"><span class="mi">☀️</span><span class="ml">Déj</span></button>
+        <button class="day-moment-btn moment-card" data-moment="🍎 Collation" onclick="pickMoment(this)"><span class="mi">🍪</span><span class="ml">Coll</span></button>
+        <button class="day-moment-btn moment-card" data-moment="🌙 Dîner" onclick="pickMoment(this)"><span class="mi">🌙</span><span class="ml">Dîner</span></button>
       </div>
       <div id="day-add-actions" style="display:none;">
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px;">2. Ajoute…</div>
@@ -1359,10 +1367,7 @@ let ingrToDayMode = false; // true quand on choisit un ingrédient POUR la journ
 function pickMoment(btn){
   dayAddMoment = btn.dataset.moment;
   document.querySelectorAll('.day-moment-btn').forEach(b=>{
-    const on = (b===btn);
-    b.style.background = on ? 'var(--accent)' : '';
-    b.style.color = on ? '#fff' : '';
-    b.style.borderColor = on ? 'var(--accent)' : '';
+    b.classList.toggle('on', b===btn);
   });
   const act=document.getElementById('day-add-actions'); if(act) act.style.display='block';
 }
@@ -1479,11 +1484,11 @@ function renderDayRecap(){
   const kcal=Math.round(tot.kcal);
   const kc=document.getElementById('recap-kcal'); if(kc) kc.textContent=kcal;
   // anneau : circonférence 2*pi*36 ≈ 226
-  const C=226, pct=Math.min(1, KCAL_OBJ? kcal/KCAL_OBJ : 0);
+  const C=251, pct=Math.min(1, KCAL_OBJ? kcal/KCAL_OBJ : 0);
   const ring=document.getElementById('recap-ring'); if(ring) ring.style.strokeDashoffset = C*(1-pct);
   const rest=Math.max(0, KCAL_OBJ-kcal);
-  const rr=document.getElementById('recap-restant'); if(rr) rr.textContent=rest+' kcal';
-  const nb=document.getElementById('recap-nb'); if(nb) nb.textContent=items.length+' repas';
+  const rr=document.getElementById('recap-restant'); if(rr) rr.textContent=rest;
+  const nb=document.getElementById('recap-nb'); if(nb) nb.textContent=items.length;
   const macros=[
     {lbl:'Protéines', emoji:'💪', val:tot.prot, obj:PROT_OBJ, col:'#a8e6cf'},
     {lbl:'Glucides',  emoji:'🌾', val:tot.gluc, obj:GLUC_OBJ, col:'#cde7fb'},
