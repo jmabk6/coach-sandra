@@ -219,6 +219,10 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 .day-row .dunit{font-size:11px;color:var(--muted);min-width:30px;}
 
 /* ===== Journée — look épuré ===== */
+.recapx-row{display:flex;align-items:center;gap:16px;}
+.recapx-ring{position:relative;width:104px;height:104px;flex-shrink:0;}
+.recapx-right{flex:1;min-width:0;}
+
 .recapx{background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:18px;margin-bottom:14px;box-shadow:0 6px 22px rgba(192,97,106,.06);}
 .recapx-top{display:flex;align-items:center;gap:16px;margin-bottom:14px;}
 .recapx-pills{display:flex;gap:8px;}
@@ -437,27 +441,29 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
     <!-- RÉCAP NUTRITIONNEL DU JOUR -->
     <div id="day-recap" class="recapx">
-      <div class="recapx-top">
-        <!-- anneau -->
-        <div style="position:relative;width:96px;height:96px;flex-shrink:0;">
-          <svg width="96" height="96" viewBox="0 0 96 96">
-            <circle cx="48" cy="48" r="40" fill="none" stroke="rgba(192,97,106,0.12)" stroke-width="9"/>
-            <circle id="recap-ring" cx="48" cy="48" r="40" fill="none" stroke="var(--accent)" stroke-width="9"
-              stroke-linecap="round" stroke-dasharray="251" stroke-dashoffset="251"
-              transform="rotate(-90 48 48)" style="transition:stroke-dashoffset .5s;"/>
+      <div class="recapx-row">
+        <!-- anneau seul, centré dans sa colonne -->
+        <div class="recapx-ring">
+          <svg width="104" height="104" viewBox="0 0 104 104">
+            <circle cx="52" cy="52" r="44" fill="none" stroke="rgba(192,97,106,0.12)" stroke-width="9"/>
+            <circle id="recap-ring" cx="52" cy="52" r="44" fill="none" stroke="var(--accent)" stroke-width="9"
+              stroke-linecap="round" stroke-dasharray="276" stroke-dashoffset="276"
+              transform="rotate(-90 52 52)" style="transition:stroke-dashoffset .5s;"/>
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-            <span id="recap-kcal" style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:24px;color:var(--accent);line-height:1;">0</span>
+            <span id="recap-kcal" style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:26px;color:var(--accent);line-height:1;">0</span>
             <span style="font-size:10px;color:var(--muted);">/1500 kcal</span>
           </div>
         </div>
-        <!-- pastilles restant / repas -->
-        <div style="flex:1;" class="recapx-pills">
-          <div class="recapx-pill"><div class="l">Restant</div><div class="v" id="recap-restant">1500</div><div class="u">kcal</div></div>
-          <div class="recapx-pill"><div class="l">Repas</div><div class="v" id="recap-nb">0</div><div class="u">pris</div></div>
+        <!-- colonne droite : pastilles + macros -->
+        <div class="recapx-right">
+          <div class="recapx-pills" style="margin-bottom:14px;">
+            <div class="recapx-pill"><div class="l">Restant</div><div class="v" id="recap-restant">1500</div><div class="u">kcal</div></div>
+            <div class="recapx-pill"><div class="l">Repas</div><div class="v" id="recap-nb">0</div><div class="u">pris</div></div>
+          </div>
+          <div id="recap-macros"></div>
         </div>
       </div>
-      <div id="recap-macros"></div>
     </div>
 
     <div id="day-add-block" style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:14px;">
@@ -1493,7 +1499,7 @@ function renderDayRecap(){
   const kcal=Math.round(tot.kcal);
   const kc=document.getElementById('recap-kcal'); if(kc) kc.textContent=kcal;
   // anneau : circonférence 2*pi*36 ≈ 226
-  const C=251, pct=Math.min(1, KCAL_OBJ? kcal/KCAL_OBJ : 0);
+  const C=276, pct=Math.min(1, KCAL_OBJ? kcal/KCAL_OBJ : 0);
   const ring=document.getElementById('recap-ring'); if(ring) ring.style.strokeDashoffset = C*(1-pct);
   const rest=Math.max(0, KCAL_OBJ-kcal);
   const rr=document.getElementById('recap-restant'); if(rr) rr.textContent=rest;
@@ -1526,7 +1532,7 @@ function renderDay(){
   const addBlock=document.getElementById('day-add-block');
   if(addBlock) addBlock.style.display = past ? 'none' : 'block';
   el.classList.toggle('day-readonly', past);
-  if(!items.length){ el.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">'+(past?'Aucun repas ce jour-là.':'Rien pour ce jour.<br>Ajoute une recette ou un aliment ci-dessus.')+'</div></div>'; return; }
+  if(!items.length){ el.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">'+(past?'Aucun repas ce jour-là.':'Rien encore aujourd'hui.<br>Choisis un moment ci-dessus pour commencer.')+'</div></div>'; return; }
 
   // Ordre logique des moments
   const ordre=['🌅 Petit-déj','☀️ Déjeuner','🍎 Collation','🌙 Dîner'];
