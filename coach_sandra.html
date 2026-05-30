@@ -387,12 +387,11 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 </div>
 
 <!-- ========== PAGE REPAS ========== -->
-<div class="page" id="page-repas">
+<div class="page" id="page-alimentation">
   <div style="height:16px;"></div>
 
   <div class="mode-tabs">
     <button class="mode-btn active" id="rnav-journee-btn" onclick="showRepasTab('journee')">📅 Journée</button>
-    <button class="mode-btn" id="rnav-recettes-btn" onclick="showRepasTab('recettes')">🍽️ Recettes</button>
     <button class="mode-btn" id="rnav-ingr-btn" onclick="showRepasTab('ingr')">🥗 Ingréd.</button>
   </div>
 
@@ -470,6 +469,63 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
       <button class="filter-pill" style="width:100%;margin-top:14px;padding:11px;" onclick="closeCalendar()">‹ Retour à la journée</button>
     </div>
   </div>
+  <div id="rtab-ingr" style="display:none;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-family:Cormorant Garamond,serif;font-weight:700;font-size:28px;">🥗 Mes Ingrédients</div>
+      <button onclick="toggleFormIngr()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:8px 14px;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;">+ Créer</button>
+    </div>
+    <div id="ingr-select-mode-banner" style="display:none;background:rgba(192,97,106,0.08);border:1px solid rgba(192,97,106,0.3);border-radius:12px;padding:10px 14px;margin-bottom:12px;align-items:center;gap:10px;">
+      <div style="flex:1;font-size:13px;color:var(--accent);font-weight:600;">👇 Clique sur un ingrédient pour l'ajouter</div>
+      <button onclick="cancelIngrSelect()" style="background:none;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;white-space:nowrap;">← Retour</button>
+    </div>
+    <div class="search-bar" style="margin-bottom:10px;"><span style="color:var(--muted);">🔍</span><input type="text" id="ingr-lib-search" placeholder="Rechercher…" oninput="onIngrSearchInput()" onfocus="onIngrSearchFocus()"><button id="ingr-search-clear" onclick="clearIngrSearch()" style="display:none;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;line-height:1;">✕</button></div>
+    <div class="filter-wrap" style="margin-bottom:12px;">
+      <button class="filter-pill active" data-icat="tous" onclick="filterIngr(this)">Tous</button>
+      <button class="filter-pill" data-icat="laitiers" onclick="filterIngr(this)">🥚 Laitiers</button>
+      <button class="filter-pill" data-icat="poissons" onclick="filterIngr(this)">🐟 Poissons</button>
+      <button class="filter-pill" data-icat="viandes" onclick="filterIngr(this)">🍗 Viandes</button>
+      <button class="filter-pill" data-icat="legumes" onclick="filterIngr(this)">🥦 Légumes</button>
+      <button class="filter-pill" data-icat="fruits" onclick="filterIngr(this)">🍋 Fruits</button>
+      <button class="filter-pill" data-icat="feculents" onclick="filterIngr(this)">🍞 Féculents</button>
+      <button class="filter-pill" data-icat="condiments" onclick="filterIngr(this)">🫒 Condiments</button>
+    </div>
+    <div class="card" id="form-ingr" style="display:none;">
+      <div class="card-title" style="color:var(--accent);">➕ Nouvel ingrédient</div>
+      <input type="text" id="ingr-nom" class="form-input" placeholder="Nom de l'ingrédient" style="margin-bottom:8px;">
+      <select id="ingr-cat" class="form-input" style="margin-bottom:8px;appearance:none;">
+        <option value="laitiers">🥚 Laitiers</option>
+        <option value="poissons">🐟 Poissons</option>
+        <option value="viandes">🍗 Viandes</option>
+        <option value="legumes">🥦 Légumes</option>
+        <option value="fruits">🍋 Fruits</option>
+        <option value="feculents">🍞 Féculents</option>
+        <option value="condiments">🫒 Condiments</option>
+      </select>
+      <select id="ingr-unit" class="form-input" style="margin-bottom:8px;appearance:none;" onchange="updateUnitLabel()">
+        <option value="100g">⚖️ Pour 100 g (poids)</option>
+        <option value="unite">🥚 Par unité (1 pièce)</option>
+        <option value="cas">🥄 Par cuillère à soupe</option>
+        <option value="cac">🥄 Par cuillère à café</option>
+      </select>
+      <div id="ingr-unit-label" style="font-size:11px;color:var(--muted);margin-bottom:8px;font-family:'Inter',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Pour 100g</div>
+      <div class="macros-grid-form">
+        <div><div class="macro-field-label" style="color:#e76f51;">🔥 Calories</div><div class="macro-input-wrap"><input type="number" id="ingr-kcal" class="macro-input" placeholder="0"><span class="macro-unit">kcal</span></div></div>
+        <div><div class="macro-field-label" style="color:#2d6a4f;">💪 Protéines</div><div class="macro-input-wrap"><input type="number" id="ingr-prot" class="macro-input" placeholder="0"><span class="macro-unit">g</span></div></div>
+        <div><div class="macro-field-label" style="color:#457b9d;">🌾 Glucides</div><div class="macro-input-wrap"><input type="number" id="ingr-gluc" class="macro-input" placeholder="0"><span class="macro-unit">g</span></div></div>
+        <div><div class="macro-field-label" style="color:#d97706;">🥑 Lipides</div><div class="macro-input-wrap"><input type="number" id="ingr-lip" class="macro-input" placeholder="0"><span class="macro-unit">g</span></div></div>
+        <div><div class="macro-field-label" style="color:#52b788;">🌿 Fibres</div><div class="macro-input-wrap"><input type="number" id="ingr-fibres" class="macro-input" placeholder="0"><span class="macro-unit">g</span></div></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button onclick="saveIngredient()" class="btn-primary" style="margin-bottom:0;flex:1;">💾 Enregistrer</button>
+        <button onclick="toggleFormIngr()" class="btn-secondary-sm">✕</button>
+      </div>
+    </div>
+    <div id="ingredients-list"></div>
+  </div>
+
+</div>
+
+<div class="page" id="page-recettes">
   <div id="rtab-recettes" style="display:none;">
     <div style="height:16px;"></div>
     <div id="rec-banner" style="display:none;background:rgba(192,97,106,0.08);border:1px solid rgba(192,97,106,0.3);border-radius:12px;padding:10px 14px;margin-bottom:12px;align-items:center;gap:10px;">
@@ -536,72 +592,21 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
       </div>
     </div>
   </div>
-
-  <div id="rtab-ingr" style="display:none;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <div style="font-family:Cormorant Garamond,serif;font-weight:700;font-size:28px;">🥗 Mes Ingrédients</div>
-      <button onclick="toggleFormIngr()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:8px 14px;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;">+ Créer</button>
-    </div>
-    <div id="ingr-select-mode-banner" style="display:none;background:rgba(192,97,106,0.08);border:1px solid rgba(192,97,106,0.3);border-radius:12px;padding:10px 14px;margin-bottom:12px;align-items:center;gap:10px;">
-      <div style="flex:1;font-size:13px;color:var(--accent);font-weight:600;">👇 Clique sur un ingrédient pour l'ajouter</div>
-      <button onclick="cancelIngrSelect()" style="background:none;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;white-space:nowrap;">← Retour</button>
-    </div>
-    <div class="search-bar" style="margin-bottom:10px;"><span style="color:var(--muted);">🔍</span><input type="text" id="ingr-lib-search" placeholder="Rechercher…" oninput="onIngrSearchInput()" onfocus="onIngrSearchFocus()"><button id="ingr-search-clear" onclick="clearIngrSearch()" style="display:none;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;line-height:1;">✕</button></div>
-    <div class="filter-wrap" style="margin-bottom:12px;">
-      <button class="filter-pill active" data-icat="tous" onclick="filterIngr(this)">Tous</button>
-      <button class="filter-pill" data-icat="laitiers" onclick="filterIngr(this)">🥚 Laitiers</button>
-      <button class="filter-pill" data-icat="poissons" onclick="filterIngr(this)">🐟 Poissons</button>
-      <button class="filter-pill" data-icat="viandes" onclick="filterIngr(this)">🍗 Viandes</button>
-      <button class="filter-pill" data-icat="legumes" onclick="filterIngr(this)">🥦 Légumes</button>
-      <button class="filter-pill" data-icat="fruits" onclick="filterIngr(this)">🍋 Fruits</button>
-      <button class="filter-pill" data-icat="feculents" onclick="filterIngr(this)">🍞 Féculents</button>
-      <button class="filter-pill" data-icat="condiments" onclick="filterIngr(this)">🫒 Condiments</button>
-    </div>
-    <div class="card" id="form-ingr" style="display:none;">
-      <div class="card-title" style="color:var(--accent);">➕ Nouvel ingrédient</div>
-      <input type="text" id="ingr-nom" class="form-input" placeholder="Nom de l'ingrédient" style="margin-bottom:8px;">
-      <select id="ingr-cat" class="form-input" style="margin-bottom:8px;appearance:none;">
-        <option value="laitiers">🥚 Laitiers</option>
-        <option value="poissons">🐟 Poissons</option>
-        <option value="viandes">🍗 Viandes</option>
-        <option value="legumes">🥦 Légumes</option>
-        <option value="fruits">🍋 Fruits</option>
-        <option value="feculents">🍞 Féculents</option>
-        <option value="condiments">🫒 Condiments</option>
-      </select>
-      <select id="ingr-unit" class="form-input" style="margin-bottom:8px;appearance:none;" onchange="updateUnitLabel()">
-        <option value="100g">⚖️ Pour 100 g (poids)</option>
-        <option value="unite">🥚 Par unité (1 pièce)</option>
-        <option value="cas">🥄 Par cuillère à soupe</option>
-        <option value="cac">🥄 Par cuillère à café</option>
-      </select>
-      <div id="ingr-unit-label" style="font-size:11px;color:var(--muted);margin-bottom:8px;font-family:'Inter',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:.5px;">Pour 100g</div>
-      <div class="macros-grid-form">
-        <div><div class="macro-field-label" style="color:#e76f51;">🔥 Calories</div><div class="macro-input-wrap"><input type="number" id="ingr-kcal" class="macro-input" placeholder="0"><span class="macro-unit">kcal</span></div></div>
-        <div><div class="macro-field-label" style="color:#2d6a4f;">💪 Protéines</div><div class="macro-input-wrap"><input type="number" id="ingr-prot" class="macro-input" placeholder="0"><span class="macro-unit">g</span></div></div>
-        <div><div class="macro-field-label" style="color:#457b9d;">🌾 Glucides</div><div class="macro-input-wrap"><input type="number" id="ingr-gluc" class="macro-input" placeholder="0"><span class="macro-unit">g</span></div></div>
-        <div><div class="macro-field-label" style="color:#d97706;">🥑 Lipides</div><div class="macro-input-wrap"><input type="number" id="ingr-lip" class="macro-input" placeholder="0"><span class="macro-unit">g</span></div></div>
-        <div><div class="macro-field-label" style="color:#52b788;">🌿 Fibres</div><div class="macro-input-wrap"><input type="number" id="ingr-fibres" class="macro-input" placeholder="0"><span class="macro-unit">g</span></div></div>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:8px;">
-        <button onclick="saveIngredient()" class="btn-primary" style="margin-bottom:0;flex:1;">💾 Enregistrer</button>
-        <button onclick="toggleFormIngr()" class="btn-secondary-sm">✕</button>
-      </div>
-    </div>
-    <div id="ingredients-list"></div>
-  </div>
-
 </div>
 
 </main>
 
 <nav class="bottom-nav">
-  <button class="nav-item active" onclick="showPage('poids',this)">
+  <button class="nav-item active" id="nav-poids" onclick="showPage('poids')">
     <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 17l4-8 4 4 4-6 4 4"/></svg>
     Poids
   </button>
-  <button class="nav-item" onclick="showPage('repas',this)">
+  <button class="nav-item" id="nav-alim" onclick="showPage('repas')">
     <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 1v3M10 1v3M14 1v3"/></svg>
+    Alimentation
+  </button>
+  <button class="nav-item" id="nav-rec" onclick="showPage('recettes')">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 5a2 2 0 012-2h13v18H6a2 2 0 01-2-2V5z"/></svg>
     Recettes
   </button>
 </nav>
@@ -764,13 +769,21 @@ function showToast(msg) {
 
 function rnd(v) { return Math.round(v * 10) / 10; }
 
-function showPage(id, btn) {
+let currentAlimTab = 'journee';
+function showPage(id) {
+  // 'repas' = ancien nom interne du module Alimentation
+  const pageId = (id === 'repas') ? 'alimentation' : id;
+  const navId  = (id === 'repas') ? 'nav-alim' : (id === 'recettes' ? 'nav-rec' : 'nav-poids');
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-  if (btn) btn.classList.add('active');
-  if (id === 'poids') renderPoids();
-  if (id === 'repas') showRepasTab('journee');
+  const pg = document.getElementById('page-' + pageId); if (pg) pg.classList.add('active');
+  const nv = document.getElementById(navId); if (nv) nv.classList.add('active');
+  if (pageId === 'poids') renderPoids();
+  if (pageId === 'alimentation') showRepasTab(currentAlimTab || 'journee');
+  if (pageId === 'recettes') {
+    const rt = document.getElementById('rtab-recettes'); if (rt) rt.style.display = 'block';
+    if (!recSelectMode) recGoEtage1();
+  }
 }
 
 // ==================== POIDS ====================
@@ -1054,7 +1067,9 @@ let ingrCatFilter  = 'tous';
 
 /* ============ NAVIGATION SOUS-ONGLETS ============ */
 function showRepasTab(tab) {
-  ['journee','recettes','ingr'].forEach(t=>{
+  if (tab==='recettes') { showPage('recettes'); return; } // Recettes est devenu un onglet a part
+  currentAlimTab = tab;
+  ['journee','ingr'].forEach(t=>{
     const el = document.getElementById('rtab-'+t);
     if (el) el.style.display = (t===tab) ? 'block' : 'none';
     const btn = document.getElementById('rnav-'+t+'-btn');
@@ -1065,7 +1080,6 @@ function showRepasTab(tab) {
     const main=document.getElementById('day-main'); if(main) main.style.display='block';
     renderDay();
   }
-  if (tab==='recettes') { if(!recSelectMode) recGoEtage1(); }
   if (tab==='ingr')     renderIngredients();
 }
 
@@ -1182,7 +1196,7 @@ function rfAddIng(){
   // On garde le formulaire recette ouvert en arrière-plan et on va choisir un ingrédient
   rfFromForm = true;
   ingrSelectMode = true;
-  showRepasTab('ingr');
+  showPage('repas'); showRepasTab('ingr');
   const b=document.getElementById('ingr-select-mode-banner');
   if(b){ b.style.display='flex'; }
   renderIngredients();
@@ -1329,7 +1343,7 @@ function addIngredientToDay(moment){
   recSelectMoment = moment;
   ingrToDayMode = true;
   ingrSelectMode = true;
-  showRepasTab('ingr');
+  showPage('repas'); showRepasTab('ingr');
   const b=document.getElementById('ingr-select-mode-banner'); if(b) b.style.display='flex';
   renderIngredients();
 }
@@ -1337,13 +1351,13 @@ function addIngredientToDay(moment){
 function addRecetteToDay(moment){
   recSelectMoment=moment; recSelectMode=true;
   const b=document.getElementById('rec-banner'); if(b){ b.style.display='flex'; document.getElementById('rec-banner-moment').textContent=moment; }
-  showRepasTab('recettes');
+  showPage('recettes');
   recGoEtage1();
 }
 function recCancelSelect(){
   recSelectMode=false; recSelectMoment=null;
   const b=document.getElementById('rec-banner'); if(b) b.style.display='none';
-  showRepasTab('journee');
+  currentAlimTab='journee'; showPage('repas');
 }
 function getJourDate(){ return new Date().toISOString().split('T')[0]; }
 let selectedDate = getJourDate();
@@ -1419,7 +1433,7 @@ function pickRecette(id){
   recSelectMode=false; recSelectMoment=null;
   const b=document.getElementById('rec-banner'); if(b) b.style.display='none';
   showToast('➕ '+r.nom+' ajoutée');
-  showRepasTab('journee');
+  currentAlimTab='journee'; showPage('repas');
 }
 
 /* ============ JOURNÉE ============ */
@@ -1571,7 +1585,7 @@ function selectIngrFromLib(id){
     }
     ingrToDayMode=false; ingrSelectMode=false;
     const b=document.getElementById('ingr-select-mode-banner'); if(b) b.style.display='none';
-    showRepasTab('journee');
+    currentAlimTab='journee'; showPage('repas');
     if(s) showToast('➕ '+s.nom+' ajouté');
     return;
   }
@@ -1585,11 +1599,8 @@ function selectIngrFromLib(id){
   }
   rfFromForm=false; ingrSelectMode=false;
   const b=document.getElementById('ingr-select-mode-banner'); if(b) b.style.display='none';
-  // revenir à l'onglet recettes, écran 3 (formulaire) toujours rempli
-  ['journee','recettes','ingr'].forEach(t=>{
-    const el=document.getElementById('rtab-'+t); if(el) el.style.display=(t==='recettes')?'block':'none';
-    const btn=document.getElementById('rnav-'+t+'-btn'); if(btn) btn.classList.toggle('active', t==='recettes');
-  });
+  // revenir à la page recettes, écran 3 (formulaire) toujours rempli
+  showPage('recettes');
   recShow(3);
   renderRfIngs();
   window.scrollTo({top:0,behavior:'smooth'});
@@ -1600,16 +1611,13 @@ function cancelIngrSelect(){
   const b=document.getElementById('ingr-select-mode-banner'); if(b) b.style.display='none';
   if(ingrToDayMode){
     ingrToDayMode=false;
-    showRepasTab('journee');
+    currentAlimTab='journee'; showPage('repas');
     return;
   }
   if(rfFromForm){
     // on annule le choix et on revient au formulaire recette tel quel
     rfFromForm=false;
-    ['journee','recettes','ingr'].forEach(t=>{
-      const el=document.getElementById('rtab-'+t); if(el) el.style.display=(t==='recettes')?'block':'none';
-      const btn=document.getElementById('rnav-'+t+'-btn'); if(btn) btn.classList.toggle('active', t==='recettes');
-    });
+    showPage('recettes');
     recShow(3);
     window.scrollTo({top:0,behavior:'smooth'});
     return;
