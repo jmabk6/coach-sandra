@@ -681,8 +681,13 @@ const firebaseConfig = {
   appId: "1:886753114102:web:b5c0bcb87defd3c7de39d7"
 };
 
-// Clés synchronisées vers le cloud
-const SYNC_KEYS = ['sandra_poids','sandra_objectif','sandra_ingredients','sandra_repas','sandra_categories','sandra_recettes','sandra_journal','sandra_cat_aliments'];
+// === Données COMMUNES (catalogue partagé entre TOUS les comptes) ===
+const SHARED_KEYS = ['sandra_ingredients','sandra_categories','sandra_recettes','sandra_cat_aliments'];
+// === Données PRIVÉES (propres à chaque compte) ===
+const PRIVATE_KEYS = ['sandra_poids','sandra_objectif','sandra_journal','sandra_repas'];
+const SYNC_KEYS = SHARED_KEYS.concat(PRIVATE_KEYS);
+function isSyncKey(k){ return SYNC_KEYS.includes(k); }
+function isShared(k){ return SHARED_KEYS.includes(k); }
 
 firebase.initializeApp(firebaseConfig);
 const _auth = firebase.auth();
@@ -702,12 +707,12 @@ const _ls = window.localStorage;
 // --- Shim : redirige localStorage vers le cache mémoire pour les clés sync ---
 const _shim = {
   getItem(k){
-    if (SYNC_KEYS.includes(k)) return (k in _mem) ? _mem[k] : null;
+    if (isSyncKey(k)) return (k in _mem) ? _mem[k] : null;
     try { return _ls.getItem(k); } catch(e){ return null; }
   },
   setItem(k,v){
     v = String(v);
-    if (SYNC_KEYS.includes(k)) {
+    if (isSyncKey(k)) {
       _mem[k] = v;
       _pushCloud(k, v);   // écriture cloud en fond (fire-and-forget)
       try { _ls.setItem(k, v); } catch(e){}  // double sécurité locale
@@ -716,7 +721,7 @@ const _shim = {
     try { _ls.setItem(k, v); } catch(e){}
   },
   removeItem(k){
-    if (SYNC_KEYS.includes(k)) { delete _mem[k]; _pushCloud(k, null); }
+    if (isSyncKey(k)) { delete _mem[k]; _pushCloud(k, null); }
     try { _ls.removeItem(k); } catch(e){}
   }
 };
@@ -730,10 +735,14 @@ try {
   window.localStorage.removeItem = _shim.removeItem;
 }
 
-function _docRef(k){ return _db.collection('users').doc(_uid).collection('store').doc(k); }
+function _docRef(k){
+  // Catalogue commun -> espace partagé ; le reste -> sous le compte de l'utilisateur
+  if (isShared(k)) return _db.collection('shared').doc('catalogue').collection('store').doc(k);
+  return _db.collection('users').doc(_uid).collection('store').doc(k);
+}
 
 function _pushCloud(k, v){
-  if (!_uid || !SYNC_KEYS.includes(k)) return;
+  if (!_uid || !isSyncKey(k)) return;
   clearTimeout(_writeTimers[k]);
   _writeTimers[k] = setTimeout(()=>{
     const ref = _docRef(k);
@@ -743,16 +752,34 @@ function _pushCloud(k, v){
 }
 
 async function _pullCloud(){
-  const snap = await _db.collection('users').doc(_uid).collection('store').get();
-  snap.forEach(doc=>{
-    const d = doc.data();
-    if (d && typeof d.v === 'string') _mem[doc.id] = d.v;
-  });
-  // Migration douce : si le cloud est vide mais qu'il y a des données locales, on les remonte
-  for (const k of SYNC_KEYS){
+  // 1) Données PRIVÉES (sous le compte de l'utilisateur)
+  const snapU = await _db.collection('users').doc(_uid).collection('store').get();
+  const userDocs = {};
+  snapU.forEach(doc=>{ const d=doc.data(); if (d && typeof d.v==='string') userDocs[doc.id]=d.v; });
+  PRIVATE_KEYS.forEach(k=>{ if (k in userDocs) _mem[k]=userDocs[k]; });
+
+  // 2) Catalogue COMMUN (espace partagé)
+  const sharedHas = {};
+  try {
+    const snapS = await _db.collection('shared').doc('catalogue').collection('store').get();
+    snapS.forEach(doc=>{ const d=doc.data(); if (d && typeof d.v==='string'){ _mem[doc.id]=d.v; sharedHas[doc.id]=true; } });
+  } catch(e){ console.warn('lecture catalogue commun', e); }
+
+  // 3) MIGRATION SANS PERTE : si une clé commune n'existe pas encore dans le partagé
+  //    mais qu'on l'a dans l'ancien emplacement (sous le compte) ou en local, on la pousse vers le commun.
+  for (const k of SHARED_KEYS){
+    if (!sharedHas[k]){
+      let val = (k in userDocs) ? userDocs[k] : null;
+      if (val===null){ try { val=_ls.getItem(k); } catch(e){} }
+      if (val!==null){ _mem[k]=val; _pushCloud(k, val); }  // _docRef enverra bien vers shared/catalogue
+    }
+  }
+
+  // 4) Migration locale -> privé (comme avant) pour les clés privées manquantes
+  for (const k of PRIVATE_KEYS){
     if (!(k in _mem)){
-      let local = null; try { local = _ls.getItem(k); } catch(e){}
-      if (local !== null){ _mem[k] = local; _pushCloud(k, local); }
+      let local=null; try { local=_ls.getItem(k); } catch(e){}
+      if (local!==null){ _mem[k]=local; _pushCloud(k, local); }
     }
   }
 }
@@ -845,23 +872,36 @@ function showPage(id) {
 }
 
 // ==================== POIDS ====================
-const W_KEY = 'sandra_poids';
-const O_KEY = 'sandra_objectif';
+/* ===== PROFILS (poids + journal privés par profil ; recettes/aliments communs) ===== */
+const PROFILES = [
+  { id:'sandra',     name:'Sandra',      taille:1.61, objDef:46, prefix:'sandra_' },
+  { id:'jeanmichel', name:'Jean-Michel', taille:1.78, objDef:84, prefix:'jeanmichel_' },
+  { id:'levana',     name:'Lévana',      taille:1.65, objDef:50, prefix:'levana_' }
+];
+function getProfileId(){ return localStorage.getItem('coach_profile') || 'sandra'; }
+function setProfileId(id){ localStorage.setItem('coach_profile', id); }
+function curProfile(){ return PROFILES.find(p=>p.id===getProfileId()) || PROFILES[0]; }
+// Clés privées dynamiques. Sandra conserve EXACTEMENT ses clés historiques (sandra_poids…)
+function W_KEY(){ return curProfile().prefix + 'poids'; }
+function O_KEY(){ return curProfile().prefix + 'objectif'; }
+function TAILLE_KEY(){ return curProfile().prefix + 'taille'; }
+function getTaille(){ const v=parseFloat(localStorage.getItem(TAILLE_KEY())); return (v&&v>0.5&&v<2.5)?v:curProfile().taille; }
+function setTaille(v){ localStorage.setItem(TAILLE_KEY(), v); }
 
-function loadWeights() { try { return JSON.parse(localStorage.getItem(W_KEY)||'[]'); } catch(e){return[];} }
-function saveWeights(d){ localStorage.setItem(W_KEY, JSON.stringify(d)); }
-function getObjectif() { return parseFloat(localStorage.getItem(O_KEY)) || 46; }
+function loadWeights() { try { return JSON.parse(localStorage.getItem(W_KEY())||'[]'); } catch(e){return[];} }
+function saveWeights(d){ localStorage.setItem(W_KEY(), JSON.stringify(d)); }
+function getObjectif() { return parseFloat(localStorage.getItem(O_KEY())) || curProfile().objDef; }
 function getDepart()   { const d=loadWeights(); return d.length ? d[0].poids : null; }
 
 function saveObjectif() {
   const v = parseFloat(document.getElementById('obj-input').value);
   if (!v||v<20||v>200) { showToast('⚠️ Poids invalide'); return; }
-  localStorage.setItem(O_KEY, v);
+  localStorage.setItem(O_KEY(), v);
   renderPoids();
   showToast('✅ Objectif enregistré !');
 }
 
-function calcIMC(p) { return rnd(p / (TAILLE * TAILLE)); }
+function calcIMC(p) { const t=getTaille(); return rnd(p / (t * t)); }
 
 function addWeight() {
   const v = parseFloat(document.getElementById('weight-input').value);
@@ -1100,7 +1140,7 @@ const INGR_KEY  = 'sandra_ingredients';
 const REPAS_KEY = 'sandra_repas';
 const CAT_KEY = 'sandra_categories';
 const RECETTE_KEY = 'sandra_recettes';
-const JOURNAL_KEY = 'sandra_journal';
+const JOURNAL_KEY_BASE = 'journal';
 
 const SANDRA_CATS_DEFAULT = [{"key": "entrees", "emoji": "🍽️", "name": "Entrées"}, {"key": "salades", "emoji": "🥗", "name": "Salades"}, {"key": "poulet", "emoji": "🍗", "name": "Poulet"}, {"key": "viandes", "emoji": "🥩", "name": "Viandes"}, {"key": "poissons", "emoji": "🐟", "name": "Poissons"}, {"key": "vege", "emoji": "🥘", "name": "Végé / mixtes"}, {"key": "desserts", "emoji": "🍰", "name": "Desserts"}];
 const SANDRA_RECETTES_DEFAULT = [{"id": 1, "nom": "Houmous", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 2, "nom": "Caviar d’aubergine", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 3, "nom": "Poivrons grillés", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 4, "nom": "Choukchouka", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 5, "nom": "Courgette à la harissa", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 6, "nom": "Carottes au cumin", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 7, "nom": "Œufs à l’israélienne", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 8, "nom": "Tomates/Concombres/Oignons", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 9, "nom": "Fenouil", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 10, "nom": "Coleslaw", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 11, "nom": "Salade de patates douces", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 12, "nom": "Pâté", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 13, "nom": "Saumon fumé", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 14, "nom": "Mechouïa au thon", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 15, "nom": "Asperges sauce mousseline", "cats": ["entrees"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 16, "nom": "Salade césar", "cats": ["salades"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 17, "nom": "Taboulé", "cats": ["salades"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 18, "nom": "Salade grecque", "cats": ["salades"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 19, "nom": "Salade de quinoa", "cats": ["salades"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 20, "nom": "Poulet aux olives", "cats": ["poulet"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 21, "nom": "Parguit aux champignons de papa", "cats": ["poulet"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 22, "nom": "Osso buco", "cats": ["viandes"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 23, "nom": "Rosbeef", "cats": ["viandes"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 24, "nom": "Bœuf Bourguignon", "cats": ["viandes"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 25, "nom": "Couscous", "cats": ["viandes"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 26, "nom": "Épaule d’agneau", "cats": ["viandes"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 27, "nom": "Saumon en papillote", "cats": ["poissons"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 28, "nom": "Lasagne au thon", "cats": ["poissons"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 29, "nom": "Quiche au saumon", "cats": ["poissons"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 30, "nom": "Quiche au thon", "cats": ["poissons"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 31, "nom": "Torsade au saumon", "cats": ["poissons"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 32, "nom": "Pizza maison", "cats": ["vege"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 33, "nom": "Bagel maison", "cats": ["vege"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 34, "nom": "Riz aux légumes", "cats": ["vege"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 35, "nom": "Gâteau au chocolat", "cats": ["desserts"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 36, "nom": "Tarte aux pommes", "cats": ["desserts"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 37, "nom": "Galettes de mamie", "cats": ["desserts"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 38, "nom": "Croquants", "cats": ["desserts"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 39, "nom": "Mousse au chocolat", "cats": ["desserts"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}, {"id": 40, "nom": "Tiramisu", "cats": ["desserts"], "ings": [], "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fib": 0}];
@@ -1126,8 +1166,9 @@ function aCatCount(key){ return loadIngr().filter(i=>i.cat===key).length; }
 
 function loadRecettes(){ try{ let s=JSON.parse(localStorage.getItem(RECETTE_KEY)||'[]'); if(!s.length){ localStorage.setItem(RECETTE_KEY,JSON.stringify(SANDRA_RECETTES_DEFAULT)); return SANDRA_RECETTES_DEFAULT.slice(); } return s; }catch(e){ return SANDRA_RECETTES_DEFAULT.slice(); } }
 function saveRecettes(d){ localStorage.setItem(RECETTE_KEY, JSON.stringify(d)); }
-function loadJournal(){ try{ return JSON.parse(localStorage.getItem(JOURNAL_KEY)||'[]'); }catch(e){ return []; } }
-function saveJournal(d){ localStorage.setItem(JOURNAL_KEY, JSON.stringify(d)); }
+function JKEY(){ return curProfile().prefix + JOURNAL_KEY_BASE; }
+function loadJournal(){ try{ return JSON.parse(localStorage.getItem(JKEY())||'[]'); }catch(e){ return []; } }
+function saveJournal(d){ localStorage.setItem(JKEY(), JSON.stringify(d)); }
 
 
 function loadIngr()      { try { let s=JSON.parse(localStorage.getItem(INGR_KEY)||'[]'); if(!s.length){localStorage.setItem(INGR_KEY,JSON.stringify(SANDRA_INGREDIENTS_DEFAULT));return SANDRA_INGREDIENTS_DEFAULT;} s=s.map(i=>{if(!i.cat){const d=SANDRA_INGREDIENTS_DEFAULT.find(d=>d.nom===i.nom);return{...i,cat:d?d.cat:'autres'};}return i;}); return s; } catch(e){return SANDRA_INGREDIENTS_DEFAULT;} }
