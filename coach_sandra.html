@@ -218,6 +218,20 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 .day-row input{width:54px;background:var(--bg);border:1.5px solid var(--accent);border-radius:8px;padding:5px;font-size:13px;font-weight:700;color:var(--accent);text-align:center;outline:none;}
 .day-row .dunit{font-size:11px;color:var(--muted);min-width:30px;}
 
+/* ===== Compo recette (joli bloc) ===== */
+.compo-box{background:linear-gradient(160deg,#fff,#fdf0f0);border:1.5px solid var(--accent-light);border-radius:18px;padding:16px;margin-top:14px;box-shadow:0 6px 20px rgba(192,97,106,.08);}
+.compo-head{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.compo-head .t{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:19px;color:var(--accent);}
+.compo-head .s{font-size:11px;color:var(--muted);margin-left:auto;text-transform:uppercase;letter-spacing:.5px;font-weight:700;}
+.compo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.compo-cell{background:#fff;border:1px solid var(--border);border-radius:14px;padding:11px 12px;}
+.compo-cell.kcal{grid-column:1 / -1;background:#fff;border-color:#f3c9bd;}
+.compo-cell .lbl{font-size:12px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:5px;}
+.compo-cell .inrow{display:flex;align-items:baseline;gap:4px;}
+.compo-cell input{width:100%;border:none;outline:none;background:transparent;font-family:'Cormorant Garamond',serif;font-weight:800;font-size:30px;line-height:1;color:var(--text);}
+.compo-cell.kcal input{font-size:38px;color:var(--accent);}
+.compo-cell .u{font-size:13px;color:var(--muted);font-weight:600;}
+
 /* jour passé en lecture seule */
 .day-readonly input{ pointer-events:none; opacity:.7; border-color:var(--border)!important; }
 .day-readonly .btn-del{ display:none!important; }
@@ -585,13 +599,15 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
       <label class="flabel" style="margin-top:14px;">Recette (préparation, notes…)</label>
       <textarea id="rf-texte" class="finput" rows="6" placeholder="Étapes de préparation, astuces, remarques…" style="resize:none;overflow:hidden;font-family:'Inter',sans-serif;min-height:140px;" oninput="autoGrow(this)"></textarea>
 
-      <label class="flabel" style="margin-top:14px;">Composition pour 1 portion</label>
-      <div class="macros-grid-form">
-        <div><div class="macro-field-label" style="color:#e76f51;">🔥 Calories</div><div class="macro-input-wrap"><input type="number" id="rf-kcal" class="macro-input" placeholder="0"><span class="macro-unit">kcal</span></div></div>
-        <div><div class="macro-field-label" style="color:#2d6a4f;">💪 Protéines</div><div class="macro-input-wrap"><input type="number" id="rf-prot" class="macro-input" placeholder="0"><span class="macro-unit">g</span></div></div>
-        <div><div class="macro-field-label" style="color:#457b9d;">🌾 Glucides</div><div class="macro-input-wrap"><input type="number" id="rf-gluc" class="macro-input" placeholder="0"><span class="macro-unit">g</span></div></div>
-        <div><div class="macro-field-label" style="color:#d97706;">🥑 Lipides</div><div class="macro-input-wrap"><input type="number" id="rf-lip" class="macro-input" placeholder="0"><span class="macro-unit">g</span></div></div>
-        <div><div class="macro-field-label" style="color:#52b788;">🌿 Fibres</div><div class="macro-input-wrap"><input type="number" id="rf-fib" class="macro-input" placeholder="0"><span class="macro-unit">g</span></div></div>
+      <div class="compo-box">
+        <div class="compo-head"><span style="font-size:20px;">📊</span><span class="t">Composition</span><span class="s">pour 1 portion</span></div>
+        <div class="compo-grid">
+          <div class="compo-cell kcal"><div class="lbl" style="color:#e76f51;">🔥 Calories</div><div class="inrow"><input type="number" id="rf-kcal" placeholder="0"><span class="u">kcal</span></div></div>
+          <div class="compo-cell"><div class="lbl" style="color:#2d6a4f;">💪 Protéines</div><div class="inrow"><input type="number" id="rf-prot" placeholder="0"><span class="u">g</span></div></div>
+          <div class="compo-cell"><div class="lbl" style="color:#457b9d;">🌾 Glucides</div><div class="inrow"><input type="number" id="rf-gluc" placeholder="0"><span class="u">g</span></div></div>
+          <div class="compo-cell"><div class="lbl" style="color:#d97706;">🥑 Lipides</div><div class="inrow"><input type="number" id="rf-lip" placeholder="0"><span class="u">g</span></div></div>
+          <div class="compo-cell"><div class="lbl" style="color:#52b788;">🌿 Fibres</div><div class="inrow"><input type="number" id="rf-fib" placeholder="0"><span class="u">g</span></div></div>
+        </div>
       </div>
 
       <div style="display:flex;gap:8px;margin-top:12px;">
