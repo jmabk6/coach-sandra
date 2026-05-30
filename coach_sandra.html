@@ -289,7 +289,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-05b</div>
+  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-05c</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -356,7 +356,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
   <div class="card">
     <div class="card-title">Enregistrer mon poids</div>
     <div class="weight-row">
-      <input type="number" class="weight-input" id="weight-input" placeholder="41.0" step="0.1" min="20" max="200">
+      <input type="number" class="weight-input" id="weight-input" placeholder="ex. 65" step="0.1" min="20" max="200">
       <button class="btn-add" onclick="addWeight()">+ Ajouter</button>
     </div>
     <div style="font-size:12px;color:var(--muted);margin-top:8px;">Date : <strong id="poids-date"></strong></div>
@@ -406,10 +406,10 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
     </div>
     <div class="bench-row" style="background:#e8f5e9;">
       <span><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#2d6a4f;margin-right:6px;"></span>Idéal ✅</span>
-      <span style="color:var(--muted);">48–65 kg · IMC 18.5–25</span>
+      <span style="color:var(--muted);">IMC 18.5–25</span>
     </div>
     <div class="bench-row" style="background:rgba(231,111,81,0.08);" id="bench-moi" style="display:none;">
-      <span style="font-weight:600;">📍 Sandra</span>
+      <span style="font-weight:600;" id="bench-moi-nom">📍 Moi</span>
       <span style="color:var(--accent);font-weight:600;" id="bench-moi-val">—</span>
     </div>
   </div>
@@ -1010,6 +1010,7 @@ function renderPoids() {
     const tM = (typeof getTaille==='function') ? getTaille() : 1.61;
     const titleEl = document.getElementById('bench-title');
     if(titleEl) titleEl.textContent = 'Référence · ' + sexeLbl + ' · ' + tM.toFixed(2).replace('.','m');
+    const moiNom=document.getElementById('bench-moi-nom'); if(moiNom){ const pn=(prof.prenom)||'Moi'; moiNom.textContent='📍 '+pn; }
     document.getElementById('bench-val').textContent = cur.toFixed(1) + ' kg · IMC ' + imc;
     // échelle IMC 15 -> 35 (largeur 20)
     const benchPct = Math.min(97, Math.max(3, ((imc - 15) / 20) * 100));
@@ -2124,7 +2125,7 @@ function renderRepasAll() { renderDay(); }
     <h3>Mon profil</h3>
     <div id="prof-sub" style="display:none;font-size:13px;color:var(--muted);margin-bottom:8px;">Bienvenue ! Renseigne ton profil pour commencer.</div>
     <label class="flabel">Prénom</label>
-    <input class="finput" id="prof-prenom" placeholder="ex. Sandra">
+    <input class="finput" id="prof-prenom" placeholder="Ton prénom">
     <label class="flabel">Sexe</label>
     <select class="finput" id="prof-sexe" style="appearance:none;">
       <option value="">— choisir —</option>
