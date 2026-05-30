@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-exocats</div>
+  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-cardio</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -1424,9 +1424,28 @@ const SANDRA_ECATS_DEFAULT = [
   {key:'bras', emoji:'💪', name:'Bras'},
   {key:'jambes', emoji:'🦵', name:'Jambes'},
   {key:'gainage', emoji:'🧱', name:'Gainage'},
-  {key:'stretching', emoji:'🧘', name:'Stretching'}
+  {key:'stretching', emoji:'🧘', name:'Stretching'},
+  {key:'cardio', emoji:'🏃', name:'Cardio'}
 ];
-function loadECats(){ try{ let s=JSON.parse(localStorage.getItem(ECAT_KEY)||'[]'); if(!s.length){ localStorage.setItem(ECAT_KEY,JSON.stringify(SANDRA_ECATS_DEFAULT)); return SANDRA_ECATS_DEFAULT.slice(); } return s; }catch(e){ return SANDRA_ECATS_DEFAULT.slice(); } }
+function loadECats(){
+  try{
+    let s=JSON.parse(localStorage.getItem(ECAT_KEY)||'[]');
+    if(!s.length){ localStorage.setItem(ECAT_KEY,JSON.stringify(SANDRA_ECATS_DEFAULT)); return SANDRA_ECATS_DEFAULT.slice(); }
+    // Auto-ajout : toute catégorie présente dans les exos mais absente de la liste (ex. cardio ajouté après coup)
+    const data = (window.EXO_DATA||EXO_DATA||[]);
+    const have = new Set(s.map(c=>c.key));
+    let changed=false;
+    data.forEach(e=>{
+      if(e.cat && !have.has(e.cat)){
+        const def = SANDRA_ECATS_DEFAULT.find(d=>d.key===e.cat);
+        s.push(def || {key:e.cat, emoji:'🏋️', name:e.cat.charAt(0).toUpperCase()+e.cat.slice(1)});
+        have.add(e.cat); changed=true;
+      }
+    });
+    if(changed) localStorage.setItem(ECAT_KEY, JSON.stringify(s));
+    return s;
+  }catch(e){ return SANDRA_ECATS_DEFAULT.slice(); }
+}
 function saveECats(d){ localStorage.setItem(ECAT_KEY, JSON.stringify(d)); }
 function eCatLabel(key){ const c=loadECats().find(c=>c.key===key); return c?c.emoji+' '+c.name:(key||''); }
 function eCatCount(key){ return (window.EXO_DATA||EXO_DATA||[]).filter(e=>e.cat===key).length; }
@@ -2793,7 +2812,7 @@ function renderSeaExoPicker() {
   if (!el) return;
   el.innerHTML=EXO_DATA.map(e=>`
     <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface);border-radius:10px;border:1.5px solid var(--border);cursor:pointer;" id="sea-exo-${e.id}" onclick="toggleSeaExo(${e.id},'${e.nom.replace(/'/g,"\\'")}')">
-      <img src="${e.thumb}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0;">
+      ${e.thumb ? `<img src="${e.thumb}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0;">` : `<div style="width:40px;height:40px;border-radius:8px;flex-shrink:0;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:22px;">${e.emoji||'🏋️'}</div>`}
       <div style="flex:1;font-size:13px;font-weight:500;">${e.nom}</div>
       <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
         <span style="font-size:10px;color:var(--muted);">Séries</span>
@@ -2940,15 +2959,17 @@ function renderExoSearchAll(){
 }
 
 function exoCardHTML(e){
-  const chargesHtml = e.cat==='gainage'||e.cat==='stretching'
-    ? `<span style="font-size:10px;color:var(--muted);">🔴${e.charges[0]}s · 🟡${e.charges[1]}s · 🟢${e.charges[2]}s · ⭐${e.charges[3]}s</span>`
+  const _isTime = (e.cat==='gainage'||e.cat==='stretching'||e.cat==='cardio');
+  const _unit = e.cat==='cardio' ? 'min' : 's';
+  const chargesHtml = _isTime
+    ? `<span style="font-size:10px;color:var(--muted);">🔴${e.charges[0]}${_unit} · 🟡${e.charges[1]}${_unit} · 🟢${e.charges[2]}${_unit} · ⭐${e.charges[3]}${_unit}</span>`
     : `<span style="background:#ffebe8;color:#e63946;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">🔴${e.charges[0]}</span>
        <span style="background:#fff3e0;color:#e67c00;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">🟡${e.charges[1]}</span>
        <span style="background:#e8f5e9;color:#2d6a4f;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">🟢${e.charges[2]}</span>
        <span style="background:#fff8e1;color:#d97706;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">⭐${e.charges[3]}</span>`;
   const isSpecial = e.id===10;
   return `<div onclick="showExoDetail(${e.id})" style="display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:14px;padding:10px 12px;margin-bottom:8px;border:${isSpecial?'1px solid #f59e0b':'1px solid var(--border)'};cursor:pointer;${isSpecial?'border-left:3px solid #f59e0b;':''}">
-    <img src="${e.thumb}" style="width:56px;height:56px;border-radius:10px;object-fit:cover;flex-shrink:0;border:1px solid var(--border);">
+    ${e.thumb ? `<img src="${e.thumb}" style="width:56px;height:56px;border-radius:10px;object-fit:cover;flex-shrink:0;border:1px solid var(--border);">` : `<div style="width:56px;height:56px;border-radius:10px;flex-shrink:0;border:1px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:30px;">${e.emoji||'🏋️'}</div>`}
     <div style="flex:1;min-width:0;">
       <div style="font-weight:700;font-size:14px;margin-bottom:3px;">${e.nom}</div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:3px;">
@@ -2976,7 +2997,14 @@ function showExoDetail(id) {
   if (!panel) return;
 
   document.getElementById('det-nom').textContent=e.nom;
-  document.getElementById('det-img').src=e.full;
+  const _img=document.getElementById('det-img');
+  if(e.full){ _img.style.display='block'; _img.src=e.full; }
+  else { _img.style.display='none'; }
+  // bandeau emoji si pas de photo
+  let _emo=document.getElementById('det-emoji');
+  if(!_emo){ _emo=document.createElement('div'); _emo.id='det-emoji'; _emo.style.cssText='font-size:64px;text-align:center;margin-bottom:12px;'; _img.parentNode.insertBefore(_emo, _img); }
+  _emo.style.display = e.full ? 'none' : 'block';
+  _emo.textContent = e.full ? '' : (e.emoji||'🏋️');
   document.getElementById('det-muscles').innerHTML=
     e.muscles_p.map(m=>`<span style="background:rgba(230,57,70,0.1);color:#e63946;border:1px solid rgba(230,57,70,0.25);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;">🔴 ${m}</span>`).join('')+
     e.muscles_s.map(m=>`<span style="background:rgba(244,162,97,0.1);color:#e67c00;border:1px solid rgba(244,162,97,0.25);border-radius:20px;padding:4px 12px;font-size:12px;">🟡 ${m}</span>`).join('');
