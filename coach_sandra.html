@@ -503,28 +503,12 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
       <button onclick="cancelIngrSelect()" style="background:none;border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;white-space:nowrap;">← Retour</button>
     </div>
     <div class="search-bar" style="margin-bottom:10px;"><span style="color:var(--muted);">🔍</span><input type="text" id="ingr-lib-search" placeholder="Rechercher…" oninput="onIngrSearchInput()" onfocus="onIngrSearchFocus()"><button id="ingr-search-clear" onclick="clearIngrSearch()" style="display:none;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;line-height:1;">✕</button></div>
-    <div class="filter-wrap" style="margin-bottom:12px;">
-      <button class="filter-pill active" data-icat="tous" onclick="filterIngr(this)">Tous</button>
-      <button class="filter-pill" data-icat="laitiers" onclick="filterIngr(this)">🥚 Laitiers</button>
-      <button class="filter-pill" data-icat="poissons" onclick="filterIngr(this)">🐟 Poissons</button>
-      <button class="filter-pill" data-icat="viandes" onclick="filterIngr(this)">🍗 Viandes</button>
-      <button class="filter-pill" data-icat="legumes" onclick="filterIngr(this)">🥦 Légumes</button>
-      <button class="filter-pill" data-icat="fruits" onclick="filterIngr(this)">🍋 Fruits</button>
-      <button class="filter-pill" data-icat="feculents" onclick="filterIngr(this)">🍞 Féculents</button>
-      <button class="filter-pill" data-icat="condiments" onclick="filterIngr(this)">🫒 Condiments</button>
-    </div>
+    <div class="filter-wrap" id="ingr-cat-filters" style="margin-bottom:6px;"></div>
+    <button onclick="openACatManager()" style="background:none;border:none;color:var(--accent);font-size:12px;cursor:pointer;text-decoration:underline;margin-bottom:12px;padding:0;">✎ Gérer les catégories</button>
     <div class="card" id="form-ingr" style="display:none;">
       <div class="card-title" style="color:var(--accent);">➕ Nouvel aliment</div>
       <input type="text" id="ingr-nom" class="form-input" placeholder="Nom de l'aliment" style="margin-bottom:8px;">
-      <select id="ingr-cat" class="form-input" style="margin-bottom:8px;appearance:none;">
-        <option value="laitiers">🥚 Laitiers</option>
-        <option value="poissons">🐟 Poissons</option>
-        <option value="viandes">🍗 Viandes</option>
-        <option value="legumes">🥦 Légumes</option>
-        <option value="fruits">🍋 Fruits</option>
-        <option value="feculents">🍞 Féculents</option>
-        <option value="condiments">🫒 Condiments</option>
-      </select>
+      <select id="ingr-cat" class="form-input" style="margin-bottom:8px;appearance:none;"></select>
       <select id="ingr-unit" class="form-input" style="margin-bottom:8px;appearance:none;" onchange="updateUnitLabel()">
         <optgroup label="Portions (recommandé)">
           <option value="portion">🍽️ Par portion (1 assiette)</option>
@@ -679,7 +663,7 @@ const firebaseConfig = {
 };
 
 // Clés synchronisées vers le cloud
-const SYNC_KEYS = ['sandra_poids','sandra_objectif','sandra_ingredients','sandra_repas','sandra_categories','sandra_recettes','sandra_journal'];
+const SYNC_KEYS = ['sandra_poids','sandra_objectif','sandra_ingredients','sandra_repas','sandra_categories','sandra_recettes','sandra_journal','sandra_cat_aliments'];
 
 firebase.initializeApp(firebaseConfig);
 const _auth = firebase.auth();
@@ -1096,6 +1080,23 @@ const SANDRA_RECETTES_DEFAULT = [{"id": 1, "nom": "Houmous", "cats": ["entrees"]
 
 function loadCats(){ try{ let s=JSON.parse(localStorage.getItem(CAT_KEY)||'[]'); if(!s.length){ localStorage.setItem(CAT_KEY,JSON.stringify(SANDRA_CATS_DEFAULT)); return SANDRA_CATS_DEFAULT.slice(); } return s; }catch(e){ return SANDRA_CATS_DEFAULT.slice(); } }
 function saveCats(d){ localStorage.setItem(CAT_KEY, JSON.stringify(d)); }
+
+/* ===== Catégories d'ALIMENTS (modifiables) ===== */
+const ACAT_KEY = 'sandra_cat_aliments';
+const SANDRA_ACATS_DEFAULT = [
+  {key:'laitiers', emoji:'🥚', name:'Laitiers'},
+  {key:'poissons', emoji:'🐟', name:'Poissons'},
+  {key:'viandes', emoji:'🍗', name:'Viandes'},
+  {key:'legumes', emoji:'🥦', name:'Légumes'},
+  {key:'fruits', emoji:'🍋', name:'Fruits'},
+  {key:'feculents', emoji:'🍞', name:'Féculents'},
+  {key:'condiments', emoji:'🫒', name:'Condiments'}
+];
+function loadACats(){ try{ let s=JSON.parse(localStorage.getItem(ACAT_KEY)||'[]'); if(!s.length){ localStorage.setItem(ACAT_KEY,JSON.stringify(SANDRA_ACATS_DEFAULT)); return SANDRA_ACATS_DEFAULT.slice(); } return s; }catch(e){ return SANDRA_ACATS_DEFAULT.slice(); } }
+function saveACats(d){ localStorage.setItem(ACAT_KEY, JSON.stringify(d)); }
+function aCatLabel(key){ const c=loadACats().find(c=>c.key===key); return c?c.emoji+' '+c.name:(key||''); }
+function aCatCount(key){ return loadIngr().filter(i=>i.cat===key).length; }
+
 function loadRecettes(){ try{ let s=JSON.parse(localStorage.getItem(RECETTE_KEY)||'[]'); if(!s.length){ localStorage.setItem(RECETTE_KEY,JSON.stringify(SANDRA_RECETTES_DEFAULT)); return SANDRA_RECETTES_DEFAULT.slice(); } return s; }catch(e){ return SANDRA_RECETTES_DEFAULT.slice(); } }
 function saveRecettes(d){ localStorage.setItem(RECETTE_KEY, JSON.stringify(d)); }
 function loadJournal(){ try{ return JSON.parse(localStorage.getItem(JOURNAL_KEY)||'[]'); }catch(e){ return []; } }
@@ -1711,7 +1712,19 @@ function clearIngrSearch(){
 }
 
 let editingIngrId = null;
+function renderIngrCatFilters(){
+  const wrap=document.getElementById('ingr-cat-filters'); if(!wrap) return;
+  const cats=loadACats();
+  let h='<button class="filter-pill '+(ingrCatFilter==='tous'?'active':'')+'" data-icat="tous" onclick="filterIngr(this)">Tous</button>';
+  h+=cats.map(c=>'<button class="filter-pill '+(ingrCatFilter===c.key?'active':'')+'" data-icat="'+c.key+'" onclick="filterIngr(this)">'+c.emoji+' '+c.name+'</button>').join('');
+  wrap.innerHTML=h;
+}
+function renderIngrCatSelect(sel){
+  const el=document.getElementById('ingr-cat'); if(!el) return;
+  el.innerHTML=loadACats().map(c=>'<option value="'+c.key+'" '+(c.key===sel?'selected':'')+'>'+c.emoji+' '+c.name+'</option>').join('');
+}
 function renderIngredients() {
+  renderIngrCatFilters();
   const search = (document.getElementById('ingr-lib-search')?.value||'').toLowerCase();
   let data = loadIngr();
   if (ingrCatFilter!=='tous') data = data.filter(i=>i.cat===ingrCatFilter);
@@ -1719,7 +1732,7 @@ function renderIngredients() {
   const el = document.getElementById('ingredients-list');
   if (!el) return;
   if (!data.length) { el.innerHTML='<div class="empty-state"><div class="empty-icon">🥗</div><div class="empty-text">Aucun aliment.</div></div>'; return; }
-  const catLabels = {laitiers:'🥚 Laitiers',poissons:'🐟 Poissons',viandes:'🍗 Viandes',legumes:'🥦 Légumes',fruits:'🍋 Fruits',feculents:'🍞 Féculents',condiments:'🫒 Condiments'};
+  const catLabels = {}; loadACats().forEach(c=>catLabels[c.key]=c.emoji+' '+c.name);
   let html='', lastCat='';
   data.forEach(i => {
     if (ingrCatFilter==='tous' && i.cat && i.cat!==lastCat) {
@@ -1769,6 +1782,7 @@ function toggleFormIngr() {
     // Ouverture via "+ Créer" → on force le mode création (formulaire vierge)
     editingIngrId = null;
     ['ingr-nom','ingr-kcal','ingr-prot','ingr-gluc','ingr-lip','ingr-fibres'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+    renderIngrCatSelect();
     const us=document.getElementById('ingr-unit'); if(us) us.value='100g';
     updateUnitLabel();
     const t=document.querySelector('#form-ingr .card-title'); if(t) t.textContent='➕ Nouvel aliment';
@@ -1826,6 +1840,7 @@ function editIngr(id) {
   editingIngrId = id;
   const set=(k,v)=>{const e=document.getElementById(k); if(e) e.value=v;};
   set('ingr-nom', ingr.nom);
+  renderIngrCatSelect(ingr.cat||'');
   const catSel=document.getElementById('ingr-cat'); if(catSel) catSel.value=ingr.cat||'autres';
   const unitSel=document.getElementById('ingr-unit'); if(unitSel) unitSel.value=ingr.unit||'100g';
   updateUnitLabel();
@@ -1834,6 +1849,59 @@ function editIngr(id) {
   const t=document.querySelector('#form-ingr .card-title'); if(t) t.textContent='✏️ Modifier l\'aliment';
   const f=document.getElementById('form-ingr'); if(f) f.style.display='block';
   f && f.scrollIntoView({behavior:'smooth', block:'center'});
+}
+
+/* ===== Gestion des catégories d'ALIMENTS ===== */
+let editingACatKey = null;
+function openACatManager(){ renderACatList(); openModal('modal-acat'); }
+function renderACatList(){
+  const el=document.getElementById('acat-list'); if(!el) return;
+  el.innerHTML = loadACats().map(c=>{
+    const n=aCatCount(c.key);
+    return '<div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin-bottom:8px;">'+
+      '<span style="font-size:20px;">'+c.emoji+'</span>'+
+      '<div style="flex:1;"><div style="font-weight:600;font-size:14px;">'+c.name+'</div>'+
+      '<div style="font-size:11px;color:var(--muted);">'+n+' aliment'+(n>1?'s':'')+'</div></div>'+
+      '<button onclick="editACatForm(\''+c.key+'\')" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;width:32px;height:32px;font-size:13px;cursor:pointer;">✎</button>'+
+      '<button onclick="deleteACat(\''+c.key+'\')" class="btn-del" style="font-size:15px;">🗑️</button>'+
+    '</div>';
+  }).join('') + '<button onclick="editACatForm(null)" class="filter-pill" style="width:100%;padding:11px;margin-top:4px;border-style:dashed;border-color:var(--accent-light);color:var(--accent);">➕ Nouvelle catégorie</button>';
+}
+function editACatForm(key){
+  editingACatKey = key;
+  const c = key ? loadACats().find(x=>x.key===key) : null;
+  const e=document.getElementById('acatf-emoji'); if(e) e.value = c?c.emoji:'';
+  const nm=document.getElementById('acatf-nom'); if(nm) nm.value = c?c.name:'';
+  const t=document.getElementById('acatf-title'); if(t) t.textContent = c?'Modifier la catégorie':'Nouvelle catégorie';
+  document.getElementById('acat-list-wrap').style.display='none';
+  document.getElementById('acat-form-wrap').style.display='block';
+}
+function acatBack(){
+  document.getElementById('acat-form-wrap').style.display='none';
+  document.getElementById('acat-list-wrap').style.display='block';
+  renderACatList();
+}
+function saveACat(){
+  const emoji=(document.getElementById('acatf-emoji').value.trim())||'🍽️';
+  const name=document.getElementById('acatf-nom').value.trim();
+  if(!name){ showToast('⚠️ Nom requis'); return; }
+  let cats=loadACats();
+  if(editingACatKey){
+    cats=cats.map(c=>c.key===editingACatKey?{...c,emoji,name}:c);
+    showToast('✅ Catégorie modifiée');
+  } else {
+    cats.push({key:'acat_'+Date.now(), emoji, name});
+    showToast('✅ Catégorie créée');
+  }
+  saveACats(cats); editingACatKey=null;
+  acatBack(); renderIngredients();
+}
+function deleteACat(key){
+  const n=aCatCount(key);
+  if(n>0){ showToast('⚠️ Vide-la d\u2019abord ('+n+' aliment'+(n>1?'s':'')+')'); return; }
+  if(!confirm('Supprimer cette catégorie vide ?')) return;
+  saveACats(loadACats().filter(c=>c.key!==key));
+  renderACatList(); renderIngredients(); showToast('🗑️ Catégorie supprimée');
 }
 
 function deleteIngr(id) { saveIngr(loadIngr().filter(i=>i.id!==id)); renderIngredients(); showToast('🗑️ Supprimé'); }
@@ -1851,6 +1919,27 @@ function renderRepasAll() { renderDay(); }
 </div>
 
 <!-- MODAL catégorie -->
+<div class="modal-bg" id="modal-acat">
+  <div class="modal-box">
+    <div id="acat-list-wrap">
+      <h3>Catégories d'aliments</h3>
+      <div id="acat-list"></div>
+      <button class="filter-pill" style="width:100%;padding:11px;margin-top:10px;" onclick="closeModal('modal-acat')">Fermer</button>
+    </div>
+    <div id="acat-form-wrap" style="display:none;">
+      <h3 id="acatf-title">Nouvelle catégorie</h3>
+      <label class="flabel">Emoji</label>
+      <input class="finput" id="acatf-emoji" placeholder="🥦" maxlength="2" style="font-size:22px;text-align:center;">
+      <label class="flabel">Nom</label>
+      <input class="finput" id="acatf-nom" placeholder="ex. Boissons">
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <button class="filter-pill" style="flex:1;padding:11px;" onclick="acatBack()">‹ Retour</button>
+        <button class="filter-pill" style="flex:1;padding:11px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="saveACat()">💾 Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="modal-cat">
   <div class="modal-box">
     <h3 id="cf-title">Nouvelle catégorie</h3>
