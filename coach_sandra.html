@@ -781,7 +781,10 @@ async function _pullCloud(){
   }
 
   // 4) Migration locale -> privé (comme avant) pour les clés privées manquantes
+  //    SAUF le profil : il doit rester vide pour un nouveau compte (sinon il hériterait
+  //    d'un profil resté en localStorage sur l'appareil).
   for (const k of PRIVATE_KEYS){
+    if (k==='sandra_profil') continue;
     if (!(k in _mem)){
       let local=null; try { local=_ls.getItem(k); } catch(e){}
       if (local!==null){ _mem[k]=local; _pushCloud(k, local); }
