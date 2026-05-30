@@ -828,7 +828,14 @@ function showPage(id) {
   const pg = document.getElementById('page-' + pageId); if (pg) pg.classList.add('active');
   const nv = document.getElementById(navId); if (nv) nv.classList.add('active');
   if (pageId === 'poids') renderPoids();
-  if (pageId === 'alimentation') showRepasTab(currentAlimTab || 'journee');
+  if (pageId === 'alimentation') {
+    // Entrée par le menu = consultation : on quitte un éventuel mode sélection résiduel
+    if (!ingrToDayMode && !rfFromForm) {
+      ingrSelectMode = false;
+      const bb=document.getElementById('ingr-select-mode-banner'); if(bb) bb.style.display='none';
+    }
+    showRepasTab(currentAlimTab || 'journee');
+  }
   if (pageId === 'recettes') {
     const rt = document.getElementById('rtab-recettes'); if (rt) rt.style.display = 'block';
     if (!recSelectMode) recGoEtage1();
