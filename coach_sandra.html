@@ -1532,7 +1532,7 @@ function renderDay(){
   const addBlock=document.getElementById('day-add-block');
   if(addBlock) addBlock.style.display = past ? 'none' : 'block';
   el.classList.toggle('day-readonly', past);
-  if(!items.length){ el.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">'+(past?'Aucun repas ce jour-là.':'Rien encore aujourd'hui.<br>Choisis un moment ci-dessus pour commencer.')+'</div></div>'; return; }
+  if(!items.length){ el.innerHTML='<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-text">'+(past?'Aucun repas ce jour-là.':'Rien encore aujourd\u2019hui.<br>Choisis un moment ci-dessus pour commencer.')+'</div></div>'; return; }
 
   // Ordre logique des moments
   const ordre=['🌅 Petit-déj','☀️ Déjeuner','🍎 Collation','🌙 Dîner'];
