@@ -254,6 +254,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 .day-readonly input{ pointer-events:none; opacity:.7; border-color:var(--border)!important; }
 .day-readonly .btn-del{ display:none!important; }
 .day-readonly button{ pointer-events:none; opacity:.5; }
+.day-readonly .btn-clear-day{ pointer-events:auto!important; opacity:1!important; }
 </style>
 </head>
 <body>
@@ -1599,7 +1600,19 @@ function renderDay(){
       <div style="font-size:12px;color:var(--muted);font-weight:600;">${Math.round(mKcal)} kcal</div></div>`;
     html += its.map(d=>renderDayItem(d)).join('');
   });
+  // Bouton "Vider ce jour" (visible dès qu'il y a des entrées, même un jour passé)
+  html += '<button onclick="clearDay()" class="btn-clear-day" style="width:100%;margin-top:8px;background:#fdeceb;color:#b3433f;border:1px solid #e6b3b0;border-radius:12px;padding:12px;font-family:\'Inter\',sans-serif;font-weight:600;font-size:14px;cursor:pointer;pointer-events:auto;opacity:1;">🗑️ Vider ce jour</button>';
   el.innerHTML=html;
+}
+
+function clearDay(){
+  const items=loadJournal().filter(d=>d.date===selectedDate);
+  if(!items.length){ showToast('Rien à vider ce jour-là'); return; }
+  const lbl=fmtDateLabel(selectedDate);
+  if(!confirm('Vider toutes les entrées du '+lbl+' ? ('+items.length+' élément'+(items.length>1?'s':'')+')\nCette action est définitive.')) return;
+  saveJournal(loadJournal().filter(d=>d.date!==selectedDate));
+  renderDay();
+  showToast('🗑️ Journée vidée');
 }
 
 function toggleDayItem(itemId){
