@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-sportlazy</div>
+  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-exocats</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -776,25 +776,22 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
   <!-- ===== EXERCICES ===== -->
   <div id="stab-exercices" style="display:none;">
-    <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:10px;">
-      <span style="color:var(--muted);">🔍</span>
-      <input type="text" id="exo-search" placeholder="Rechercher un exercice…" oninput="renderExercices()"
-        style="flex:1;background:none;border:none;outline:none;font-family:'Epilogue',sans-serif;font-size:14px;color:var(--text);">
+    <!-- ÉCRAN 1 : vignettes catégories -->
+    <div id="exo-etage1">
+      <div class="search-bar" style="margin-bottom:12px;"><span style="color:var(--muted);">🔍</span><input type="text" id="exo-search-all" placeholder="Rechercher un exercice…" oninput="renderExoSearchAll()"><button id="exo-search-all-clear" onclick="clearExoSearchAll()" style="display:none;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;line-height:1;">✕</button></div>
+      <div id="exo-search-results" style="display:none;"></div>
+      <div class="cat-grid" id="exo-cat-grid"></div>
     </div>
 
-    <!-- Filtres 2 lignes -->
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
-      <button class="meal-cat-btn active" data-ecat="tous" onclick="filterExo(this)">Tous</button>
-      <button class="meal-cat-btn" data-ecat="pec" onclick="filterExo(this)">💪 Pec</button>
-      <button class="meal-cat-btn" data-ecat="dos" onclick="filterExo(this)">🔙 Dos</button>
-      <button class="meal-cat-btn" data-ecat="epaules" onclick="filterExo(this)">🫀 Épaules</button>
-      <button class="meal-cat-btn" data-ecat="bras" onclick="filterExo(this)">💪 Bras</button>
-      <button class="meal-cat-btn" data-ecat="jambes" onclick="filterExo(this)">🦵 Jambes</button>
-      <button class="meal-cat-btn" data-ecat="gainage" onclick="filterExo(this)">🧱 Gainage</button>
-      <button class="meal-cat-btn" data-ecat="stretching" onclick="filterExo(this)">🧘 Stretching</button>
-    </div>
-
-    <div id="exo-list"></div>
+    <!-- ÉCRAN 2 : liste des exercices d'une catégorie -->
+    <div id="exo-etage2" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;">
+        <button onclick="exoGoEtage1()" style="background:none;border:1px solid var(--border);border-radius:10px;padding:7px 12px;font-size:14px;cursor:pointer;color:var(--muted);white-space:nowrap;">‹ Retour</button>
+        <div id="exo-cat-title" style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:20px;text-align:center;flex:1;">Catégorie</div>
+        <div style="width:64px;"></div>
+      </div>
+      <div class="search-bar" style="margin-bottom:10px;"><span style="color:var(--muted);">🔍</span><input type="text" id="exo-search" placeholder="Rechercher…" oninput="renderExercices()"><button onclick="document.getElementById('exo-search').value='';renderExercices();" style="background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;line-height:1;">✕</button></div>
+      <div id="exo-list"></div>
 
     <!-- Détail exercice (panel) -->
     <div id="exo-detail-panel" style="display:none;background:var(--surface);border-radius:20px;border:1px solid var(--border);margin-bottom:12px;overflow:hidden;">
@@ -834,6 +831,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
         </div>
       </div>
     </div>
+    </div><!-- /exo-etage2 -->
   </div>
 
   <!-- ===== RÉSULTATS ===== -->
@@ -903,7 +901,7 @@ const firebaseConfig = {
 };
 
 // === Données COMMUNES (catalogue partagé entre TOUS les comptes) ===
-const SHARED_KEYS = ['sandra_ingredients','sandra_categories','sandra_recettes','sandra_cat_aliments'];
+const SHARED_KEYS = ['sandra_ingredients','sandra_categories','sandra_recettes','sandra_cat_aliments','sandra_cat_exos'];
 // === Données PRIVÉES (propres à chaque compte) ===
 const PRIVATE_KEYS = ['sandra_poids','sandra_objectif','sandra_journal','sandra_repas','sandra_profil','mc_seances','mc_planning','mc_resultats'];
 const SYNC_KEYS = SHARED_KEYS.concat(PRIVATE_KEYS);
@@ -1416,6 +1414,23 @@ const SANDRA_ACATS_DEFAULT = [
 ];
 function loadACats(){ try{ let s=JSON.parse(localStorage.getItem(ACAT_KEY)||'[]'); if(!s.length){ localStorage.setItem(ACAT_KEY,JSON.stringify(SANDRA_ACATS_DEFAULT)); return SANDRA_ACATS_DEFAULT.slice(); } return s; }catch(e){ return SANDRA_ACATS_DEFAULT.slice(); } }
 function saveACats(d){ localStorage.setItem(ACAT_KEY, JSON.stringify(d)); }
+
+/* ===== Catégories d'EXERCICES (modifiables, communes) ===== */
+const ECAT_KEY = 'sandra_cat_exos';
+const SANDRA_ECATS_DEFAULT = [
+  {key:'pec', emoji:'💪', name:'Pectoraux'},
+  {key:'dos', emoji:'🔙', name:'Dos'},
+  {key:'epaules', emoji:'🫀', name:'Épaules'},
+  {key:'bras', emoji:'💪', name:'Bras'},
+  {key:'jambes', emoji:'🦵', name:'Jambes'},
+  {key:'gainage', emoji:'🧱', name:'Gainage'},
+  {key:'stretching', emoji:'🧘', name:'Stretching'}
+];
+function loadECats(){ try{ let s=JSON.parse(localStorage.getItem(ECAT_KEY)||'[]'); if(!s.length){ localStorage.setItem(ECAT_KEY,JSON.stringify(SANDRA_ECATS_DEFAULT)); return SANDRA_ECATS_DEFAULT.slice(); } return s; }catch(e){ return SANDRA_ECATS_DEFAULT.slice(); } }
+function saveECats(d){ localStorage.setItem(ECAT_KEY, JSON.stringify(d)); }
+function eCatLabel(key){ const c=loadECats().find(c=>c.key===key); return c?c.emoji+' '+c.name:(key||''); }
+function eCatCount(key){ return (window.EXO_DATA||EXO_DATA||[]).filter(e=>e.cat===key).length; }
+
 function aCatLabel(key){ const c=loadACats().find(c=>c.key===key); return c?c.emoji+' '+c.name:(key||''); }
 function aCatCount(key){ return loadIngr().filter(i=>i.cat===key).length; }
 
@@ -2357,6 +2372,21 @@ function renderRepasAll() { renderDay(); }
   </div>
 </div>
 
+<div class="modal-bg" id="modal-ecat">
+  <div class="modal-box">
+    <h3 id="ecatf-title">Nouvelle catégorie</h3>
+    <label class="flabel">Emoji</label>
+    <input class="finput" id="ecatf-emoji" placeholder="🏋️" maxlength="2" style="font-size:22px;text-align:center;">
+    <label class="flabel">Nom</label>
+    <input class="finput" id="ecatf-nom" placeholder="ex. Cardio">
+    <div style="display:flex;gap:8px;margin-top:4px;">
+      <button class="filter-pill" style="flex:1;padding:11px;" onclick="closeModal('modal-ecat')">Annuler</button>
+      <button class="filter-pill" style="flex:1;padding:11px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="saveECat()">💾 Enregistrer</button>
+    </div>
+    <button id="ecatf-delete" style="display:none;width:100%;margin-top:10px;background:none;border:none;color:var(--accent);font-size:13px;cursor:pointer;text-decoration:underline;" onclick="deleteECat()">🗑️ Supprimer cette catégorie</button>
+  </div>
+</div>
+
 <div class="modal-bg" id="modal-acat">
   <div class="modal-box">
     <h3 id="acatf-title">Nouvelle catégorie</h3>
@@ -2419,7 +2449,7 @@ function showSportTab(tab) {
   });
   if (tab==='planning')   renderSportCalendar();
   if (tab==='seances')    renderSeancesList();
-  if (tab==='exercices')  renderExercices();
+  if (tab==='exercices')  exoGoEtage1();
   if (tab==='resultats')  { initResultats(); renderHistorique(); }
 }
 
@@ -2824,51 +2854,119 @@ function deleteSeance(id) {
 // ---- EXERCICES ----
 let exoFilter='tous';
 
-function filterExo(btn) {
-  document.querySelectorAll('[data-ecat]').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  exoFilter=btn.dataset.ecat;
+const EXO_CAT_LABELS = {'pec':'💪 Pectoraux','dos':'🔙 Dos','epaules':'🫀 Épaules','bras':'💪 Bras','jambes':'🦵 Jambes','gainage':'🧱 Gainage','stretching':'🧘 Stretching'};
+const EXO_CAT_EMOJI = {'pec':'💪','dos':'🔙','epaules':'🫀','bras':'💪','jambes':'🦵','gainage':'🧱','stretching':'🧘'};
+function exoShow(n){
+  const e1=document.getElementById('exo-etage1'); if(e1) e1.style.display=(n===1)?'block':'none';
+  const e2=document.getElementById('exo-etage2'); if(e2) e2.style.display=(n===2)?'block':'none';
+}
+function exoGoEtage1(){
+  exoFilter='tous';
+  exoShow(1);
+  const i=document.getElementById('exo-search-all'); if(i) i.value='';
+  const res=document.getElementById('exo-search-results'); if(res){ res.style.display='none'; res.innerHTML=''; }
+  const grid=document.getElementById('exo-cat-grid'); if(grid) grid.style.display='grid';
+  const x=document.getElementById('exo-search-all-clear'); if(x) x.style.display='none';
+  const dp=document.getElementById('exo-detail-panel'); if(dp) dp.style.display='none';
+  renderExoCatGrid();
+}
+function exoGoEtage2(cat){
+  exoFilter=cat;
+  exoShow(2);
+  const t=document.getElementById('exo-cat-title'); if(t) t.textContent=eCatLabel(cat);
+  const s2=document.getElementById('exo-search'); if(s2) s2.value='';
+  const dp=document.getElementById('exo-detail-panel'); if(dp) dp.style.display='none';
   renderExercices();
 }
+function exoCount(cat){ return EXO_DATA.filter(e=>e.cat===cat).length; }
+let editingECatKey = null;
+function openECatManager(){ editECatForm(null); }
+function editECatForm(key){
+  editingECatKey = key;
+  const c = key ? loadECats().find(x=>x.key===key) : null;
+  const e=document.getElementById('ecatf-emoji'); if(e) e.value = c?c.emoji:'';
+  const nm=document.getElementById('ecatf-nom'); if(nm) nm.value = c?c.name:'';
+  const t=document.getElementById('ecatf-title'); if(t) t.textContent = c?'Modifier la catégorie':'Nouvelle catégorie';
+  const del=document.getElementById('ecatf-delete'); if(del) del.style.display = c?'block':'none';
+  openModal('modal-ecat');
+}
+function saveECat(){
+  const emoji=(document.getElementById('ecatf-emoji').value.trim())||'🏋️';
+  const name=document.getElementById('ecatf-nom').value.trim();
+  if(!name){ showToast('⚠️ Nom requis'); return; }
+  let cats=loadECats();
+  if(editingECatKey){
+    cats=cats.map(c=>c.key===editingECatKey?{...c,emoji,name}:c);
+    showToast('✅ Catégorie modifiée');
+  } else {
+    cats.push({key:'ecat_'+Date.now(), emoji, name});
+    showToast('✅ Catégorie créée');
+  }
+  saveECats(cats); editingECatKey=null;
+  closeModal('modal-ecat'); renderExoCatGrid();
+}
+function deleteECat(){
+  if(!editingECatKey) return;
+  const n=eCatCount(editingECatKey);
+  if(n>0){ showToast('⚠️ Vide-la d\u2019abord ('+n+' exo'+(n>1?'s':'')+')'); return; }
+  if(!confirm('Supprimer cette catégorie vide ?')) return;
+  saveECats(loadECats().filter(c=>c.key!==editingECatKey));
+  editingECatKey=null;
+  closeModal('modal-ecat'); renderExoCatGrid(); showToast('🗑️ Catégorie supprimée');
+}
+function renderExoCatGrid(){
+  const grid=document.getElementById('exo-cat-grid'); if(!grid) return;
+  const cats=loadECats();
+  let h=cats.map(c=>'<div class="cat-tile" onclick="exoGoEtage2(\''+c.key+'\')" style="position:relative;">'+
+    '<button onclick="event.stopPropagation();editECatForm(\''+c.key+'\')" style="position:absolute;top:4px;right:4px;background:rgba(255,255,255,.85);border:1px solid var(--border);border-radius:8px;width:24px;height:24px;font-size:12px;cursor:pointer;padding:0;line-height:1;">✎</button>'+
+    '<span class="emoji">'+c.emoji+'</span><div class="cname">'+c.name+'</div>'+
+    '<div class="ccount">'+exoCount(c.key)+' exo'+(exoCount(c.key)>1?'s':'')+'</div></div>').join('');
+  h+='<div class="cat-tile add" onclick="editECatForm(null)"><span class="emoji">➕</span><div class="cname">Nouvelle</div><div class="ccount">catégorie</div></div>';
+  grid.innerHTML=h;
+}
+function clearExoSearchAll(){ const i=document.getElementById('exo-search-all'); if(i) i.value=''; renderExoSearchAll(); }
+function renderExoSearchAll(){
+  const i=document.getElementById('exo-search-all'); const q=(i?i.value:'').trim().toLowerCase();
+  const x=document.getElementById('exo-search-all-clear'); if(x) x.style.display=q?'inline':'none';
+  const grid=document.getElementById('exo-cat-grid');
+  const res=document.getElementById('exo-search-results');
+  if(!q){ if(res){res.style.display='none';res.innerHTML='';} if(grid) grid.style.display='grid'; return; }
+  if(grid) grid.style.display='none';
+  const list=EXO_DATA.filter(e=>e.nom.toLowerCase().includes(q));
+  if(res){
+    res.style.display='block';
+    res.innerHTML = list.length ? list.map(e=>exoCardHTML(e)).join('') : '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">Aucun exercice trouvé.</div></div>';
+  }
+}
 
+function exoCardHTML(e){
+  const chargesHtml = e.cat==='gainage'||e.cat==='stretching'
+    ? `<span style="font-size:10px;color:var(--muted);">🔴${e.charges[0]}s · 🟡${e.charges[1]}s · 🟢${e.charges[2]}s · ⭐${e.charges[3]}s</span>`
+    : `<span style="background:#ffebe8;color:#e63946;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">🔴${e.charges[0]}</span>
+       <span style="background:#fff3e0;color:#e67c00;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">🟡${e.charges[1]}</span>
+       <span style="background:#e8f5e9;color:#2d6a4f;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">🟢${e.charges[2]}</span>
+       <span style="background:#fff8e1;color:#d97706;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">⭐${e.charges[3]}</span>`;
+  const isSpecial = e.id===10;
+  return `<div onclick="showExoDetail(${e.id})" style="display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:14px;padding:10px 12px;margin-bottom:8px;border:${isSpecial?'1px solid #f59e0b':'1px solid var(--border)'};cursor:pointer;${isSpecial?'border-left:3px solid #f59e0b;':''}">
+    <img src="${e.thumb}" style="width:56px;height:56px;border-radius:10px;object-fit:cover;flex-shrink:0;border:1px solid var(--border);">
+    <div style="flex:1;min-width:0;">
+      <div style="font-weight:700;font-size:14px;margin-bottom:3px;">${e.nom}</div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:3px;">
+        ${e.muscles_p.map(m=>`<span style="background:rgba(230,57,70,0.08);color:#e63946;border-radius:6px;padding:2px 7px;font-size:10px;">${m}</span>`).join('')}
+      </div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;">${chargesHtml}</div>
+    </div>
+    <div style="color:var(--muted);font-size:18px;">›</div>
+  </div>`;
+}
 function renderExercices() {
   const search=(document.getElementById('exo-search')?.value||'').toLowerCase();
   const el=document.getElementById('exo-list');
   if (!el) return;
-  let data=EXO_DATA;
-  if (exoFilter!=='tous') data=data.filter(e=>e.cat===exoFilter);
+  let data=EXO_DATA.filter(e=>e.cat===exoFilter);
   if (search) data=data.filter(e=>e.nom.toLowerCase().includes(search));
   if (!data.length) { el.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);">Aucun résultat</div>'; return; }
-
-  // Group by cat
-  const cats={'pec':'💪 Pectoraux','dos':'🔙 Dos','epaules':'🫀 Épaules','bras':'💪 Bras','jambes':'🦵 Jambes','gainage':'🧱 Gainage','stretching':'🧘 Stretching'};
-  let html='';
-  let lastCat='';
-  data.forEach(e=>{
-    if (exoFilter==='tous' && e.cat!==lastCat) {
-      html+=`<div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px;">${cats[e.cat]||e.cat}</div>`;
-      lastCat=e.cat;
-    }
-    const chargesHtml = e.cat==='gainage'||e.cat==='stretching'
-      ? `<span style="font-size:10px;color:var(--muted);">🔴${e.charges[0]}s · 🟡${e.charges[1]}s · 🟢${e.charges[2]}s · ⭐${e.charges[3]}s</span>`
-      : `<span style="background:#ffebe8;color:#e63946;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">🔴${e.charges[0]}</span>
-         <span style="background:#fff3e0;color:#e67c00;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">🟡${e.charges[1]}</span>
-         <span style="background:#e8f5e9;color:#2d6a4f;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">🟢${e.charges[2]}</span>
-         <span style="background:#fff8e1;color:#d97706;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">⭐${e.charges[3]}</span>`;
-    const isSpecial = e.id===10;
-    html+=`<div onclick="showExoDetail(${e.id})" style="display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:14px;padding:10px 12px;margin-bottom:8px;border:${isSpecial?'1px solid #f59e0b':'1px solid var(--border)'};cursor:pointer;${isSpecial?'border-left:3px solid #f59e0b;':''}">
-      <img src="${e.thumb}" style="width:56px;height:56px;border-radius:10px;object-fit:cover;flex-shrink:0;border:1px solid var(--border);">
-      <div style="flex:1;min-width:0;">
-        <div style="font-weight:700;font-size:14px;margin-bottom:3px;">${e.nom}</div>
-        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:3px;">
-          ${e.muscles_p.map(m=>`<span style="background:rgba(230,57,70,0.08);color:#e63946;border-radius:6px;padding:2px 7px;font-size:10px;">${m}</span>`).join('')}
-        </div>
-        <div style="display:flex;gap:4px;flex-wrap:wrap;">${chargesHtml}</div>
-      </div>
-      <div style="color:var(--muted);font-size:18px;">›</div>
-    </div>`;
-  });
-  el.innerHTML=html;
+  el.innerHTML=data.map(e=>exoCardHTML(e)).join('');
 }
 
 function showExoDetail(id) {
