@@ -580,11 +580,19 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
       </div>
 
       <label class="flabel">Ingrédients</label>
-      <div id="rf-ings"></div>
-      <button class="filter-pill" style="width:100%;margin-top:4px;padding:10px;" onclick="rfAddIng()">+ Ajouter un ingrédient</button>
+      <textarea id="rf-ings-texte" class="finput" rows="4" placeholder="ex.&#10;3 œufs&#10;200 g chocolat noir&#10;1 c. à s. de fécule…" style="resize:none;overflow:hidden;font-family:'Inter',sans-serif;min-height:90px;" oninput="autoGrow(this)"></textarea>
 
       <label class="flabel" style="margin-top:14px;">Recette (préparation, notes…)</label>
       <textarea id="rf-texte" class="finput" rows="6" placeholder="Étapes de préparation, astuces, remarques…" style="resize:none;overflow:hidden;font-family:'Inter',sans-serif;min-height:140px;" oninput="autoGrow(this)"></textarea>
+
+      <label class="flabel" style="margin-top:14px;">Composition pour 1 portion</label>
+      <div class="macros-grid-form">
+        <div><div class="macro-field-label" style="color:#e76f51;">🔥 Calories</div><div class="macro-input-wrap"><input type="number" id="rf-kcal" class="macro-input" placeholder="0"><span class="macro-unit">kcal</span></div></div>
+        <div><div class="macro-field-label" style="color:#2d6a4f;">💪 Protéines</div><div class="macro-input-wrap"><input type="number" id="rf-prot" class="macro-input" placeholder="0"><span class="macro-unit">g</span></div></div>
+        <div><div class="macro-field-label" style="color:#457b9d;">🌾 Glucides</div><div class="macro-input-wrap"><input type="number" id="rf-gluc" class="macro-input" placeholder="0"><span class="macro-unit">g</span></div></div>
+        <div><div class="macro-field-label" style="color:#d97706;">🥑 Lipides</div><div class="macro-input-wrap"><input type="number" id="rf-lip" class="macro-input" placeholder="0"><span class="macro-unit">g</span></div></div>
+        <div><div class="macro-field-label" style="color:#52b788;">🌿 Fibres</div><div class="macro-input-wrap"><input type="number" id="rf-fib" class="macro-input" placeholder="0"><span class="macro-unit">g</span></div></div>
+      </div>
 
       <div style="display:flex;gap:8px;margin-top:12px;">
         <button class="filter-pill" style="flex:1;padding:11px;" onclick="closeRecetteForm()">Annuler</button>
@@ -1137,13 +1145,12 @@ function renderRecetteList(){
   const el=document.getElementById('rec-list'); if(!el) return;
   if(!list.length){ el.innerHTML='<div class="empty-state"><div class="empty-icon">🍽️</div><div class="empty-text">Aucune recette ici.<br>Clique “+ Créer”.</div></div>'; return; }
   el.innerHTML=list.map(r=>{
-    const empty=!(r.ings&&r.ings.length);
+    const empty=!(r.kcal||r.prot||r.gluc||r.lip||r.fib);
     const chips = empty ? '<span class="rchip rchip-empty">à compléter</span>'
       : `<span class="rchip rchip-kcal">🔥${r.kcal}</span><span class="rchip rchip-prot">💪${r.prot}g</span><span class="rchip rchip-gluc">🌾${r.gluc}g</span><span class="rchip rchip-lip">🥑${r.lip}g</span><span class="rchip rchip-fib">🌿${r.fib}g</span>`;
     const right = recSelectMode ? '<span class="rec-plus">+</span>'
       : `<button class="btn-del" onclick="event.stopPropagation();delRecette(${r.id})">✕</button>`;
     const click = recSelectMode ? `pickRecette(${r.id})` : `openRecetteForm(${r.id})`;
-    const nbi = r.ings? r.ings.length : 0;
     const avatar = r.photo
       ? `<div style="width:46px;height:46px;border-radius:50%;background-image:url('${r.photo}');background-size:cover;background-position:center;flex-shrink:0;margin-right:12px;border:1.5px solid var(--border);"></div>`
       : '';
@@ -1151,7 +1158,7 @@ function renderRecetteList(){
       ${avatar}
       <div style="flex:1;"><div class="rnom">${r.nom}</div>
       <div class="rchips">${chips}</div>
-      <div class="rmeta">${nbi} ingrédient${nbi>1?'s':''}${r.nbPers?' · 👥 '+r.nbPers+' pers.':''}</div></div>${right}</div>`;
+      <div class="rmeta">${r.nbPers?'👥 '+r.nbPers+' pers.':''}</div></div>${right}</div>`;
   }).join('');
 }
 
@@ -1168,19 +1175,29 @@ function openRecetteForm(id){
     `<option value="${c.key}" ${c.key===selKey?'selected':''}>${c.emoji} ${c.name}</option>`).join('');
   const txt=document.getElementById('rf-texte'); if(txt){ txt.value = r && r.texte ? r.texte : ''; }
   const np=document.getElementById('rf-nb-pers'); if(np) np.value = (r && r.nbPers) ? r.nbPers : 4;
-  rfIngs = r ? JSON.parse(JSON.stringify(r.ings||[])) : [];
+  // Ingrédients = texte libre (rétro-compat : si une ancienne recette avait une liste, on l'affiche en texte)
+  const it=document.getElementById('rf-ings-texte');
+  if(it){
+    if(r && typeof r.ingsTexte==='string'){ it.value=r.ingsTexte; }
+    else if(r && Array.isArray(r.ings) && r.ings.length){ it.value=r.ings.map(g=>g.nom+(g.qty?' : '+g.qty:'')).join('\n'); }
+    else { it.value=''; }
+  }
+  // Composition par portion
+  const setv=(id,v)=>{const e=document.getElementById(id); if(e) e.value=(v||v===0)?v:'';};
+  setv('rf-kcal', r?r.kcal:''); setv('rf-prot', r?r.prot:''); setv('rf-gluc', r?r.gluc:'');
+  setv('rf-lip', r?r.lip:''); setv('rf-fib', r?r.fib:'');
   rfPhoto = r && r.photo ? r.photo : null;
   rfSetPhotoPreview(rfPhoto);
-  renderRfIngs();
   recShow(3);
   window.scrollTo({top:0,behavior:'smooth'});
-  // autoGrow APRÈS l'affichage : le textarea doit être visible pour que scrollHeight soit correct
-  setTimeout(()=>{ const t=document.getElementById('rf-texte'); if(t) autoGrow(t); }, 30);
+  // autoGrow APRÈS l'affichage : les textareas doivent être visibles pour que scrollHeight soit correct
+  setTimeout(()=>{ ['rf-texte','rf-ings-texte'].forEach(id=>{const t=document.getElementById(id); if(t) autoGrow(t);}); }, 30);
 }
 function closeRecetteForm(){
   editingRecetteId=null; rfIngs=[]; rfPhoto=null;
   rfSetPhotoPreview(null);
   const txt=document.getElementById('rf-texte'); if(txt) txt.value='';
+  const it=document.getElementById('rf-ings-texte'); if(it) it.value='';
   recGoEtage2(); // retour à la liste de la catégorie
 }
 function renderRfIngs(){
@@ -1246,15 +1263,17 @@ function saveRecette(){
   if(!csel || !csel.value){ showToast('⚠️ Choisis une catégorie'); return; }
   const cats=[csel.value];
   const texte=(document.getElementById('rf-texte')?.value||'').trim();
+  const ingsTexte=(document.getElementById('rf-ings-texte')?.value||'').trim();
   const nbPers=parseInt(document.getElementById('rf-nb-pers')?.value)||4;
-  const t=recTotals(rfIngs);
+  const num=id=>{const v=parseFloat(document.getElementById(id)?.value); return isNaN(v)?0:v;};
+  const t={kcal:Math.round(num('rf-kcal')), prot:num('rf-prot'), gluc:num('rf-gluc'), lip:num('rf-lip'), fib:num('rf-fib')};
   let data=loadRecettes();
   if(editingRecetteId){
-    data = data.map(r=> r.id===editingRecetteId ? {...r, nom, cats, photo:rfPhoto||null, texte, nbPers, ings:JSON.parse(JSON.stringify(rfIngs)), kcal:t.kcal,prot:t.prot,gluc:t.gluc,lip:t.lip,fib:t.fib} : r);
+    data = data.map(r=> r.id===editingRecetteId ? {...r, nom, cats, photo:rfPhoto||null, texte, ingsTexte, nbPers, ings:[], kcal:t.kcal,prot:t.prot,gluc:t.gluc,lip:t.lip,fib:t.fib} : r);
     showToast('✅ Recette modifiée');
   } else {
     const id=Math.max(0,...data.map(r=>r.id||0))+1;
-    data.push({id, nom, cats, photo:rfPhoto||null, texte, nbPers, ings:JSON.parse(JSON.stringify(rfIngs)), kcal:t.kcal,prot:t.prot,gluc:t.gluc,lip:t.lip,fib:t.fib});
+    data.push({id, nom, cats, photo:rfPhoto||null, texte, ingsTexte, nbPers, ings:[], kcal:t.kcal,prot:t.prot,gluc:t.gluc,lip:t.lip,fib:t.fib});
     showToast('✅ Recette créée');
   }
   saveRecettes(data);
