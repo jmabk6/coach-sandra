@@ -817,6 +817,7 @@ function showToast(msg) {
 }
 
 function rnd(v) { return Math.round(v * 10) / 10; }
+function _alpha(a,b){ return (a.nom||'').localeCompare((b.nom||''),'fr',{sensitivity:'base'}); }
 
 let currentAlimTab = 'journee';
 function showPage(id) {
@@ -1197,7 +1198,7 @@ function renderRecSearchAll(){
   const res=document.getElementById('rec-search-results');
   if(!q){ if(res){res.style.display='none';res.innerHTML='';} if(grid) grid.style.display='grid'; return; }
   if(grid) grid.style.display='none';
-  const list=loadRecettes().filter(r=>r.nom.toLowerCase().includes(q));
+  const list=loadRecettes().filter(r=>r.nom.toLowerCase().includes(q)).sort(_alpha);
   if(res){
     res.style.display='block';
     res.innerHTML = list.length ? list.map(r=>{
@@ -1230,7 +1231,7 @@ function recGoEtage2(key){
 }
 function renderRecetteList(){
   const q=(document.getElementById('rec-search')?.value||'').toLowerCase();
-  let list=loadRecettes().filter(r=>(r.cats||[]).includes(recCurrentCat));
+  let list=loadRecettes().filter(r=>(r.cats||[]).includes(recCurrentCat)).sort(_alpha);
   if(q) list=list.filter(r=>r.nom.toLowerCase().includes(q));
   const el=document.getElementById('rec-list'); if(!el) return;
   if(!list.length){ el.innerHTML='<div class="empty-state"><div class="empty-icon">🍽️</div><div class="empty-text">Aucune recette ici.<br>Clique “+ Créer”.</div></div>'; return; }
@@ -1800,7 +1801,7 @@ function renderIngSearchAll(){
   const res=document.getElementById('ing-search-results');
   if(!q){ if(res){res.style.display='none';res.innerHTML='';} if(grid) grid.style.display='grid'; return; }
   if(grid) grid.style.display='none';
-  const list=loadIngr().filter(a=>a.nom.toLowerCase().includes(q));
+  const list=loadIngr().filter(a=>a.nom.toLowerCase().includes(q)).sort(_alpha);
   if(res){
     res.style.display='block';
     res.innerHTML = list.length ? list.map(i=>ingCardHTML(i)).join('') : '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">Aucun aliment trouvé.</div></div>';
@@ -1844,7 +1845,7 @@ function renderIngrCatSelect(sel){
 }
 function renderIngredients() {
   const search=(document.getElementById('ingr-lib-search')?.value||'').toLowerCase();
-  let data=loadIngr().filter(i=>i.cat===ingrCatFilter);
+  let data=loadIngr().filter(i=>i.cat===ingrCatFilter).sort(_alpha);
   if(search) data=data.filter(i=>i.nom.toLowerCase().includes(search));
   const el=document.getElementById('ingredients-list');
   if(!el) return;
