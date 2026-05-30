@@ -290,7 +290,10 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
 
-  <div id="poids-hello" style="margin-top:14px;font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
+  <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+    <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
+    <button onclick="openProfil()" title="Mon profil" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;width:42px;height:42px;font-size:20px;cursor:pointer;flex-shrink:0;">⚙️</button>
+  </div>
 
   <!-- 4 STATS -->
   <div class="stats-grid" style="margin-top:16px;">
@@ -686,7 +689,7 @@ const firebaseConfig = {
 // === Données COMMUNES (catalogue partagé entre TOUS les comptes) ===
 const SHARED_KEYS = ['sandra_ingredients','sandra_categories','sandra_recettes','sandra_cat_aliments'];
 // === Données PRIVÉES (propres à chaque compte) ===
-const PRIVATE_KEYS = ['sandra_poids','sandra_objectif','sandra_journal','sandra_repas'];
+const PRIVATE_KEYS = ['sandra_poids','sandra_objectif','sandra_journal','sandra_repas','sandra_profil'];
 const SYNC_KEYS = SHARED_KEYS.concat(PRIVATE_KEYS);
 function isSyncKey(k){ return SYNC_KEYS.includes(k); }
 function isShared(k){ return SHARED_KEYS.includes(k); }
@@ -818,24 +821,17 @@ async function _bootstrap(){
   try { renderPoids(); } catch(e){ console.warn(e); }
   // remonter en haut de la page (sinon elle s'ouvre scrollée au milieu)
   setTimeout(()=>{ window.scrollTo(0,0); document.body.scrollTop=0; document.documentElement.scrollTop=0; }, 50);
+  // Premier lancement : profil obligatoire
+  if(!profilComplet()){ setTimeout(()=>openProfil(true), 200); }
 }
 
 let _email = null;
-const PRENOMS = {
-  'jma_iskalia':'Sandra',
-  'abecassis3112':'Jean-Michel',
-  'davsrouss':'David',
-  'liliabecassis':'Lirone',
-  'levanaabecassis':'Lévana'
-};
-function prenomFromEmail(email){
-  if(!email) return '';
-  const local = String(email).split('@')[0].toLowerCase();
-  if(PRENOMS[local]) return PRENOMS[local];
-  // repli : on capitalise la partie avant @
-  return local.charAt(0).toUpperCase()+local.slice(1);
-}
-function currentPrenom(){ return prenomFromEmail(_email); }
+// Profil perso (privé par compte) : prénom / sexe / taille
+const PROFIL_KEY = 'sandra_profil';
+function loadProfil(){ try{ return JSON.parse(localStorage.getItem(PROFIL_KEY)||'{}'); }catch(e){ return {}; } }
+function saveProfil(p){ localStorage.setItem(PROFIL_KEY, JSON.stringify(p)); }
+function currentPrenom(){ const p=loadProfil(); return (p && p.prenom) ? p.prenom : ''; }
+function profilComplet(){ const p=loadProfil(); return !!(p && p.prenom && p.sexe && p.taille); }
 _auth.onAuthStateChanged(async user=>{
   if (user){
     _uid = user.uid;
@@ -904,7 +900,10 @@ function curProfile(){ return PROFILES.find(p=>p.id===getProfileId()) || PROFILE
 function W_KEY(){ return curProfile().prefix + 'poids'; }
 function O_KEY(){ return curProfile().prefix + 'objectif'; }
 function TAILLE_KEY(){ return curProfile().prefix + 'taille'; }
-function getTaille(){ const v=parseFloat(localStorage.getItem(TAILLE_KEY())); return (v&&v>0.5&&v<2.5)?v:curProfile().taille; }
+function getTaille(){
+  const p=loadProfil(); if(p && p.taille){ const t=parseFloat(p.taille); if(t>0.5&&t<2.5) return t; if(t>50&&t<250) return t/100; }
+  const v=parseFloat(localStorage.getItem(TAILLE_KEY())); return (v&&v>0.5&&v<2.5)?v:curProfile().taille;
+}
 function setTaille(v){ localStorage.setItem(TAILLE_KEY(), v); }
 
 function loadWeights() { try { return JSON.parse(localStorage.getItem(W_KEY())||'[]'); } catch(e){return[];} }
@@ -1746,7 +1745,33 @@ function delDayItem(itemId){
 
 /* ============ MODALS ============ */
 function openModal(id){ const m=document.getElementById(id); if(m) m.classList.add('open'); }
-function closeModal(id){ const m=document.getElementById(id); if(m) m.classList.remove('open'); }
+let _profilForce = false;
+function closeModal(id){ if(id==='modal-profil' && _profilForce){ showToast('Complète ton profil pour continuer'); return; } const m=document.getElementById(id); if(m) m.classList.remove('open'); }
+function openProfil(force){
+  _profilForce = !!force;
+  const p=loadProfil();
+  const pr=document.getElementById('prof-prenom'); if(pr) pr.value=p.prenom||'';
+  const sx=document.getElementById('prof-sexe'); if(sx) sx.value=p.sexe||'';
+  const ta=document.getElementById('prof-taille'); if(ta) ta.value=p.taille? Math.round(parseFloat(p.taille)>3?parseFloat(p.taille):parseFloat(p.taille)*100):'';
+  // mode obligatoire : pas de bouton Annuler, titre explicite
+  const cancel=document.getElementById('prof-cancel'); if(cancel) cancel.style.display=_profilForce?'none':'block';
+  const sub=document.getElementById('prof-sub'); if(sub) sub.style.display=_profilForce?'block':'none';
+  openModal('modal-profil');
+}
+function saveProfilForm(){
+  const prenom=(document.getElementById('prof-prenom').value||'').trim();
+  const sexe=document.getElementById('prof-sexe').value||'';
+  let tcm=parseFloat(document.getElementById('prof-taille').value);
+  if(!prenom){ showToast('⚠️ Indique ton prénom'); return; }
+  if(!sexe){ showToast('⚠️ Choisis le sexe'); return; }
+  if(!(tcm && tcm>50 && tcm<250)){ showToast('⚠️ Taille en cm (ex. 165)'); return; }
+  const taille = tcm/100;
+  saveProfil({prenom, sexe, taille});
+  _profilForce=false;
+  closeModal('modal-profil');
+  renderPoids();
+  showToast('✅ Profil enregistré');
+}
 function autoGrow(el){ if(!el) return; el.style.height='auto'; el.style.height=(el.scrollHeight+4)+'px'; }
 
 /* compat : ancien mode sélection d'ingrédient (désormais inutilisé) */
@@ -2075,6 +2100,27 @@ function renderRepasAll() { renderDay(); }
 </div>
 
 <!-- MODAL catégorie -->
+<div class="modal-bg" id="modal-profil">
+  <div class="modal-box">
+    <h3>Mon profil</h3>
+    <div id="prof-sub" style="display:none;font-size:13px;color:var(--muted);margin-bottom:8px;">Bienvenue ! Renseigne ton profil pour commencer.</div>
+    <label class="flabel">Prénom</label>
+    <input class="finput" id="prof-prenom" placeholder="ex. Sandra">
+    <label class="flabel">Sexe</label>
+    <select class="finput" id="prof-sexe" style="appearance:none;">
+      <option value="">— choisir —</option>
+      <option value="F">Femme</option>
+      <option value="H">Homme</option>
+    </select>
+    <label class="flabel">Taille (cm)</label>
+    <input class="finput" id="prof-taille" type="number" placeholder="ex. 165">
+    <div style="display:flex;gap:8px;margin-top:6px;">
+      <button id="prof-cancel" class="filter-pill" style="flex:1;padding:11px;" onclick="closeModal('modal-profil')">Annuler</button>
+      <button class="filter-pill" style="flex:1;padding:11px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="saveProfilForm()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-bg" id="modal-acat">
   <div class="modal-box">
     <h3 id="acatf-title">Nouvelle catégorie</h3>
