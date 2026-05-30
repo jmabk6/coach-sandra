@@ -289,6 +289,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
+  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-05b</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -381,22 +382,22 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
   <!-- BENCHMARK -->
   <div class="card">
-    <div class="card-title">Référence · Femme · 1m61</div>
+    <div class="card-title" id="bench-title">Référence · IMC</div>
     <div style="font-size:12px;color:var(--muted);margin-bottom:6px;">Ton poids : <strong id="bench-val">—</strong></div>
     <div style="position:relative;margin-bottom:4px;">
       <div class="bench-track">
         <div class="bench-zones">
-          <div style="background:#e63946;flex:0 0 18%;"></div>
-          <div style="background:#f4a261;flex:0 0 12%;"></div>
-          <div style="background:#2d6a4f;flex:0 0 40%;"></div>
-          <div style="background:#f4a261;flex:0 0 15%;"></div>
-          <div style="background:#e63946;flex:0 0 15%;"></div>
+          <div style="background:#e63946;flex:0 0 5%;"></div>
+          <div style="background:#f4a261;flex:0 0 12.5%;"></div>
+          <div style="background:#2d6a4f;flex:0 0 32.5%;"></div>
+          <div style="background:#f4a261;flex:0 0 25%;"></div>
+          <div style="background:#e63946;flex:0 0 25%;"></div>
         </div>
       </div>
       <div class="bench-cursor" id="bench-cursor" style="left:10%;"></div>
     </div>
     <div class="bench-labels" style="margin-bottom:8px;">
-      <span>&lt;40</span><span>42–48</span><span>48–65 ✓</span><span>65–72</span><span>&gt;72</span>
+      <span>maigre</span><span>&lt;18.5</span><span>18.5–25 ✓</span><span>25–30</span><span>&gt;30</span>
     </div>
     <div style="font-size:12px;font-weight:600;text-align:center;margin-bottom:12px;" id="bench-lbl">—</div>
     <div class="bench-row" style="background:rgba(230,57,70,0.08);">
@@ -1003,13 +1004,23 @@ function renderPoids() {
       etaEl.textContent = 'Encore ' + reste + ' kg ' + (isGain ? 'à prendre' : 'à perdre');
     }
 
-    // Benchmark
+    // Benchmark basé sur l'IMC (universel : valable pour toute taille / tout sexe)
+    const prof = (typeof loadProfil==='function') ? loadProfil() : {};
+    const sexeLbl = prof.sexe==='H' ? 'Homme' : (prof.sexe==='F' ? 'Femme' : '—');
+    const tM = (typeof getTaille==='function') ? getTaille() : 1.61;
+    const titleEl = document.getElementById('bench-title');
+    if(titleEl) titleEl.textContent = 'Référence · ' + sexeLbl + ' · ' + tM.toFixed(2).replace('.','m');
     document.getElementById('bench-val').textContent = cur.toFixed(1) + ' kg · IMC ' + imc;
-    const benchPct = Math.min(95, Math.max(5, ((cur - 35) / 45) * 100));
+    // échelle IMC 15 -> 35 (largeur 20)
+    const benchPct = Math.min(97, Math.max(3, ((imc - 15) / 20) * 100));
     document.getElementById('bench-cursor').style.left = benchPct + '%';
-    const benchLbl = cur < 48 ? '⚠️ Insuffisant — objectif zone verte (48–65 kg)' : cur <= 65 ? '✅ Zone idéale pour 1m61 !' : cur <= 72 ? '⚠️ Légère surcharge' : '⚠️ Surpoids';
+    let benchLbl, ok=false;
+    if (imc < 18.5)      benchLbl = '⚠️ Maigreur — objectif zone verte (IMC 18.5–25)';
+    else if (imc < 25) { benchLbl = '✅ Corpulence normale !'; ok=true; }
+    else if (imc < 30)   benchLbl = '⚠️ Surpoids léger';
+    else                 benchLbl = '⚠️ Surpoids';
     document.getElementById('bench-lbl').textContent = benchLbl;
-    document.getElementById('bench-lbl').style.color = (cur >= 48 && cur <= 65) ? '#2d6a4f' : 'var(--accent)';
+    document.getElementById('bench-lbl').style.color = ok ? '#2d6a4f' : 'var(--accent)';
     document.getElementById('bench-moi').style.display = 'flex';
     document.getElementById('bench-moi-val').textContent = cur.toFixed(1) + ' kg · IMC ' + imc;
 
@@ -1109,7 +1120,12 @@ function copierPoidsClaudeBtn() {
   if (!data.length) { showToast('⚠️ Aucune donnée'); return; }
   const cur = data[data.length-1].poids;
   const histo = data.slice(-15).map(d=>`- ${d.date} : ${d.poids} kg`).join('\n');
-  const texte = `Données poids de Sandra (femme, 1m61) :\n\nPoids actuel : ${cur} kg (objectif : ${obj} kg)\nIMC : ${calcIMC(cur)}\n\nHistorique récent :\n${histo}\n\nPeux-tu analyser sa progression et donner des conseils pour atteindre ${obj} kg ?`;
+  const _p = (typeof loadProfil==='function') ? loadProfil() : {};
+  const _nom = _p.prenom || 'la personne';
+  const _sexe = _p.sexe==='H' ? 'homme' : (_p.sexe==='F' ? 'femme' : '');
+  const _t = (typeof getTaille==='function') ? getTaille().toFixed(2)+'m' : '';
+  const _entete = _nom + (_sexe||_t ? ' (' + [_sexe,_t].filter(Boolean).join(', ') + ')' : '');
+  const texte = `Données poids de ${_entete} :\n\nPoids actuel : ${cur} kg (objectif : ${obj} kg)\nIMC : ${calcIMC(cur)}\n\nHistorique récent :\n${histo}\n\nPeux-tu analyser la progression et donner des conseils pour atteindre ${obj} kg ?`;
   navigator.clipboard.writeText(texte).then(()=>showToast('📋 Copié !')).catch(()=>prompt('Copie :',texte));
 }
 
@@ -2156,7 +2172,13 @@ function renderRepasAll() { renderDay(); }
 
 <script>
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg=>{ try{ reg.update(); }catch(e){} }).catch(()=>{});
+    // Casse le cache têtu : on vide les anciens caches une fois
+    if (window.caches && caches.keys) {
+      caches.keys().then(keys=>keys.forEach(k=>caches.delete(k))).catch(()=>{});
+    }
+  });
 }
 </script>
 </body>
