@@ -290,6 +290,8 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
 
+  <div id="poids-hello" style="margin-top:14px;font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
+
   <!-- 4 STATS -->
   <div class="stats-grid" style="margin-top:16px;">
     <div class="stat-card">
@@ -818,9 +820,26 @@ async function _bootstrap(){
   setTimeout(()=>{ window.scrollTo(0,0); document.body.scrollTop=0; document.documentElement.scrollTop=0; }, 50);
 }
 
+let _email = null;
+const PRENOMS = {
+  'jma_iskalia':'Sandra',
+  'abecassis3112':'Jean-Michel',
+  'davsrouss':'David',
+  'liliabecassis':'Lirone',
+  'levanaabecassis':'Lévana'
+};
+function prenomFromEmail(email){
+  if(!email) return '';
+  const local = String(email).split('@')[0].toLowerCase();
+  if(PRENOMS[local]) return PRENOMS[local];
+  // repli : on capitalise la partie avant @
+  return local.charAt(0).toUpperCase()+local.slice(1);
+}
+function currentPrenom(){ return prenomFromEmail(_email); }
 _auth.onAuthStateChanged(async user=>{
   if (user){
     _uid = user.uid;
+    _email = user.email || null;
     await _bootstrap();
   } else {
     _showLogin();
@@ -929,6 +948,7 @@ function setPeriod(n, btn) {
 }
 
 function renderPoids() {
+  const hello=document.getElementById('poids-hello'); if(hello){ const p=currentPrenom(); hello.textContent = p ? ('👋 Bonjour '+p) : '👋 Bonjour'; }
   const data = loadWeights();
   const obj = getObjectif();
   const dep = getDepart();
