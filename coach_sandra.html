@@ -469,11 +469,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
         <button class="day-moment-btn moment-card" data-moment="🌙 Dîner" onclick="pickMoment(this)"><span class="mi">🌙</span><span class="ml">Dîner</span></button>
       </div>
       <div id="day-add-actions" style="display:none;">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px;">2. Ajoute…</div>
-        <div style="display:flex;gap:8px;">
-          <button class="filter-pill" style="flex:1;padding:12px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="dayAddRecette()">🍽️ Une recette</button>
-          <button class="filter-pill" style="flex:1;padding:12px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="dayAddIngredient()">🥗 Un aliment</button>
-        </div>
+        <button onclick="dayAddIngredient()" style="width:100%;border:none;cursor:pointer;background:rgba(192,97,106,0.10);color:var(--accent);font-weight:700;font-size:15px;border-radius:14px;padding:15px;display:flex;align-items:center;justify-content:center;gap:8px;">＋ 2. Ajouter un aliment</button>
       </div>
     </div>
     <div id="day-list"></div>
