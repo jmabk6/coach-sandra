@@ -1869,6 +1869,7 @@ function toggleFormIngr() {
     editingIngrId = null;
     const t=document.querySelector('#form-ingr .card-title'); if(t) t.textContent='➕ Nouvel aliment';
     f.style.display='none';
+    if(typeof ingGoEtage1==='function') ingGoEtage1();
   }
 }
 
@@ -1901,7 +1902,7 @@ function saveIngredient() {
   editingIngrId = null;
   const t=document.querySelector('#form-ingr .card-title'); if(t) t.textContent='➕ Nouvel aliment';
   const f=document.getElementById('form-ingr'); if(f) f.style.display='none';
-  refreshIngScreen(); showToast(msg);
+  ingGoEtage1(); showToast(msg);
 }
 
 const UNIT_LABELS = {'100g':'100g','unite':'1 unité','cas':'1 c. à soupe','cac':'1 c. à café','portion':'1 portion','tranche':'1 tranche','bol':'1 bol','verre':'1 verre','piece':'1 pièce','poignee':'1 poignée','pot':'1 pot'};
@@ -1925,6 +1926,11 @@ function editIngr(id) {
   set('ingr-kcal', ingr.kcal); set('ingr-prot', ingr.prot);
   set('ingr-gluc', ingr.gluc); set('ingr-lip', ingr.lip); set('ingr-fibres', ingr.fibres||0);
   const t=document.querySelector('#form-ingr .card-title'); if(t) t.textContent='✏️ Modifier l\'aliment';
+  // S'assurer qu'on est sur l'écran 2 (le formulaire y vit) : sinon il resterait masqué
+  if(typeof ingShow==='function') ingShow(2);
+  const e1=document.getElementById('ing-etage1'); if(e1) e1.style.display='none';
+  const e2=document.getElementById('ing-etage2'); if(e2) e2.style.display='block';
+  const lst=document.getElementById('ingredients-list'); if(lst) lst.innerHTML='';
   const f=document.getElementById('form-ingr'); if(f) f.style.display='block';
   f && f.scrollIntoView({behavior:'smooth', block:'center'});
 }
