@@ -556,9 +556,12 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
     <!-- ÉCRAN 1 : vignettes -->
     <div id="rec-etage1">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;">
         <div style="font-family:Cormorant Garamond,serif;font-weight:700;font-size:28px;">🍽️ Mes Recettes</div>
+        <button onclick="openRecetteFormNew()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:8px 14px;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap;">+ Créer</button>
       </div>
+      <div class="search-bar" style="margin-bottom:12px;"><span style="color:var(--muted);">🔍</span><input type="text" id="rec-search-all" placeholder="Rechercher une recette…" oninput="renderRecSearchAll()"><button id="rec-search-all-clear" onclick="clearRecSearchAll()" style="display:none;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;line-height:1;">✕</button></div>
+      <div id="rec-search-results" style="display:none;"></div>
       <div class="cat-grid" id="rec-cat-grid"></div>
     </div>
 
@@ -1157,7 +1160,32 @@ function recShow(n){
 function recGoEtage1(){
   recCurrentCat=null;
   recShow(1);
+  const i=document.getElementById('rec-search-all'); if(i) i.value='';
+  const res=document.getElementById('rec-search-results'); if(res){ res.style.display='none'; res.innerHTML=''; }
+  const grid=document.getElementById('rec-cat-grid'); if(grid) grid.style.display='grid';
+  const x=document.getElementById('rec-search-all-clear'); if(x) x.style.display='none';
   renderCatGrid();
+}
+function openRecetteFormNew(){ recCurrentCat=null; openRecetteForm(); }
+function clearRecSearchAll(){ const i=document.getElementById('rec-search-all'); if(i) i.value=''; renderRecSearchAll(); }
+function renderRecSearchAll(){
+  const i=document.getElementById('rec-search-all'); const q=(i?i.value:'').trim().toLowerCase();
+  const x=document.getElementById('rec-search-all-clear'); if(x) x.style.display=q?'inline':'none';
+  const grid=document.getElementById('rec-cat-grid');
+  const res=document.getElementById('rec-search-results');
+  if(!q){ if(res){res.style.display='none';res.innerHTML='';} if(grid) grid.style.display='grid'; return; }
+  if(grid) grid.style.display='none';
+  const list=loadRecettes().filter(r=>r.nom.toLowerCase().includes(q));
+  if(res){
+    res.style.display='block';
+    res.innerHTML = list.length ? list.map(r=>{
+      const empty=!(r.kcal||r.prot||r.gluc||r.lip||r.fib);
+      const chips = empty ? '<span class="rchip rchip-empty">à compléter</span>'
+        : '<span class="rchip rchip-kcal">🔥'+r.kcal+'</span><span class="rchip rchip-prot">💪'+r.prot+'g</span>';
+      const catn = (r.cats&&r.cats[0])?recCatName(r.cats[0]):'';
+      return '<div class="rec-card" onclick="openRecetteForm('+r.id+')"><div style="flex:1;"><div class="rnom">'+r.nom+'</div><div class="rchips">'+chips+'</div><div class="rmeta">'+catn+'</div></div></div>';
+    }).join('') : '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">Aucune recette trouvée.</div></div>';
+  }
 }
 function renderCatGrid(){
   const grid=document.getElementById('rec-cat-grid'); if(!grid) return;
