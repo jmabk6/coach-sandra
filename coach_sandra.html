@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-edit</div>
+  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-thumb</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -2635,6 +2635,17 @@ function ensureExoData(){
           const j = EXO_DATA.findIndex(b=>b && String(b.id)===String(ex.id));
           if(j>=0) EXO_DATA[j]=ex; else EXO_DATA.push(ex);
         });
+        // Réparer les vignettes trop grandes (la petite vignette manque ou contient la grande image)
+        let _pending=0, _fixed=false;
+        cx.filter(Boolean).forEach(ex=>{
+          if(ex.full && (!ex.thumb || ex.thumb.length>20000)){
+            _pending++;
+            exocResizeURL(ex.full, 150, function(t){
+              ex.thumb=t; _fixed=true; _pending--;
+              if(_pending===0 && _fixed){ try{ saveCustomExos(cx); }catch(_e){} if(typeof renderSport==='function'){ try{ renderSport(); }catch(_e){} } }
+            });
+          }
+        });
       }
     }catch(e){ console.warn('custom exos', e); }
     const w=document.getElementById('exo-loading'); if(w) w.remove();
@@ -3304,6 +3315,20 @@ function exocResize(file, max, cb){
   };
   img.src=URL.createObjectURL(file);
 }
+function exocResizeURL(url, max, cb){
+  try{
+    const img=new Image();
+    img.onload=function(){
+      const sc=Math.min(1, max/img.width);
+      const w=Math.round(img.width*sc), h=Math.round(img.height*sc);
+      const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      cb(cv.toDataURL('image/jpeg',0.72));
+    };
+    img.onerror=function(){ cb(url); };
+    img.src=url;
+  }catch(e){ cb(url); }
+}
 function exocAddPhoto(input){
   const f=input.files[0]; if(!f) return;
   exocResize(f, 700, function(full){ exocFull=full;
@@ -3402,7 +3427,7 @@ function openExoEdit(id){
   const catName = (e.fiche&&e.fiche.categorie) || ((loadECats().find(c=>c.key===e.cat)||{}).name) || e.cat;
   if(catName) exocSetCatBadge(catName);
   // photo existante
-  exocFull = e.full||null; exocThumb = e.thumb||e.full||null;
+  exocFull = e.full||null; exocThumb = e.thumb||null;
   if(exocFull){ document.getElementById('exoc-photo').innerHTML = '<img src="'+exocFull+'"><label class="add"><span style="font-size:22px;">＋</span><span>Changer</span><input type="file" accept="image/*" hidden onchange="exocAddPhoto(this)"></label>'; }
   // contenu (depuis fiche, ou dérivé des anciens champs)
   const f = exoFicheData(e);
@@ -3432,6 +3457,11 @@ function exocSave(){
   const nom=(document.getElementById('exoc-nom').value||'').trim();
   if(!nom){ exocMsg('err','Donne un nom à l\u2019exercice.'); document.getElementById('exoc-msg').scrollIntoView({behavior:'smooth'}); return; }
   if(!exocCat){ exocMsg('err','Choisis une catégorie (tape le badge).'); return; }
+  // Toujours (re)générer une PETITE vignette à partir de la grande photo
+  if(exocFull){ exocResizeURL(exocFull, 150, function(t){ exocThumb=t; exocSaveCommit(nom); }); return; }
+  exocThumb=null; exocSaveCommit(nom);
+}
+function exocSaveCommit(nom){
   const muscles=exocReadSection('exoc-muscles');
   const execution=exocReadSection('exoc-execution');
   const conseils=exocReadSection('exoc-conseils');
