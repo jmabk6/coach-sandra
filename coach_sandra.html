@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-thumb</div>
+  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-thumb2</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -889,6 +889,16 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
           <div class="exoc-photo" id="exoc-photo">
             <label class="add"><span style="font-size:22px;">＋</span><span>Photo</span>
               <input type="file" accept="image/*" hidden onchange="exocAddPhoto(this)"></label>
+          </div></div>
+
+        <div class="fld" id="exoc-thumb-fld" style="display:none;">
+          <div class="lab">Vignette de la liste (un seul côté du mouvement)</div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <img id="exoc-thumb-prev" style="width:56px;height:56px;border-radius:10px;object-fit:cover;border:1px solid var(--border);background:var(--bg);">
+            <div style="display:flex;gap:8px;">
+              <button type="button" id="exoc-side-left" onclick="exocSetThumbSide('left')" style="border:1px solid var(--accent);background:var(--accent);color:#fff;font-size:12px;font-weight:600;padding:8px 13px;border-radius:999px;cursor:pointer;">◐ Gauche</button>
+              <button type="button" id="exoc-side-right" onclick="exocSetThumbSide('right')" style="border:1px solid var(--accent);background:var(--surface);color:var(--accent);font-size:12px;font-weight:600;padding:8px 13px;border-radius:999px;cursor:pointer;">Droite ◑</button>
+            </div>
           </div></div>
 
         <div class="fld"><div class="lab">Catégorie</div>
@@ -2635,13 +2645,13 @@ function ensureExoData(){
           const j = EXO_DATA.findIndex(b=>b && String(b.id)===String(ex.id));
           if(j>=0) EXO_DATA[j]=ex; else EXO_DATA.push(ex);
         });
-        // Réparer les vignettes trop grandes (la petite vignette manque ou contient la grande image)
+        // Régénérer les vignettes en « un seul côté » (une fois, marqué par thumbV=2)
         let _pending=0, _fixed=false;
         cx.filter(Boolean).forEach(ex=>{
-          if(ex.full && (!ex.thumb || ex.thumb.length>20000)){
+          if(ex.full && ex.thumbV!==2){
             _pending++;
-            exocResizeURL(ex.full, 150, function(t){
-              ex.thumb=t; _fixed=true; _pending--;
+            exocMakeThumb(ex.full, 150, ex.thumbSide||'left', function(t){
+              ex.thumb=t; ex.thumbV=2; _fixed=true; _pending--;
               if(_pending===0 && _fixed){ try{ saveCustomExos(cx); }catch(_e){} if(typeof renderSport==='function'){ try{ renderSport(); }catch(_e){} } }
             });
           }
@@ -3253,7 +3263,20 @@ document.addEventListener('click', function(ev){
 });
 
 // ===== CRÉATION D'EXERCICE =====
-let exocCat = null, exocFull = null, exocThumb = null, exocEditId = null;
+let exocCat = null, exocFull = null, exocThumb = null, exocEditId = null, exocThumbSide = 'left';
+function exocSetThumbSide(side){
+  exocThumbSide = side;
+  const bl=document.getElementById('exoc-side-left'), br=document.getElementById('exoc-side-right');
+  if(bl&&br){
+    const on='background:var(--accent);color:#fff;', off='background:var(--surface);color:var(--accent);';
+    bl.setAttribute('style','border:1px solid var(--accent);font-size:12px;font-weight:600;padding:8px 13px;border-radius:999px;cursor:pointer;'+(side==='left'?on:off));
+    br.setAttribute('style','border:1px solid var(--accent);font-size:12px;font-weight:600;padding:8px 13px;border-radius:999px;cursor:pointer;'+(side==='right'?on:off));
+  }
+  if(exocFull){ exocMakeThumb(exocFull, 150, exocThumbSide, function(t){ exocThumb=t; const p=document.getElementById('exoc-thumb-prev'); if(p) p.src=t; }); }
+}
+function exocShowThumbCtrl(show){
+  const f=document.getElementById('exoc-thumb-fld'); if(f) f.style.display = show ? 'block' : 'none';
+}
 const EXOC_FIELDS = ['muscles','execution','conseils','precautions','charge','volume'];
 
 function exocEscape(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -3329,14 +3352,35 @@ function exocResizeURL(url, max, cb){
     img.src=url;
   }catch(e){ cb(url); }
 }
+// Fabrique une PETITE vignette carrée en ne gardant qu'UN côté (avant/après) si l'image est large
+function exocMakeThumb(url, size, side, cb){
+  try{
+    const img=new Image();
+    img.onload=function(){
+      const W=img.width, H=img.height;
+      let sx=0, sy=0, sw=W, sh=H;
+      if(W > H*1.3){ // image large type « avant/après » → ne garder qu'un côté
+        sw = W/2;
+        sx = (side==='right') ? W/2 : 0;
+      }
+      const sq = Math.min(sw, sh);                 // plus grand carré dans la région
+      const cx = sx + (sw - sq)/2, cy = sy + (sh - sq)/2;
+      const cv=document.createElement('canvas'); cv.width=size; cv.height=size;
+      cv.getContext('2d').drawImage(img, cx, cy, sq, sq, 0, 0, size, size);
+      cb(cv.toDataURL('image/jpeg',0.78));
+    };
+    img.onerror=function(){ cb(url); };
+    img.src=url;
+  }catch(e){ cb(url); }
+}
 function exocAddPhoto(input){
   const f=input.files[0]; if(!f) return;
   exocResize(f, 700, function(full){ exocFull=full;
-    exocResize(f, 150, function(thumb){ exocThumb=thumb;
-      const box=document.getElementById('exoc-photo');
-      box.innerHTML = '<img src="'+full+'">' +
-        '<label class="add"><span style="font-size:22px;">＋</span><span>Changer</span><input type="file" accept="image/*" hidden onchange="exocAddPhoto(this)"></label>';
-    });
+    const box=document.getElementById('exoc-photo');
+    box.innerHTML = '<img src="'+full+'">' +
+      '<label class="add"><span style="font-size:22px;">＋</span><span>Changer</span><input type="file" accept="image/*" hidden onchange="exocAddPhoto(this)"></label>';
+    exocShowThumbCtrl(true);
+    exocMakeThumb(full, 150, exocThumbSide, function(t){ exocThumb=t; const p=document.getElementById('exoc-thumb-prev'); if(p) p.src=t; });
   });
 }
 
@@ -3394,7 +3438,9 @@ function exocMsg(type,text){ const m=document.getElementById('exoc-msg'); m.clas
 
 // --- Ouverture / fermeture / reset ---
 function exocResetForm(){
-  exocCat=null; exocFull=null; exocThumb=null;
+  exocCat=null; exocFull=null; exocThumb=null; exocThumbSide='left';
+  exocShowThumbCtrl(false);
+  if(typeof exocSetThumbSide==='function'){ const bl=document.getElementById('exoc-side-left'); if(bl) exocSetThumbSide('left'); }
   document.getElementById('exoc-nom').value='';
   document.getElementById('exoc-photo').innerHTML='<label class="add"><span style="font-size:22px;">＋</span><span>Photo</span><input type="file" accept="image/*" hidden onchange="exocAddPhoto(this)"></label>';
   const b=document.getElementById('exoc-cat-badge'); b.textContent='Déterminée par l\u2019IA (modifiable)'; b.classList.add('empty');
@@ -3428,7 +3474,12 @@ function openExoEdit(id){
   if(catName) exocSetCatBadge(catName);
   // photo existante
   exocFull = e.full||null; exocThumb = e.thumb||null;
-  if(exocFull){ document.getElementById('exoc-photo').innerHTML = '<img src="'+exocFull+'"><label class="add"><span style="font-size:22px;">＋</span><span>Changer</span><input type="file" accept="image/*" hidden onchange="exocAddPhoto(this)"></label>'; }
+  exocThumbSide = e.thumbSide || 'left';
+  if(exocFull){
+    document.getElementById('exoc-photo').innerHTML = '<img src="'+exocFull+'"><label class="add"><span style="font-size:22px;">＋</span><span>Changer</span><input type="file" accept="image/*" hidden onchange="exocAddPhoto(this)"></label>';
+    exocShowThumbCtrl(true);
+    exocSetThumbSide(exocThumbSide);
+  } else { exocShowThumbCtrl(false); }
   // contenu (depuis fiche, ou dérivé des anciens champs)
   const f = exoFicheData(e);
   exocRenderField('exoc-muscles', f.muscles);
@@ -3457,8 +3508,8 @@ function exocSave(){
   const nom=(document.getElementById('exoc-nom').value||'').trim();
   if(!nom){ exocMsg('err','Donne un nom à l\u2019exercice.'); document.getElementById('exoc-msg').scrollIntoView({behavior:'smooth'}); return; }
   if(!exocCat){ exocMsg('err','Choisis une catégorie (tape le badge).'); return; }
-  // Toujours (re)générer une PETITE vignette à partir de la grande photo
-  if(exocFull){ exocResizeURL(exocFull, 150, function(t){ exocThumb=t; exocSaveCommit(nom); }); return; }
+  // (re)générer une PETITE vignette d'UN SEUL côté à partir de la grande photo
+  if(exocFull){ exocMakeThumb(exocFull, 150, exocThumbSide, function(t){ exocThumb=t; exocSaveCommit(nom); }); return; }
   exocThumb=null; exocSaveCommit(nom);
 }
 function exocSaveCommit(nom){
@@ -3484,6 +3535,8 @@ function exocSaveCommit(nom){
   };
   if(exocFull){ exo.full=exocFull; }
   if(exocThumb){ exo.thumb=exocThumb; }
+  exo.thumbSide = exocThumbSide;
+  exo.thumbV = 2;
   const isEdit = exocEditId!=null;
   try{
     const arr=loadCustomExos();
