@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-thumb2</div>
+  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-seances</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -755,21 +755,79 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
   <div id="stab-seances" style="display:none;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
       <div class="section-title" style="margin-bottom:0;">📋 Mes Séances</div>
-      <button onclick="showCreateSeance()" class="btn-add" style="padding:10px 14px;font-size:13px;">+ Créer</button>
+      <button onclick="openSeanceCreate()" class="btn-add" style="padding:10px 14px;font-size:13px;">+ Créer</button>
     </div>
 
     <div id="seances-list"></div>
 
-    <!-- Formulaire création séance -->
-    <div id="form-create-seance" style="display:none;background:var(--surface);border:1.5px solid var(--accent-light);border-radius:16px;padding:16px;margin-bottom:12px;">
-      <div class="card-title" style="color:var(--accent);">➕ Nouvelle séance</div>
-      <input type="text" id="sea-nom-input" placeholder="Nom de la séance (ex: Haut Poussé)"
-        style="width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-family:'Epilogue',sans-serif;font-size:14px;color:var(--text);outline:none;margin-bottom:12px;">
-      <div class="card-title">Exercices</div>
-      <div id="sea-exo-picker" style="display:flex;flex-direction:column;gap:6px;max-height:250px;overflow-y:auto;margin-bottom:12px;"></div>
-      <div style="display:flex;gap:8px;">
-        <button onclick="saveSeance()" class="btn-add" style="flex:1;">💾 Enregistrer</button>
-        <button onclick="document.getElementById('form-create-seance').style.display='none'" class="btn-secondary">✕</button>
+    <!-- ===== CRÉATION / MODIFICATION DE SÉANCE (plein écran) ===== -->
+    <div id="seac-overlay" style="display:none;position:fixed;inset:0;z-index:600;background:var(--bg);">
+      <style>
+        #seac-scroll{max-width:430px;margin:0 auto;height:100dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:120px;}
+        #seac-overlay .seac-top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:14px 16px;background:linear-gradient(var(--bg) 72%,rgba(253,240,240,0));}
+        #seac-overlay .seac-back{width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:var(--surface);font-size:22px;color:var(--accent);cursor:pointer;line-height:1;flex-shrink:0;}
+        #seac-overlay .seac-ttl{font-family:'Cormorant Garamond',serif;font-weight:800;font-size:22px;flex:1;}
+        #seac-overlay .seac-pad{padding:4px 16px;}
+        #seac-overlay .seac-lab{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin:0 2px 7px;}
+        #seac-overlay .seac-nom{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:13px;padding:14px 16px;font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--text);outline:none;margin-bottom:20px;}
+        #seac-overlay .seac-nom:focus{border-color:var(--accent);}
+        #seac-overlay .phase{background:var(--surface);border:1px solid var(--border);border-left:5px solid var(--pc);border-radius:16px;padding:14px 15px;margin-bottom:14px;}
+        #seac-overlay .phase-head{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+        #seac-overlay .phase-ico{width:34px;height:34px;border-radius:10px;background:var(--ps);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+        #seac-overlay .phase-name{flex:1;font-weight:700;font-size:15px;color:var(--pc);}
+        #seac-overlay .phase-add{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--pc);background:var(--surface);color:var(--pc);font-size:22px;line-height:1;cursor:pointer;flex-shrink:0;}
+        #seac-overlay .phase-empty{font-size:13px;color:var(--muted);padding:8px 2px 4px;font-style:italic;}
+        #seac-overlay .exo-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px dashed var(--border);}
+        #seac-overlay .exo-row:first-of-type{border-top:none;}
+        #seac-overlay .exo-thumb{width:42px;height:42px;border-radius:10px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;border:1px solid var(--border);object-fit:cover;overflow:hidden;}
+        #seac-overlay .exo-thumb img{width:100%;height:100%;object-fit:cover;}
+        #seac-overlay .exo-row .nm{flex:1;font-size:14px;font-weight:600;min-width:0;}
+        #seac-overlay .sr{display:flex;align-items:center;gap:3px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:3px 6px;}
+        #seac-overlay .sr input{width:28px;border:none;background:none;text-align:center;font-size:13px;font-weight:700;color:var(--text);outline:none;font-family:inherit;}
+        #seac-overlay .sr .x{font-size:10px;color:var(--muted);}
+        #seac-overlay .exo-del{background:none;border:none;color:#c98;font-size:17px;cursor:pointer;padding:2px 4px;flex-shrink:0;}
+        #seac-overlay .seac-savebar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(rgba(253,240,240,0),var(--bg) 38%);}
+        #seac-overlay .seac-save{width:100%;background:var(--accent);color:#fff;border:none;border-radius:15px;padding:16px;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:17px;cursor:pointer;box-shadow:0 6px 18px rgba(192,97,106,.32);}
+      </style>
+      <div id="seac-scroll">
+        <div class="seac-top"><button class="seac-back" onclick="closeSeanceCreate()">‹</button><div class="seac-ttl" id="seac-title">Nouvelle séance</div></div>
+        <div class="seac-pad">
+          <div class="seac-lab">Nom de la séance</div>
+          <input type="text" id="seac-nom" class="seac-nom" placeholder="ex. Haut du corps — Poussé">
+          <div id="seac-phases"></div>
+        </div>
+        <div class="seac-savebar"><button class="seac-save" onclick="seacSave()">Enregistrer la séance</button></div>
+      </div>
+    </div>
+
+    <!-- ===== PICKER EXERCICES (plein écran) ===== -->
+    <div id="seapick-overlay" style="display:none;position:fixed;inset:0;z-index:610;background:var(--bg);">
+      <style>
+        #seapick-scroll{max-width:430px;margin:0 auto;height:100dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:30px;}
+        #seapick-overlay .sp-top{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;padding:14px 16px;background:linear-gradient(var(--bg) 72%,rgba(253,240,240,0));}
+        #seapick-overlay .sp-back{width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:var(--surface);font-size:22px;color:var(--accent);cursor:pointer;line-height:1;flex-shrink:0;}
+        #seapick-overlay .sp-ttl{font-family:'Cormorant Garamond',serif;font-weight:800;font-size:22px;flex:1;}
+        #seapick-overlay .sp-banner{margin:0 16px 14px;border-radius:13px;padding:11px 14px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;}
+        #seapick-overlay .sp-pad{padding:2px 16px;}
+        #seapick-overlay .cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+        #seapick-overlay .cat-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px 14px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;}
+        #seapick-overlay .cat-card .ce{font-size:34px;}
+        #seapick-overlay .cat-card .cn{font-weight:600;font-size:14px;}
+        #seapick-overlay .cat-card .cc{font-size:11px;color:var(--muted);}
+        #seapick-overlay .exo-pick{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin-bottom:8px;cursor:pointer;}
+        #seapick-overlay .exo-pick .th{width:46px;height:46px;border-radius:10px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;border:1px solid var(--border);overflow:hidden;}
+        #seapick-overlay .exo-pick .th img{width:100%;height:100%;object-fit:cover;}
+        #seapick-overlay .exo-pick .nm{flex:1;font-weight:600;font-size:14px;}
+        #seapick-overlay .exo-pick .go{color:var(--accent);font-size:22px;font-weight:700;}
+        #seapick-overlay .sp-backcat{display:inline-flex;align-items:center;gap:6px;color:var(--accent);font-size:13px;font-weight:600;background:none;border:none;cursor:pointer;margin-bottom:12px;padding:4px 0;}
+      </style>
+      <div id="seapick-scroll">
+        <div class="sp-top"><button class="sp-back" onclick="seacBackFromPicker()">‹</button><div class="sp-ttl">Choisir un exercice</div></div>
+        <div id="sp-banner" class="sp-banner"></div>
+        <div class="sp-pad">
+          <div id="sp-cats" class="cat-grid"></div>
+          <div id="sp-exos" style="display:none;"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -2944,93 +3002,171 @@ function savePlanningType() {
 }
 
 // ---- SÉANCES ----
+/* ====== SÉANCES — création par phases (Échauffement / Corps / Retour au calme) ====== */
+const SEAC_PHASES = [
+  {key:'echauffement', icon:'🔥', label:'Échauffement',       pc:'#b07400', ps:'#fff4d6'},
+  {key:'corps',        icon:'💪', label:'Corps de la séance',  pc:'#c0616a', ps:'#fdeceb'},
+  {key:'retour',       icon:'🧘', label:'Retour au calme',     pc:'#13807a', ps:'#e1f2f0'},
+];
+let seacDraft = null, seacEditId = null, seacPickPhase = null;
+function seacEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
 function renderSeancesList() {
   const el=document.getElementById('seances-list');
   if (!el) return;
   const seances=loadSea();
   if (!seances.length) {
-    el.innerHTML='<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">Aucune séance créée.<br>Commence par créer tes séances !</div></div>';
+    el.innerHTML='<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">Aucune séance créée.<br>Tape « + Créer » pour commencer !</div></div>';
     return;
   }
-  el.innerHTML=seances.map(s=>`
-    <div style="background:var(--surface);border-radius:16px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;">
-      <div style="padding:14px 16px;display:flex;align-items:center;gap:12px;">
+  el.innerHTML=seances.map(s=>{
+    const ech=(s.echauffement||[]).length, cor=(s.corps||[]).length, ret=(s.retour||[]).length;
+    const tot=(ech+cor+ret) || (s.exercices||[]).length;
+    const phaseLine=(ech||cor||ret)?`🔥 ${ech} · 💪 ${cor} · 🧘 ${ret}`:`${tot} exercices`;
+    const tags=(s.exercices||[]).slice(0,8).map(e=>`<span style="background:var(--bg);border-radius:8px;padding:4px 10px;font-size:11px;">${seacEsc(e.nom)}</span>`).join('');
+    return `<div style="background:var(--surface);border-radius:16px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;">
+      <div onclick="openSeanceEdit(${s.id})" style="padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;">
         <div style="font-size:26px;">${s.emoji||'💪'}</div>
-        <div style="flex:1;">
-          <div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:16px;margin-bottom:3px;">${s.titre}</div>
-          <div style="font-size:12px;color:var(--muted);">${(s.exercices||[]).length} exercices · ~${Math.round((s.exercices||[]).length*8+15)} min</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:16px;margin-bottom:3px;">${seacEsc(s.titre)}</div>
+          <div style="font-size:12px;color:var(--muted);">${phaseLine} · ~${Math.round(tot*8+15)} min</div>
         </div>
+        <div style="color:var(--muted);font-size:20px;">›</div>
       </div>
-      <div style="padding:0 16px 12px;display:flex;flex-wrap:wrap;gap:5px;">
-        ${(s.exercices||[]).map(e=>`<span style="background:var(--bg);border-radius:8px;padding:4px 10px;font-size:11px;">${e.nom}</span>`).join('')}
-      </div>
+      ${tags?`<div style="padding:0 16px 12px;display:flex;flex-wrap:wrap;gap:5px;">${tags}</div>`:''}
       <div style="display:flex;border-top:1px solid var(--bg);">
-        <button onclick="deleteSeance(${s.id})" style="flex:1;padding:11px;border:none;background:none;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:12px;color:#e63946;cursor:pointer;">🗑 Supprimer</button>
+        <button onclick="openSeanceEdit(${s.id})" style="flex:1;padding:11px;border:none;background:none;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:12px;color:var(--accent);cursor:pointer;">✎ Modifier</button>
+        <button onclick="deleteSeance(${s.id})" style="flex:1;padding:11px;border:none;border-left:1px solid var(--bg);background:none;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:12px;color:#e63946;cursor:pointer;">🗑 Supprimer</button>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
-function showCreateSeance() {
-  const f=document.getElementById('form-create-seance');
-  if (f) f.style.display=f.style.display==='none'?'block':'none';
-  renderSeaExoPicker();
+function seacEnsureData(cb){
+  if(EXO_DATA && EXO_DATA.length){ cb(); return; }
+  if(typeof ensureExoData==='function') ensureExoData();
+  let tries=0;
+  const iv=setInterval(()=>{ tries++; if((EXO_DATA&&EXO_DATA.length)||tries>40){ clearInterval(iv); cb(); } },100);
 }
 
-function renderSeaExoPicker() {
-  const el=document.getElementById('sea-exo-picker');
-  if (!el) return;
-  el.innerHTML=EXO_DATA.map(e=>`
-    <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface);border-radius:10px;border:1.5px solid var(--border);cursor:pointer;" id="sea-exo-${e.id}" onclick="toggleSeaExo(${e.id},'${e.nom.replace(/'/g,"\\'")}')">
-      ${e.thumb ? `<img src="${e.thumb}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;flex-shrink:0;">` : `<div style="width:40px;height:40px;border-radius:8px;flex-shrink:0;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:22px;">${e.emoji||'🏋️'}</div>`}
-      <div style="flex:1;font-size:13px;font-weight:500;">${e.nom}</div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-        <span style="font-size:10px;color:var(--muted);">Séries</span>
-        <input type="number" id="sea-ser-${e.id}" value="3" min="1" max="10" style="width:44px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px;font-size:13px;font-weight:700;text-align:center;outline:none;" onclick="event.stopPropagation()">
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-        <span style="font-size:10px;color:var(--muted);">Reps</span>
-        <input type="number" id="sea-rep-${e.id}" value="10" min="1" max="50" style="width:44px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:4px;font-size:13px;font-weight:700;text-align:center;outline:none;" onclick="event.stopPropagation()">
-      </div>
-      <span id="sea-check-${e.id}" style="color:var(--muted);font-size:18px;font-weight:700;">○</span>
-    </div>`).join('');
+function openSeanceCreate(){
+  seacEditId=null;
+  seacDraft={nom:'', echauffement:[], corps:[], retour:[]};
+  document.getElementById('seac-title').textContent='Nouvelle séance';
+  document.getElementById('seac-nom').value='';
+  renderSeacPhases();
+  document.getElementById('seac-overlay').style.display='block';
+  document.getElementById('seac-scroll').scrollTop=0;
+}
+function openSeanceEdit(id){
+  const s=loadSea().find(x=>x && String(x.id)===String(id));
+  if(!s){ if(typeof showToast==='function') showToast('⚠️ Séance introuvable'); return; }
+  seacEditId=s.id;
+  let ech=s.echauffement, cor=s.corps, ret=s.retour;
+  if(!ech && !cor && !ret){ cor=(s.exercices||[]).map(e=>({id:e.id,nom:e.nom,emoji:e.emoji,series:e.series||3,reps:e.reps||10})); ech=[]; ret=[]; }
+  seacDraft={nom:s.titre||'', echauffement:(ech||[]).slice(), corps:(cor||[]).slice(), retour:(ret||[]).slice()};
+  document.getElementById('seac-title').textContent='Modifier la séance';
+  document.getElementById('seac-nom').value=s.titre||'';
+  renderSeacPhases();
+  document.getElementById('seac-overlay').style.display='block';
+  document.getElementById('seac-scroll').scrollTop=0;
+}
+function closeSeanceCreate(){ document.getElementById('seac-overlay').style.display='none'; renderSeancesList(); }
+
+function seacThumbHTML(it){
+  if(it.thumb) return `<div class="exo-thumb"><img src="${it.thumb}"></div>`;
+  return `<div class="exo-thumb">${it.emoji||'🏋️'}</div>`;
+}
+function renderSeacPhases(){
+  if(document.getElementById('seac-nom')) seacDraft.nom=document.getElementById('seac-nom').value;
+  const wrap=document.getElementById('seac-phases');
+  wrap.innerHTML=SEAC_PHASES.map(p=>{
+    const items=seacDraft[p.key]||[];
+    const rows=items.length ? items.map((it,idx)=>`
+      <div class="exo-row">
+        ${seacThumbHTML(it)}
+        <div class="nm">${seacEsc(it.nom)}</div>
+        <div class="sr"><input type="number" value="${it.series||3}" min="1" max="12" onchange="seacSetSR('${p.key}',${idx},'series',this.value)"><span class="x">×</span><input type="number" value="${it.reps||10}" min="1" max="90" onchange="seacSetSR('${p.key}',${idx},'reps',this.value)"></div>
+        <button class="exo-del" onclick="seacRemove('${p.key}',${idx})">✕</button>
+      </div>`).join('') : `<div class="phase-empty">Aucun exercice — tape ＋ pour en ajouter.</div>`;
+    return `<div class="phase" style="--pc:${p.pc};--ps:${p.ps};">
+      <div class="phase-head"><div class="phase-ico">${p.icon}</div><div class="phase-name">${p.label}</div><button class="phase-add" onclick="seacOpenPicker('${p.key}')">+</button></div>
+      ${rows}
+    </div>`;
+  }).join('');
+}
+function seacSetSR(phase,idx,field,val){ const v=parseInt(val)||0; if(seacDraft[phase] && seacDraft[phase][idx]) seacDraft[phase][idx][field]=v; }
+function seacRemove(phase,idx){ seacDraft[phase].splice(idx,1); renderSeacPhases(); }
+
+function seacOpenPicker(phaseKey){
+  if(document.getElementById('seac-nom')) seacDraft.nom=document.getElementById('seac-nom').value;
+  seacPickPhase=phaseKey;
+  const p=SEAC_PHASES.find(x=>x.key===phaseKey);
+  const b=document.getElementById('sp-banner');
+  b.style.background=p.ps; b.style.color=p.pc;
+  b.innerHTML=`<span>${p.icon}</span> Ajouter à : <b>${p.label}</b>`;
+  document.getElementById('sp-cats').style.display='grid';
+  document.getElementById('sp-exos').style.display='none';
+  document.getElementById('seapick-overlay').style.display='block';
+  document.getElementById('seapick-scroll').scrollTop=0;
+  document.getElementById('sp-cats').innerHTML='<div style="grid-column:1/3;text-align:center;color:var(--muted);padding:30px;">⏳ Chargement…</div>';
+  seacEnsureData(renderSeacPickCats);
+}
+function renderSeacPickCats(){
+  const cats=loadECats();
+  document.getElementById('sp-cats').innerHTML=cats.map(c=>{
+    const n=(EXO_DATA||[]).filter(e=>e && e.cat===c.key).length;
+    return `<div class="cat-card" onclick="seacPickCat('${c.key}')"><div class="ce">${c.emoji}</div><div class="cn">${seacEsc(c.name)}</div><div class="cc">${n} exercice${n>1?'s':''}</div></div>`;
+  }).join('');
+}
+function seacPickCat(catKey){
+  const c=loadECats().find(x=>x.key===catKey);
+  const list=(EXO_DATA||[]).filter(e=>e && e.cat===catKey);
+  document.getElementById('sp-cats').style.display='none';
+  const el=document.getElementById('sp-exos');
+  el.style.display='block';
+  el.innerHTML=`<button class="sp-backcat" onclick="seacBackToCats()">‹ Catégories</button>`
+    +`<div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:20px;margin-bottom:10px;">${c?c.emoji+' '+seacEsc(c.name):''}</div>`
+    +(list.length?list.map(e=>`<div class="exo-pick" onclick="seacAddExo('${e.id}')">${e.thumb?`<div class="th"><img src="${e.thumb}"></div>`:`<div class="th">${e.emoji||'🏋️'}</div>`}<div class="nm">${seacEsc(e.nom)}</div><div class="go">+</div></div>`).join('')
+      :'<div style="color:var(--muted);padding:20px;text-align:center;">Aucun exercice dans cette catégorie.</div>');
+}
+function seacBackToCats(){ document.getElementById('sp-exos').style.display='none'; document.getElementById('sp-cats').style.display='grid'; }
+function seacBackFromPicker(){ document.getElementById('seapick-overlay').style.display='none'; }
+function seacAddExo(exoId){
+  const e=(EXO_DATA||[]).find(x=>x && String(x.id)===String(exoId)); if(!e) return;
+  seacDraft[seacPickPhase].push({id:e.id, nom:e.nom, emoji:e.emoji||'🏋️', thumb:e.thumb||null, series:3, reps:10});
+  const p=SEAC_PHASES.find(x=>x.key===seacPickPhase);
+  document.getElementById('seapick-overlay').style.display='none';
+  renderSeacPhases();
+  if(typeof showToast==='function') showToast(`✅ « ${e.nom} » ajouté à ${p.label}`);
 }
 
-let selectedSeaExos = new Set();
-function toggleSeaExo(id, nom) {
-  const el=document.getElementById(`sea-exo-${id}`);
-  const chk=document.getElementById(`sea-check-${id}`);
-  if (selectedSeaExos.has(id)) {
-    selectedSeaExos.delete(id);
-    el.style.borderColor='var(--border)'; el.style.background='var(--surface)';
-    if(chk){chk.textContent='○';chk.style.color='var(--muted)';}
-  } else {
-    selectedSeaExos.add(id);
-    el.style.borderColor='var(--accent)'; el.style.background='rgba(45,106,79,0.04)';
-    if(chk){chk.textContent='✓';chk.style.color='var(--accent)';}
-  }
-}
-
-function saveSeance() {
-  const nom=document.getElementById('sea-nom-input')?.value.trim();
-  if (!nom) { showToast('⚠️ Donne un nom !'); return; }
-  if (!selectedSeaExos.size) { showToast('⚠️ Sélectionne des exercices !'); return; }
-  const exercices=[];
-  selectedSeaExos.forEach(id=>{
-    const exo=EXO_DATA.find(e=>e.id===id);
-    if (!exo) return;
-    const ser=parseInt(document.getElementById(`sea-ser-${id}`)?.value)||3;
-    const rep=parseInt(document.getElementById(`sea-rep-${id}`)?.value)||10;
-    exercices.push({id:exo.id, nom:exo.nom, series:ser, reps:rep, chargeRef:exo.charges[1]||0});
-  });
-  const emojis=['💪','⭐','🔄','🦵','🧘','🚴','🏋️'];
+function seacSave(){
+  const nom=(document.getElementById('seac-nom').value||'').trim();
+  if(!nom){ if(typeof showToast==='function') showToast('⚠️ Donne un nom à la séance'); return; }
+  const ech=seacDraft.echauffement||[], cor=seacDraft.corps||[], ret=seacDraft.retour||[];
+  const total=ech.length+cor.length+ret.length;
+  if(!total){ if(typeof showToast==='function') showToast('⚠️ Ajoute au moins un exercice'); return; }
+  const flat=[];
+  [ech,cor,ret].forEach(arr=>arr.forEach(it=>{
+    const exo=(EXO_DATA||[]).find(x=>x && String(x.id)===String(it.id));
+    const chargeRef=exo && exo.charges ? (exo.charges[1]||exo.charges[0]||0) : 0;
+    flat.push({id:it.id, nom:it.nom, emoji:it.emoji, series:it.series||3, reps:it.reps||10, chargeRef});
+  }));
   const seances=loadSea();
-  seances.push({id:Date.now(), titre:nom, emoji:emojis[seances.length%emojis.length], exercices});
+  const isEdit=seacEditId!=null;
+  let emoji='💪';
+  if(isEdit){ const old=seances.find(s=>s && String(s.id)===String(seacEditId)); if(old) emoji=old.emoji; }
+  else { const emojis=['💪','🔥','🦵','🧘','⭐','🚴']; emoji=emojis[seances.length%emojis.length]; }
+  const obj={ id:isEdit?seacEditId:Date.now(), titre:nom, emoji, echauffement:ech, corps:cor, retour:ret, exercices:flat };
+  if(isEdit){ const i=seances.findIndex(s=>s && String(s.id)===String(seacEditId)); if(i>=0) seances[i]=obj; else seances.push(obj); }
+  else seances.push(obj);
   saveSea(seances);
-  selectedSeaExos.clear();
-  if(document.getElementById('sea-nom-input')) document.getElementById('sea-nom-input').value='';
-  document.getElementById('form-create-seance').style.display='none';
-  renderSeancesList(); renderPlanningJours();
-  showToast('✅ Séance créée !');
+  seacEditId=null; seacDraft=null;
+  document.getElementById('seac-overlay').style.display='none';
+  renderSeancesList();
+  if(typeof renderPlanningJours==='function'){ try{ renderPlanningJours(); }catch(e){} }
+  if(typeof showToast==='function') showToast(isEdit?'✅ Séance modifiée':'✅ Séance créée');
 }
 
 function deleteSeance(id) {
