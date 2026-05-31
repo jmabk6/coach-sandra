@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-fiche4</div>
+  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-edit</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -937,6 +937,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
         #exo-fiche-scroll{max-width:430px;margin:0 auto;height:100dvh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:30px;}
         #exo-fiche-overlay .fic-top{position:sticky;top:0;z-index:5;padding:12px 14px;}
         #exo-fiche-overlay .fic-back{width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:var(--surface);font-size:22px;color:var(--accent);cursor:pointer;line-height:1;}
+        #exo-fiche-overlay .fic-edit{border:1px solid var(--accent);background:var(--surface);color:var(--accent);font-size:13px;font-weight:600;padding:8px 14px;border-radius:999px;cursor:pointer;}
         #exo-fiche-overlay .fic-hero{position:relative;margin:0 16px;border-radius:20px;overflow:hidden;height:200px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;}
         #exo-fiche-overlay .fic-hero img{width:100%;height:100%;object-fit:cover;}
         #exo-fiche-overlay .fic-emoji{font-size:88px;}
@@ -957,7 +958,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
         #exo-fiche-overlay .fic-sec.charge{--c:#2f6db0;--cs:#e3f2fd;} #exo-fiche-overlay .fic-sec.volume{--c:#13807a;--cs:#e1f2f0;}
       </style>
       <div id="exo-fiche-scroll">
-        <div class="fic-top"><button class="fic-back" onclick="closeExoFiche()">‹</button></div>
+        <div class="fic-top" style="display:flex;align-items:center;justify-content:space-between;"><button class="fic-back" onclick="closeExoFiche()">‹</button><button class="fic-edit" onclick="openExoFicheEdit()">✎ Modifier</button></div>
         <div id="fic-body"></div>
       </div>
     </div>
@@ -2630,7 +2631,10 @@ function ensureExoData(){
         let _rep=false;
         cx.forEach((ex,i)=>{ if(ex && (ex.id===undefined||ex.id===null||isNaN(Number(ex.id)))){ ex.id = Date.now()+i; _rep=true; } });
         if(_rep) saveCustomExos(cx);
-        EXO_DATA = EXO_DATA.concat(cx.filter(Boolean));
+        cx.filter(Boolean).forEach(ex=>{
+          const j = EXO_DATA.findIndex(b=>b && String(b.id)===String(ex.id));
+          if(j>=0) EXO_DATA[j]=ex; else EXO_DATA.push(ex);
+        });
       }
     }catch(e){ console.warn('custom exos', e); }
     const w=document.getElementById('exo-loading'); if(w) w.remove();
@@ -3214,6 +3218,7 @@ function exoFicheData(e){
   return { muscles:muscles, execution:e.etapes||[], conseils:conseils, precautions:precautions, charge:charge, volume:[], photo:e.full||null };
 }
 function renderFiche(e){
+  _ficCurrentId = e.id;
   const f=exoFicheData(e);
   const catLabel = (typeof eCatLabel==='function') ? eCatLabel(e.cat) : (e.cat||'');
   let h='';
@@ -3228,6 +3233,8 @@ function renderFiche(e){
   document.getElementById('fic-body').innerHTML=h;
 }
 function closeExoFiche(){ const o=document.getElementById('exo-fiche-overlay'); if(o) o.style.display='none'; }
+let _ficCurrentId = null;
+function openExoFicheEdit(){ const id=_ficCurrentId; closeExoFiche(); if(id!=null) openExoEdit(id); }
 // Clic fiabilisé sur les cartes d'exercice (délégué) — marche aussi pour les exos créés
 document.addEventListener('click', function(ev){
   const c = ev.target && ev.target.closest ? ev.target.closest('[data-fiche-id]') : null;
@@ -3235,7 +3242,7 @@ document.addEventListener('click', function(ev){
 });
 
 // ===== CRÉATION D'EXERCICE =====
-let exocCat = null, exocFull = null, exocThumb = null;
+let exocCat = null, exocFull = null, exocThumb = null, exocEditId = null;
 const EXOC_FIELDS = ['muscles','execution','conseils','precautions','charge','volume'];
 
 function exocEscape(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -3371,9 +3378,41 @@ function exocResetForm(){
 }
 function openExoCreate(){
   if(typeof ensureExoData==='function' && !_exoLoaded) ensureExoData();
+  exocEditId = null;
   exocBuildCatMenu();
   exocResetForm();
+  const t=document.querySelector('#exoc-panel .exoc-head .t'); if(t) t.textContent='Créer un exercice';
   // bind placeholder dynamique
+  EXOC_FIELDS.forEach(function(k){
+    const el=document.getElementById('exoc-'+k);
+    el.oninput=function(){ if(el.textContent.trim()) el.classList.remove('empty'); else el.classList.add('empty'); };
+  });
+  document.getElementById('exoc-overlay').style.display='block';
+  document.getElementById('exoc-panel').scrollTop=0;
+}
+function openExoEdit(id){
+  if(typeof ensureExoData==='function' && !_exoLoaded){ ensureExoData(); }
+  const e = EXO_DATA.find(x=>x && String(x.id)===String(id));
+  if(!e){ if(typeof showToast==='function') showToast('⚠️ Exercice introuvable'); return; }
+  exocBuildCatMenu();
+  exocResetForm();
+  exocEditId = e.id;
+  document.getElementById('exoc-nom').value = e.nom||'';
+  // catégorie
+  const catName = (e.fiche&&e.fiche.categorie) || ((loadECats().find(c=>c.key===e.cat)||{}).name) || e.cat;
+  if(catName) exocSetCatBadge(catName);
+  // photo existante
+  exocFull = e.full||null; exocThumb = e.thumb||e.full||null;
+  if(exocFull){ document.getElementById('exoc-photo').innerHTML = '<img src="'+exocFull+'"><label class="add"><span style="font-size:22px;">＋</span><span>Changer</span><input type="file" accept="image/*" hidden onchange="exocAddPhoto(this)"></label>'; }
+  // contenu (depuis fiche, ou dérivé des anciens champs)
+  const f = exoFicheData(e);
+  exocRenderField('exoc-muscles', f.muscles);
+  exocRenderField('exoc-execution', f.execution);
+  exocRenderField('exoc-conseils', f.conseils);
+  exocRenderField('exoc-precautions', f.precautions);
+  exocRenderField('exoc-charge', f.charge);
+  exocRenderField('exoc-volume', f.volume);
+  const t=document.querySelector('#exoc-panel .exoc-head .t'); if(t) t.textContent='Modifier l\u2019exercice';
   EXOC_FIELDS.forEach(function(k){
     const el=document.getElementById('exoc-'+k);
     el.oninput=function(){ if(el.textContent.trim()) el.classList.remove('empty'); else el.classList.add('empty'); };
@@ -3402,7 +3441,7 @@ function exocSave(){
   const catKey=exocCatKey(exocCat);
   const muscles_p = muscles.map(function(s){ const i=s.indexOf(' : '); return (i>-1?s.slice(0,i):s).trim(); }).filter(Boolean);
   const exo={
-    id: Date.now(),
+    id: exocEditId!=null ? exocEditId : Date.now(),
     nom: nom, cat: catKey, custom: true,
     muscles_p: muscles_p.length?muscles_p:[exocCat], muscles_s: [],
     type: 'Perso', mouvement: '', groupe: '',
@@ -3415,13 +3454,21 @@ function exocSave(){
   };
   if(exocFull){ exo.full=exocFull; }
   if(exocThumb){ exo.thumb=exocThumb; }
+  const isEdit = exocEditId!=null;
   try{
-    const arr=loadCustomExos(); arr.push(exo); saveCustomExos(arr);
-    if(Array.isArray(EXO_DATA)) EXO_DATA.push(exo);
+    const arr=loadCustomExos();
+    const idx=arr.findIndex(x=>x && String(x.id)===String(exo.id));
+    if(idx>=0) arr[idx]=exo; else arr.push(exo);
+    saveCustomExos(arr);
+    if(Array.isArray(EXO_DATA)){
+      const j=EXO_DATA.findIndex(x=>x && String(x.id)===String(exo.id));
+      if(j>=0) EXO_DATA[j]=exo; else EXO_DATA.push(exo);
+    }
   }catch(err){ exocMsg('err','Erreur d\u2019enregistrement.'); return; }
+  exocEditId=null;
   closeExoCreate();
   if(typeof exoGoEtage1==='function') exoGoEtage1();
-  if(typeof showToast==='function') showToast('✅ « '+nom+' » créé');
+  if(typeof showToast==='function') showToast(isEdit ? '✅ « '+nom+' » modifié' : '✅ « '+nom+' » créé');
 }
 
 // ---- RÉSULTATS ----
