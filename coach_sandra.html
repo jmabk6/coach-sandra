@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-fiche</div>
+  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-fiche2</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -2624,7 +2624,15 @@ function ensureExoData(){
   s.onload=()=>{
     _exoLoaded=true;
     EXO_DATA = window.EXO_DATA || [];
-    try{ const cx=loadCustomExos(); if(cx&&cx.length) EXO_DATA = EXO_DATA.concat(cx); }catch(e){ console.warn('custom exos', e); }
+    try{
+      const cx=loadCustomExos();
+      if(cx&&cx.length){
+        let _rep=false;
+        cx.forEach((ex,i)=>{ if(ex && (ex.id===undefined||ex.id===null||isNaN(Number(ex.id)))){ ex.id = Date.now()+i; _rep=true; } });
+        if(_rep) saveCustomExos(cx);
+        EXO_DATA = EXO_DATA.concat(cx.filter(Boolean));
+      }
+    }catch(e){ console.warn('custom exos', e); }
     const w=document.getElementById('exo-loading'); if(w) w.remove();
     try{ renderSport(); }catch(e){ console.warn(e); }
   };
@@ -3095,21 +3103,23 @@ function renderExoSearchAll(){
 }
 
 function exoCardHTML(e){
+  const _ch = (Array.isArray(e.charges) && e.charges.length>=4) ? e.charges : [0,0,0,0];
+  const _mp = Array.isArray(e.muscles_p) ? e.muscles_p : [];
   const _isTime = (e.cat==='gainage'||e.cat==='stretching'||e.cat==='cardio');
   const _unit = e.cat==='cardio' ? 'min' : 's';
   const chargesHtml = _isTime
-    ? `<span style="font-size:10px;color:var(--muted);">🔴${e.charges[0]}${_unit} · 🟡${e.charges[1]}${_unit} · 🟢${e.charges[2]}${_unit} · ⭐${e.charges[3]}${_unit}</span>`
-    : `<span style="background:#ffebe8;color:#e63946;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">🔴${e.charges[0]}</span>
-       <span style="background:#fff3e0;color:#e67c00;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">🟡${e.charges[1]}</span>
-       <span style="background:#e8f5e9;color:#2d6a4f;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">🟢${e.charges[2]}</span>
-       <span style="background:#fff8e1;color:#d97706;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">⭐${e.charges[3]}</span>`;
+    ? `<span style="font-size:10px;color:var(--muted);">🔴${_ch[0]}${_unit} · 🟡${_ch[1]}${_unit} · 🟢${_ch[2]}${_unit} · ⭐${_ch[3]}${_unit}</span>`
+    : `<span style="background:#ffebe8;color:#e63946;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">🔴${_ch[0]}</span>
+       <span style="background:#fff3e0;color:#e67c00;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">🟡${_ch[1]}</span>
+       <span style="background:#e8f5e9;color:#2d6a4f;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">🟢${_ch[2]}</span>
+       <span style="background:#fff8e1;color:#d97706;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">⭐${_ch[3]}</span>`;
   const isSpecial = e.id===10;
   return `<div data-fiche-id="${e.id}" style="display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:14px;padding:10px 12px;margin-bottom:8px;border:${isSpecial?'1px solid #f59e0b':'1px solid var(--border)'};cursor:pointer;${isSpecial?'border-left:3px solid #f59e0b;':''}">
     ${e.thumb ? `<img src="${e.thumb}" style="width:56px;height:56px;border-radius:10px;object-fit:cover;flex-shrink:0;border:1px solid var(--border);">` : `<div style="width:56px;height:56px;border-radius:10px;flex-shrink:0;border:1px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:30px;">${e.emoji||'🏋️'}</div>`}
     <div style="flex:1;min-width:0;">
       <div style="font-weight:700;font-size:14px;margin-bottom:3px;">${ficEsc(e.nom)}</div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:3px;">
-        ${e.muscles_p.map(m=>`<span style="background:rgba(230,57,70,0.08);color:#e63946;border-radius:6px;padding:2px 7px;font-size:10px;">${m}</span>`).join('')}
+        ${_mp.map(m=>`<span style="background:rgba(230,57,70,0.08);color:#e63946;border-radius:6px;padding:2px 7px;font-size:10px;">${ficEsc(m)}</span>`).join('')}
       </div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;">${chargesHtml}</div>
     </div>
@@ -3127,7 +3137,8 @@ function renderExercices() {
 }
 
 function showExoDetail(id) {
-  const e=EXO_DATA.find(x=>x.id===id);
+  let e=EXO_DATA.find(x=>x.id===id);
+  if(!e) e=EXO_DATA.find(x=>String(x.id)===String(id));
   if (!e) { if(typeof showToast==='function') showToast('⚠️ Exercice introuvable (id '+id+')'); return; }
   try{ renderFiche(e); document.getElementById('exo-fiche-overlay').style.display='block'; var _sc=document.getElementById('exo-fiche-scroll'); if(_sc)_sc.scrollTop=0; return; }
   catch(_err){ if(typeof showToast==='function') showToast('⚠️ Fiche : '+_err.message); console.error('showExoDetail',_err); return; }
@@ -3220,7 +3231,7 @@ function closeExoFiche(){ const o=document.getElementById('exo-fiche-overlay'); 
 // Clic fiabilisé sur les cartes d'exercice (délégué) — marche aussi pour les exos créés
 document.addEventListener('click', function(ev){
   const c = ev.target && ev.target.closest ? ev.target.closest('[data-fiche-id]') : null;
-  if(c){ const id=Number(c.getAttribute('data-fiche-id')); if(!isNaN(id)) showExoDetail(id); }
+  if(c){ showExoDetail(c.getAttribute('data-fiche-id')); }
 });
 
 // ===== CRÉATION D'EXERCICE =====
