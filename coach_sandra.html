@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-fiche3</div>
+  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-fiche4</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -3217,8 +3217,8 @@ function renderFiche(e){
   const f=exoFicheData(e);
   const catLabel = (typeof eCatLabel==='function') ? eCatLabel(e.cat) : (e.cat||'');
   let h='';
-  h += '<div class="fic-hero">'+(f.photo?'<img src="'+f.photo+'">':'<div class="fic-emoji">'+(e.emoji||'🏋️')+'</div>')+'<div class="fic-cat-badge">'+ficEsc(catLabel)+'</div></div>';
   h += '<div class="fic-title"><h1>'+ficEsc(e.nom)+'</h1><div class="fic-sub">'+ficEsc(catLabel)+'</div></div>';
+  h += '<div class="fic-hero" style="margin-top:12px;">'+(f.photo?'<img src="'+f.photo+'">':'<div class="fic-emoji">'+(e.emoji||'🏋️')+'</div>')+'</div>';
   h += ficSec('muscles','💪','Muscles travaillés', f.muscles);
   h += ficSec('exec','▶️','Exécution', f.execution);
   h += ficSec('conseils','💡','Conseils', f.conseils);
