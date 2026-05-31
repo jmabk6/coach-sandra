@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-exocreate4</div>
+  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-exocreate5</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -3098,6 +3098,10 @@ function renderExercices() {
 function showExoDetail(id) {
   const e=EXO_DATA.find(x=>x.id===id);
   if (!e) return;
+  // Si on ouvre depuis l'écran vignettes / la recherche globale, basculer vers la catégorie de l'exo
+  // (le panneau de détail vit dans l'écran 2 ; sinon il s'afficherait dans une zone masquée).
+  const e1=document.getElementById('exo-etage1');
+  if(e1 && e1.style.display!=='none'){ exoGoEtage2(e.cat); }
   const panel=document.getElementById('exo-detail-panel');
   if (!panel) return;
 
