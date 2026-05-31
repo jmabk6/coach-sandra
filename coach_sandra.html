@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-exohead</div>
+  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-exocreate</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -780,7 +780,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
     <div id="exo-etage1">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;">
         <div style="font-family:Cormorant Garamond,serif;font-weight:700;font-size:28px;">🏋️ Mes Exercices</div>
-        <button onclick="showToast('🛠️ Création exercice : bientôt dispo')" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:8px 14px;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap;">+ Créer</button>
+        <button onclick="openExoCreate()" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:8px 14px;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap;">+ Créer</button>
       </div>
       <div class="search-bar" style="margin-bottom:12px;"><span style="color:var(--muted);">🔍</span><input type="text" id="exo-search-all" placeholder="Rechercher un exercice…" oninput="renderExoSearchAll()"><button id="exo-search-all-clear" onclick="clearExoSearchAll()" style="display:none;background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0 4px;line-height:1;">✕</button></div>
       <div id="exo-search-results" style="display:none;"></div>
@@ -836,6 +836,101 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
       </div>
     </div>
     </div><!-- /exo-etage2 -->
+
+    <!-- ===== OVERLAY : CRÉER UN EXERCICE ===== -->
+    <div id="exoc-overlay" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(40,20,20,.45);backdrop-filter:blur(2px);">
+      <style>
+        #exoc-panel{position:absolute;left:50%;top:0;transform:translateX(-50%);width:100%;max-width:430px;height:100%;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;}
+        #exoc-panel .exoc-head{position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:1px solid var(--border);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;}
+        #exoc-panel .exoc-head .t{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:24px;}
+        #exoc-panel .exoc-x{background:none;border:none;font-size:22px;color:var(--muted);cursor:pointer;}
+        #exoc-panel .fld{padding:0 18px;margin-top:16px;}
+        #exoc-panel .lab{font-size:12.5px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;color:var(--accent);margin-bottom:6px;}
+        #exoc-nom{width:100%;border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:10px 13px;font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;color:var(--text);outline:none;}
+        .exoc-photo{display:flex;gap:10px;align-items:center;}
+        .exoc-photo .add{width:78px;height:78px;border-radius:14px;border:2px dashed var(--accent);background:rgba(192,97,106,.06);color:var(--accent);font-size:13px;font-weight:600;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;}
+        .exoc-photo img{width:78px;height:78px;border-radius:14px;object-fit:cover;border:1px solid var(--border);}
+        .exoc-cat-badge{display:inline-flex;align-items:center;gap:7px;font-size:15px;font-weight:600;border-radius:999px;padding:9px 18px;cursor:pointer;background:var(--accent);color:#fff;border:1.5px solid var(--accent);}
+        .exoc-cat-badge.empty{background:rgba(192,97,106,.06);color:var(--accent);border:1.5px dashed var(--accent);font-weight:500;font-size:13.5px;}
+        #exoc-cat-menu{display:none;position:absolute;z-index:30;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:6px;box-shadow:0 8px 24px rgba(120,60,60,.18);grid-template-columns:1fr 1fr;gap:4px;margin-top:6px;}
+        #exoc-cat-menu.open{display:grid;}
+        #exoc-cat-menu button{border:none;background:transparent;font-size:14px;color:var(--text);padding:9px 13px;border-radius:9px;cursor:pointer;text-align:left;white-space:nowrap;}
+        .exoc-sec{background:var(--surface);border:1px solid var(--border);border-left:5px solid var(--c);border-radius:14px;padding:13px 15px;margin:14px 18px 0;}
+        .exoc-sec .lab{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:700;color:var(--c);text-transform:none;letter-spacing:0;margin-bottom:9px;}
+        .exoc-sec .ico{width:30px;height:30px;border-radius:9px;background:var(--cs);display:inline-flex;align-items:center;justify-content:center;font-size:16px;}
+        .exoc-content{font-size:14.5px;line-height:1.55;outline:none;min-height:22px;color:var(--text);}
+        .exoc-content.empty:before{content:attr(data-ph);color:#c9b3b3;}
+        .exoc-content .line{display:flex;gap:10px;align-items:flex-start;padding:4px 0;}
+        .exoc-content .bullet{width:7px;height:7px;border-radius:50%;background:var(--c);margin-top:8px;flex:0 0 auto;box-shadow:0 0 0 3px var(--cs);}
+        .exoc-content strong{color:var(--c);font-weight:700;}
+        .exoc-sec.muscles{--c:#c0616a;--cs:#fdeceb;} .exoc-sec.exec{--c:#2d6a4f;--cs:#e3f3ea;}
+        .exoc-sec.conseils{--c:#b07400;--cs:#fff4d6;} .exoc-sec.precautions{--c:#c23b30;--cs:#fde3e0;}
+        .exoc-sec.charge{--c:#2f6db0;--cs:#e3f2fd;} .exoc-sec.volume{--c:#13807a;--cs:#e1f2f0;}
+        .exoc-ai{margin:16px 18px 0;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:15px;}
+        .exoc-ai .at{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;margin-bottom:10px;}
+        .exoc-btnrow{display:flex;gap:10px;}
+        .exoc-btn{flex:1;border:none;border-radius:12px;padding:12px;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer;}
+        .exoc-btn.p{background:var(--accent);color:#fff;} .exoc-btn.g{background:#fff;color:var(--accent);border:1.5px solid var(--accent);}
+        .exoc-btn:disabled{opacity:.4;}
+        .exoc-sub{display:none;margin-top:12px;} .exoc-sub.open{display:block;}
+        .exoc-sub textarea{width:100%;border:1px solid var(--border);border-radius:12px;padding:11px;font-family:'Inter',sans-serif;font-size:13px;min-height:110px;outline:none;}
+        #exoc-prompt{background:rgba(192,97,106,.06);min-height:140px;}
+        .exoc-msg{margin-top:10px;font-size:13px;border-radius:10px;padding:9px 12px;display:none;}
+        .exoc-msg.ok{display:block;background:#e8f5e9;color:#2d6a4f;} .exoc-msg.err{display:block;background:#f8d7da;color:#a02a37;}
+        .exoc-save{margin:18px;width:calc(100% - 36px);background:var(--accent);color:#fff;border:none;border-radius:14px;padding:16px;font-family:'Inter',sans-serif;font-size:16px;font-weight:600;cursor:pointer;}
+      </style>
+      <div id="exoc-panel">
+        <div class="exoc-head"><div class="t">Créer un exercice</div><button class="exoc-x" onclick="closeExoCreate()">✕</button></div>
+
+        <div class="fld"><div class="lab">Nom de l'exercice</div>
+          <input type="text" id="exoc-nom" placeholder="ex. Développé couché haltères"></div>
+
+        <div class="fld"><div class="lab">Photo</div>
+          <div class="exoc-photo" id="exoc-photo">
+            <label class="add"><span style="font-size:22px;">＋</span><span>Photo</span>
+              <input type="file" accept="image/*" hidden onchange="exocAddPhoto(this)"></label>
+          </div></div>
+
+        <div class="fld"><div class="lab">Catégorie</div>
+          <div style="position:relative;">
+            <button class="exoc-cat-badge empty" id="exoc-cat-badge" onclick="exocToggleCatMenu()">Déterminée par l'IA (modifiable)</button>
+            <div id="exoc-cat-menu"></div>
+          </div></div>
+
+        <div class="exoc-sec muscles"><div class="lab"><span class="ico">💪</span> Muscles travaillés</div>
+          <div class="exoc-content empty" id="exoc-muscles" contenteditable="true" data-ph="ex. Pectoraux : muscle principal"></div></div>
+        <div class="exoc-sec exec"><div class="lab"><span class="ico">▶️</span> Exécution</div>
+          <div class="exoc-content empty" id="exoc-execution" contenteditable="true" data-ph="Départ : … · Mouvement : … · Respiration : …"></div></div>
+        <div class="exoc-sec conseils"><div class="lab"><span class="ico">💡</span> Conseils</div>
+          <div class="exoc-content empty" id="exoc-conseils" contenteditable="true" data-ph="Posture : … · Erreur : …"></div></div>
+        <div class="exoc-sec precautions"><div class="lab"><span class="ico">⚠️</span> Précautions</div>
+          <div class="exoc-content empty" id="exoc-precautions" contenteditable="true" data-ph="Dos : … · Respiration : …"></div></div>
+        <div class="exoc-sec charge"><div class="lab"><span class="ico">🏋️</span> Charge de référence</div>
+          <div class="exoc-content empty" id="exoc-charge" contenteditable="true" data-ph="Débutant : … · Intermédiaire : … · Confirmé : …"></div></div>
+        <div class="exoc-sec volume"><div class="lab"><span class="ico">🔁</span> Volume conseillé</div>
+          <div class="exoc-content empty" id="exoc-volume" contenteditable="true" data-ph="Séries : … · Répétitions : … · Repos : …"></div></div>
+
+        <div class="exoc-ai">
+          <div class="at">✨ Remplissage assisté</div>
+          <div class="exoc-btnrow">
+            <button class="exoc-btn p" onclick="exocOpenCopy()">📋 Copie pour IA</button>
+            <button class="exoc-btn g" onclick="exocOpenImport()">📥 Importer réponse</button>
+          </div>
+          <div class="exoc-sub" id="exoc-copyzone">
+            <textarea id="exoc-prompt" readonly></textarea>
+            <div class="exoc-btnrow" style="margin-top:10px;"><button class="exoc-btn p" onclick="exocDoCopy()">📋 Copier</button><button class="exoc-btn g" onclick="exocCloseZones()">Fermer</button></div>
+          </div>
+          <div class="exoc-sub" id="exoc-importzone">
+            <textarea id="exoc-paste" placeholder="Colle ici la réponse de Claude (le bloc JSON)…" oninput="exocRefreshFill()"></textarea>
+            <div class="exoc-btnrow" style="margin-top:10px;"><button class="exoc-btn p" id="exoc-fillbtn" onclick="exocImport()" disabled>Remplir la fiche</button><button class="exoc-btn g" onclick="exocCloseZones()">Annuler</button></div>
+          </div>
+          <div class="exoc-msg" id="exoc-msg"></div>
+        </div>
+
+        <button class="exoc-save" onclick="exocSave()">Enregistrer l'exercice</button>
+      </div>
+    </div>
+
   </div>
 
   <!-- ===== RÉSULTATS ===== -->
@@ -905,7 +1000,7 @@ const firebaseConfig = {
 };
 
 // === Données COMMUNES (catalogue partagé entre TOUS les comptes) ===
-const SHARED_KEYS = ['sandra_ingredients','sandra_categories','sandra_recettes','sandra_cat_aliments','sandra_cat_exos'];
+const SHARED_KEYS = ['sandra_ingredients','sandra_categories','sandra_recettes','sandra_cat_aliments','sandra_cat_exos','sandra_exos_custom'];
 // === Données PRIVÉES (propres à chaque compte) ===
 const PRIVATE_KEYS = ['sandra_poids','sandra_objectif','sandra_journal','sandra_repas','sandra_profil','mc_seances','mc_planning','mc_resultats'];
 const SYNC_KEYS = SHARED_KEYS.concat(PRIVATE_KEYS);
@@ -1451,6 +1546,11 @@ function loadECats(){
   }catch(e){ return SANDRA_ECATS_DEFAULT.slice(); }
 }
 function saveECats(d){ localStorage.setItem(ECAT_KEY, JSON.stringify(d)); }
+
+// ---- Exercices personnalisés (créés dans l'app, partagés via Firestore) ----
+const CUSTOM_EXO_KEY = 'sandra_exos_custom';
+function loadCustomExos(){ try{ return JSON.parse(localStorage.getItem(CUSTOM_EXO_KEY)||'[]'); }catch(e){ return []; } }
+function saveCustomExos(a){ localStorage.setItem(CUSTOM_EXO_KEY, JSON.stringify(a)); }
 function eCatLabel(key){ const c=loadECats().find(c=>c.key===key); return c?c.emoji+' '+c.name:(key||''); }
 function eCatCount(key){ return (window.EXO_DATA||EXO_DATA||[]).filter(e=>e.cat===key).length; }
 
@@ -2493,6 +2593,7 @@ function ensureExoData(){
   s.onload=()=>{
     _exoLoaded=true;
     EXO_DATA = window.EXO_DATA || [];
+    try{ const cx=loadCustomExos(); if(cx&&cx.length) EXO_DATA = EXO_DATA.concat(cx); }catch(e){ console.warn('custom exos', e); }
     const w=document.getElementById('exo-loading'); if(w) w.remove();
     try{ renderSport(); }catch(e){ console.warn(e); }
   };
@@ -3032,6 +3133,195 @@ function showExoDetail(id) {
 
   panel.style.display='block';
   panel.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ===== CRÉATION D'EXERCICE =====
+let exocCat = null, exocFull = null, exocThumb = null;
+const EXOC_FIELDS = ['muscles','execution','conseils','precautions','charge','volume'];
+
+function exocEscape(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function exocLineHtml(it){
+  const idx = it.indexOf(' : ');
+  let label='', detail=it;
+  if(idx>-1){ label=it.slice(0,idx); detail=it.slice(idx+3); }
+  const lab = label ? '<strong>'+exocEscape(label)+'</strong>&nbsp;: ' : '';
+  return '<div class="line"><span class="bullet"></span><span class="txt">'+lab+exocEscape(detail)+'</span></div>';
+}
+function exocRenderField(id, val){
+  const el=document.getElementById(id); if(!el) return false;
+  let items = Array.isArray(val) ? val : String(val).split(/\n|·|;/);
+  items = items.map(x=>String(x).replace(/\*\*/g,'').trim()).filter(Boolean);
+  if(!items.length){ el.classList.add('empty'); el.innerHTML=''; return false; }
+  el.classList.remove('empty');
+  el.innerHTML = items.map(exocLineHtml).join('');
+  return true;
+}
+function exocReadSection(id){
+  const el=document.getElementById(id); if(!el) return [];
+  const lines=[...el.querySelectorAll('.line .txt')];
+  if(lines.length) return lines.map(l=>l.textContent.replace(/\u00a0/g,' ').trim()).filter(Boolean);
+  return (el.textContent||'').split('\n').map(s=>s.trim()).filter(Boolean);
+}
+
+// --- Catégorie ---
+function exocBuildCatMenu(){
+  const m=document.getElementById('exoc-cat-menu'); if(!m) return;
+  m.innerHTML = loadECats().map(c=>'<button onclick="exocPickCat('+JSON.stringify(c.name)+')">'+c.emoji+' '+exocEscape(c.name)+'</button>').join('');
+}
+function exocToggleCatMenu(){ document.getElementById('exoc-cat-menu').classList.toggle('open'); }
+function exocPickCat(name){ exocSetCatBadge(name); document.getElementById('exoc-cat-menu').classList.remove('open'); }
+function exocSetCatBadge(name){
+  const c=loadECats().find(x=>x.name===name);
+  const emoji = c ? c.emoji : '🏋️';
+  const b=document.getElementById('exoc-cat-badge');
+  b.textContent = emoji+' '+name; b.classList.remove('empty');
+  exocCat = name;
+}
+function exocCatKey(name){
+  const c=loadECats().find(x=>x.name===name); if(c) return c.key;
+  let key = name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+  if(!key) key='cat'+Date.now();
+  const cats=loadECats(); cats.push({key:key, emoji:'🏋️', name:name}); saveECats(cats);
+  return key;
+}
+function exocEmoji(key){ const c=loadECats().find(x=>x.key===key); return c?c.emoji:'🏋️'; }
+
+// --- Photo (redimensionnée) ---
+function exocResize(file, max, cb){
+  const img=new Image();
+  img.onload=function(){
+    const sc=Math.min(1, max/img.width);
+    const w=Math.round(img.width*sc), h=Math.round(img.height*sc);
+    const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+    cv.getContext('2d').drawImage(img,0,0,w,h);
+    cb(cv.toDataURL('image/jpeg',0.72));
+  };
+  img.src=URL.createObjectURL(file);
+}
+function exocAddPhoto(input){
+  const f=input.files[0]; if(!f) return;
+  exocResize(f, 700, function(full){ exocFull=full;
+    exocResize(f, 150, function(thumb){ exocThumb=thumb;
+      const box=document.getElementById('exoc-photo');
+      box.innerHTML = '<img src="'+full+'">' +
+        '<label class="add"><span style="font-size:22px;">＋</span><span>Changer</span><input type="file" accept="image/*" hidden onchange="exocAddPhoto(this)"></label>';
+    });
+  });
+}
+
+// --- Workflow IA ---
+function exocBuildPrompt(){
+  const nom=(document.getElementById('exoc-nom').value||'').trim();
+  if(!nom) return null;
+  return 'Tu es coach sportif. Remplis une fiche pour l\u2019exercice : "'+nom+'".\n'+
+'Réponds UNIQUEMENT par un objet JSON valide (aucun texte autour, aucune balise Markdown, aucun astérisque).\n'+
+'Chaque champ est une LISTE de points courts. Commence CHAQUE point par un mot-clé suivi de " : " puis l\u2019explication.\n'+
+'Pour "categorie" : choisis UNE valeur correspondant au muscle/famille principal, parmi : Pectoraux, Dos, Épaules, Bras, Jambes, Gainage, Stretching, Cardio.\n'+
+'Pour "charge" : la CAPACITÉ par niveau (kg en muscu ; variante au poids de corps ; durée/intensité en cardio/gainage).\n'+
+'Pour "volume" : le nombre de séries et de répétitions (ou la durée).\n'+
+'Clés exactes :\n'+
+'{\n  "categorie": "Pectoraux",\n  "muscles": ["Muscle principal : précision"],\n  "execution": ["Départ : position", "Mouvement : geste", "Respiration : expire sur l\u2019effort"],\n  "conseils": ["Posture : ...", "Erreur : ..."],\n  "precautions": ["Dos : ...", "Respiration : pas d\u2019apnée"],\n  "charge": ["Débutant : valeur", "Intermédiaire : valeur", "Confirmé : valeur"],\n  "volume": ["Séries : ...", "Répétitions : ...", "Repos : ..."]\n}';
+}
+function exocCloseZones(){ document.getElementById('exoc-copyzone').classList.remove('open'); document.getElementById('exoc-importzone').classList.remove('open'); exocMsg('',''); }
+function exocOpenCopy(){
+  const p=exocBuildPrompt();
+  if(!p){ exocMsg('err','Écris d\u2019abord le nom de l\u2019exercice.'); return; }
+  document.getElementById('exoc-importzone').classList.remove('open');
+  document.getElementById('exoc-prompt').value=p;
+  document.getElementById('exoc-copyzone').classList.add('open');
+  exocMsg('','');
+}
+function exocDoCopy(){
+  const ta=document.getElementById('exoc-prompt'); ta.select(); ta.setSelectionRange(0,99999);
+  if(navigator.clipboard){ navigator.clipboard.writeText(ta.value).then(function(){ exocMsg('ok','✅ Copié ! Colle-le dans Claude.'); }).catch(function(){ exocMsg('ok','Texte sélectionné — fais Copier.'); }); }
+  else exocMsg('ok','Texte sélectionné — fais Copier.');
+}
+function exocOpenImport(){
+  document.getElementById('exoc-copyzone').classList.remove('open');
+  document.getElementById('exoc-paste').value='';
+  document.getElementById('exoc-importzone').classList.add('open');
+  exocRefreshFill(); exocMsg('','');
+}
+function exocRefreshFill(){ document.getElementById('exoc-fillbtn').disabled = !document.getElementById('exoc-paste').value.trim(); }
+function exocImport(){
+  let raw=(document.getElementById('exoc-paste').value||'').trim();
+  if(!raw){ exocMsg('err','Colle d\u2019abord la réponse de Claude.'); return; }
+  raw=raw.replace(/```json/gi,'').replace(/```/g,'');
+  const s=raw.indexOf('{'), e=raw.lastIndexOf('}');
+  if(s===-1||e===-1){ exocMsg('err','Pas de JSON trouvé dans le texte collé.'); return; }
+  let data; try{ data=JSON.parse(raw.slice(s,e+1)); }catch(err){ exocMsg('err','JSON illisible. Recopie la réponse complète.'); return; }
+  let filled=0;
+  EXOC_FIELDS.forEach(function(k){ if(data[k]!==undefined && exocRenderField('exoc-'+k, data[k])) filled++; });
+  let catMsg='';
+  if(data.categorie){ exocSetCatBadge(String(data.categorie).trim()); catMsg=' + catégorie'; }
+  if(filled===0 && !catMsg){ exocMsg('err','JSON valide mais aucun champ attendu trouvé.'); return; }
+  document.getElementById('exoc-importzone').classList.remove('open');
+  exocMsg('ok','✅ Fiche remplie ('+filled+'/6'+catMsg+'). Vérifie et ajuste.');
+}
+function exocMsg(type,text){ const m=document.getElementById('exoc-msg'); m.className='exoc-msg'+(type?' '+type:''); m.textContent=text; }
+
+// --- Ouverture / fermeture / reset ---
+function exocResetForm(){
+  exocCat=null; exocFull=null; exocThumb=null;
+  document.getElementById('exoc-nom').value='';
+  document.getElementById('exoc-photo').innerHTML='<label class="add"><span style="font-size:22px;">＋</span><span>Photo</span><input type="file" accept="image/*" hidden onchange="exocAddPhoto(this)"></label>';
+  const b=document.getElementById('exoc-cat-badge'); b.textContent='Déterminée par l\u2019IA (modifiable)'; b.classList.add('empty');
+  EXOC_FIELDS.forEach(function(k){ const el=document.getElementById('exoc-'+k); el.innerHTML=''; el.classList.add('empty'); });
+  exocCloseZones();
+}
+function openExoCreate(){
+  if(typeof ensureExoData==='function' && !_exoLoaded) ensureExoData();
+  exocBuildCatMenu();
+  exocResetForm();
+  // bind placeholder dynamique
+  EXOC_FIELDS.forEach(function(k){
+    const el=document.getElementById('exoc-'+k);
+    el.oninput=function(){ if(el.textContent.trim()) el.classList.remove('empty'); else el.classList.add('empty'); };
+  });
+  document.getElementById('exoc-overlay').style.display='block';
+  document.getElementById('exoc-panel').scrollTop=0;
+}
+function closeExoCreate(){ document.getElementById('exoc-overlay').style.display='none'; }
+
+// --- Sauvegarde ---
+function exocParseCharges(arr){
+  const out=[0,0,0,0];
+  for(let i=0;i<4;i++){ const m=arr[i]?String(arr[i]).match(/-?\d+([.,]\d+)?/):null; out[i]=m?parseFloat(m[0].replace(',','.')):0; }
+  return out;
+}
+function exocSave(){
+  const nom=(document.getElementById('exoc-nom').value||'').trim();
+  if(!nom){ exocMsg('err','Donne un nom à l\u2019exercice.'); document.getElementById('exoc-msg').scrollIntoView({behavior:'smooth'}); return; }
+  if(!exocCat){ exocMsg('err','Choisis une catégorie (tape le badge).'); return; }
+  const muscles=exocReadSection('exoc-muscles');
+  const execution=exocReadSection('exoc-execution');
+  const conseils=exocReadSection('exoc-conseils');
+  const precautions=exocReadSection('exoc-precautions');
+  const charge=exocReadSection('exoc-charge');
+  const volume=exocReadSection('exoc-volume');
+  const catKey=exocCatKey(exocCat);
+  const muscles_p = muscles.map(function(s){ const i=s.indexOf(' : '); return (i>-1?s.slice(0,i):s).trim(); }).filter(Boolean);
+  const exo={
+    id: Date.now(),
+    nom: nom, cat: catKey, custom: true,
+    muscles_p: muscles_p.length?muscles_p:[exocCat], muscles_s: [],
+    type: 'Perso', mouvement: '', groupe: '',
+    etapes: execution, erreurs: [],
+    conseil: conseils.join('  •  '),
+    precautions: precautions.join('<br>'),
+    charges: exocParseCharges(charge),
+    emoji: exocEmoji(catKey),
+    fiche: {categorie:exocCat, muscles:muscles, execution:execution, conseils:conseils, precautions:precautions, charge:charge, volume:volume}
+  };
+  if(exocFull){ exo.full=exocFull; }
+  if(exocThumb){ exo.thumb=exocThumb; }
+  try{
+    const arr=loadCustomExos(); arr.push(exo); saveCustomExos(arr);
+    if(Array.isArray(EXO_DATA)) EXO_DATA.push(exo);
+  }catch(err){ exocMsg('err','Erreur d\u2019enregistrement.'); return; }
+  closeExoCreate();
+  if(typeof exoGoEtage1==='function') exoGoEtage1();
+  if(typeof showToast==='function') showToast('✅ « '+nom+' » créé');
 }
 
 // ---- RÉSULTATS ----
