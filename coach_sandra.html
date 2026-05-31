@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-exocreate6</div>
+  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-fiche</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -928,6 +928,37 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
         </div>
 
         <button class="exoc-save" onclick="exocSave()">Enregistrer l'exercice</button>
+      </div>
+    </div>
+
+    <!-- ===== FICHE EXERCICE (plein écran / lecture) ===== -->
+    <div id="exo-fiche-overlay" style="display:none;position:fixed;inset:0;z-index:600;background:var(--bg);">
+      <style>
+        #exo-fiche-scroll{max-width:430px;margin:0 auto;height:100dvh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:30px;}
+        #exo-fiche-overlay .fic-top{position:sticky;top:0;z-index:5;padding:12px 14px;}
+        #exo-fiche-overlay .fic-back{width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:var(--surface);font-size:22px;color:var(--accent);cursor:pointer;line-height:1;}
+        #exo-fiche-overlay .fic-hero{position:relative;margin:0 16px;border-radius:20px;overflow:hidden;height:200px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;}
+        #exo-fiche-overlay .fic-hero img{width:100%;height:100%;object-fit:cover;}
+        #exo-fiche-overlay .fic-emoji{font-size:88px;}
+        #exo-fiche-overlay .fic-cat-badge{position:absolute;top:12px;left:12px;background:rgba(255,255,255,.92);color:var(--accent);font-weight:600;font-size:13px;padding:6px 13px;border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.12);}
+        #exo-fiche-overlay .fic-title{padding:16px 20px 4px;}
+        #exo-fiche-overlay .fic-title h1{margin:0;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:30px;line-height:1.05;}
+        #exo-fiche-overlay .fic-title .fic-sub{color:var(--muted);font-size:13px;margin-top:3px;}
+        #exo-fiche-overlay .fic-sec{background:var(--surface);border:1px solid var(--border);border-left:5px solid var(--c);border-radius:14px;padding:14px 16px;margin:12px 16px 0;box-shadow:0 1px 3px rgba(120,60,60,.04);}
+        #exo-fiche-overlay .fic-lab{display:flex;align-items:center;gap:9px;margin-bottom:10px;font-size:14px;font-weight:700;color:var(--c);}
+        #exo-fiche-overlay .fic-ico{width:30px;height:30px;border-radius:9px;background:var(--cs);display:inline-flex;align-items:center;justify-content:center;font-size:16px;}
+        #exo-fiche-overlay .fic-content{font-size:14.5px;line-height:1.55;}
+        #exo-fiche-overlay .fic-content .line{display:flex;gap:11px;align-items:flex-start;padding:5px 0;}
+        #exo-fiche-overlay .fic-content .bullet{width:7px;height:7px;border-radius:50%;background:var(--c);margin-top:8px;flex:0 0 auto;box-shadow:0 0 0 3px var(--cs);}
+        #exo-fiche-overlay .fic-content .txt{flex:1;}
+        #exo-fiche-overlay .fic-content strong{color:var(--c);font-weight:700;}
+        #exo-fiche-overlay .fic-sec.muscles{--c:#c0616a;--cs:#fdeceb;} #exo-fiche-overlay .fic-sec.exec{--c:#2d6a4f;--cs:#e3f3ea;}
+        #exo-fiche-overlay .fic-sec.conseils{--c:#b07400;--cs:#fff4d6;} #exo-fiche-overlay .fic-sec.precautions{--c:#c23b30;--cs:#fde3e0;}
+        #exo-fiche-overlay .fic-sec.charge{--c:#2f6db0;--cs:#e3f2fd;} #exo-fiche-overlay .fic-sec.volume{--c:#13807a;--cs:#e1f2f0;}
+      </style>
+      <div id="exo-fiche-scroll">
+        <div class="fic-top"><button class="fic-back" onclick="closeExoFiche()">‹</button></div>
+        <div id="fic-body"></div>
       </div>
     </div>
 
@@ -3073,10 +3104,10 @@ function exoCardHTML(e){
        <span style="background:#e8f5e9;color:#2d6a4f;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">🟢${e.charges[2]}</span>
        <span style="background:#fff8e1;color:#d97706;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">⭐${e.charges[3]}</span>`;
   const isSpecial = e.id===10;
-  return `<div onclick="showExoDetail(${e.id})" style="display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:14px;padding:10px 12px;margin-bottom:8px;border:${isSpecial?'1px solid #f59e0b':'1px solid var(--border)'};cursor:pointer;${isSpecial?'border-left:3px solid #f59e0b;':''}">
+  return `<div data-fiche-id="${e.id}" style="display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:14px;padding:10px 12px;margin-bottom:8px;border:${isSpecial?'1px solid #f59e0b':'1px solid var(--border)'};cursor:pointer;${isSpecial?'border-left:3px solid #f59e0b;':''}">
     ${e.thumb ? `<img src="${e.thumb}" style="width:56px;height:56px;border-radius:10px;object-fit:cover;flex-shrink:0;border:1px solid var(--border);">` : `<div style="width:56px;height:56px;border-radius:10px;flex-shrink:0;border:1px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:30px;">${e.emoji||'🏋️'}</div>`}
     <div style="flex:1;min-width:0;">
-      <div style="font-weight:700;font-size:14px;margin-bottom:3px;">${e.nom}</div>
+      <div style="font-weight:700;font-size:14px;margin-bottom:3px;">${ficEsc(e.nom)}</div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:3px;">
         ${e.muscles_p.map(m=>`<span style="background:rgba(230,57,70,0.08);color:#e63946;border-radius:6px;padding:2px 7px;font-size:10px;">${m}</span>`).join('')}
       </div>
@@ -3098,6 +3129,8 @@ function renderExercices() {
 function showExoDetail(id) {
   const e=EXO_DATA.find(x=>x.id===id);
   if (!e) { if(typeof showToast==='function') showToast('⚠️ Exercice introuvable (id '+id+')'); return; }
+  try{ renderFiche(e); document.getElementById('exo-fiche-overlay').style.display='block'; var _sc=document.getElementById('exo-fiche-scroll'); if(_sc)_sc.scrollTop=0; return; }
+  catch(_err){ if(typeof showToast==='function') showToast('⚠️ Fiche : '+_err.message); console.error('showExoDetail',_err); return; }
   try {
   // Si on ouvre depuis l'écran vignettes / la recherche globale, basculer vers la catégorie de l'exo
   // (le panneau de détail vit dans l'écran 2 ; sinon il s'afficherait dans une zone masquée).
@@ -3140,6 +3173,55 @@ function showExoDetail(id) {
   panel.scrollIntoView({behavior:'smooth',block:'start'});
   } catch(err){ if(typeof showToast==='function') showToast('⚠️ Affichage fiche : '+err.message); console.error('showExoDetail', err); }
 }
+
+// ===== FICHE EXERCICE PLEIN ÉCRAN =====
+function ficEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function ficLine(it){
+  const i=String(it).indexOf(' : '); let lab='', det=it;
+  if(i>-1){ lab=it.slice(0,i); det=it.slice(i+3); }
+  return '<div class="line"><span class="bullet"></span><span class="txt">'+(lab?'<strong>'+ficEsc(lab)+'</strong>&nbsp;: ':'')+ficEsc(det)+'</span></div>';
+}
+function ficSec(cls,ico,title,arr){
+  if(!arr || !arr.length) return '';
+  return '<div class="fic-sec '+cls+'"><div class="fic-lab"><span class="fic-ico">'+ico+'</span> '+title+'</div><div class="fic-content">'+arr.map(ficLine).join('')+'</div></div>';
+}
+function exoFicheData(e){
+  if(e.fiche){
+    return { muscles:e.fiche.muscles||[], execution:e.fiche.execution||[], conseils:e.fiche.conseils||[],
+             precautions:e.fiche.precautions||[], charge:e.fiche.charge||[], volume:e.fiche.volume||[],
+             photo:e.full||e.thumb||null };
+  }
+  // exos d'origine : on mappe les anciens champs vers la même présentation
+  const lvl=['Faible','Moyen','Bon','Top'];
+  const isTime=(e.cat==='gainage'||e.cat==='stretching'); const isCardio=(e.cat==='cardio');
+  const unit=isCardio?' min':(isTime?' s':' kg');
+  const charge=(e.charges||[]).map((c,i)=>(lvl[i]||('N'+(i+1)))+' : '+c+unit);
+  const conseils=[]; if(e.conseil) conseils.push(e.conseil);
+  (e.erreurs||[]).forEach(x=>conseils.push('À éviter : '+x));
+  const precautions = e.precautions ? String(e.precautions).split(/<br\s*\/?>/i).map(s=>s.trim()).filter(Boolean) : [];
+  const muscles=(e.muscles_p||[]).concat(e.muscles_s||[]);
+  return { muscles:muscles, execution:e.etapes||[], conseils:conseils, precautions:precautions, charge:charge, volume:[], photo:e.full||null };
+}
+function renderFiche(e){
+  const f=exoFicheData(e);
+  const catLabel = (typeof eCatLabel==='function') ? eCatLabel(e.cat) : (e.cat||'');
+  let h='';
+  h += '<div class="fic-hero">'+(f.photo?'<img src="'+f.photo+'">':'<div class="fic-emoji">'+(e.emoji||'🏋️')+'</div>')+'<div class="fic-cat-badge">'+ficEsc(catLabel)+'</div></div>';
+  h += '<div class="fic-title"><h1>'+ficEsc(e.nom)+'</h1><div class="fic-sub">'+ficEsc(catLabel)+'</div></div>';
+  h += ficSec('muscles','💪','Muscles travaillés', f.muscles);
+  h += ficSec('exec','▶️','Exécution', f.execution);
+  h += ficSec('conseils','💡','Conseils', f.conseils);
+  h += ficSec('precautions','⚠️','Précautions', f.precautions);
+  h += ficSec('charge','🏋️','Charge de référence', f.charge);
+  h += ficSec('volume','🔁','Volume conseillé', f.volume);
+  document.getElementById('fic-body').innerHTML=h;
+}
+function closeExoFiche(){ const o=document.getElementById('exo-fiche-overlay'); if(o) o.style.display='none'; }
+// Clic fiabilisé sur les cartes d'exercice (délégué) — marche aussi pour les exos créés
+document.addEventListener('click', function(ev){
+  const c = ev.target && ev.target.closest ? ev.target.closest('[data-fiche-id]') : null;
+  if(c){ const id=Number(c.getAttribute('data-fiche-id')); if(!isNaN(id)) showExoDetail(id); }
+});
 
 // ===== CRÉATION D'EXERCICE =====
 let exocCat = null, exocFull = null, exocThumb = null;
