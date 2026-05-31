@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-fiche2</div>
+  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-fiche3</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -2623,7 +2623,7 @@ function ensureExoData(){
   s.src='exo_data.js?v=1';
   s.onload=()=>{
     _exoLoaded=true;
-    EXO_DATA = window.EXO_DATA || [];
+    EXO_DATA = (window.EXO_DATA || []).filter(Boolean);
     try{
       const cx=loadCustomExos();
       if(cx&&cx.length){
@@ -3137,8 +3137,8 @@ function renderExercices() {
 }
 
 function showExoDetail(id) {
-  let e=EXO_DATA.find(x=>x.id===id);
-  if(!e) e=EXO_DATA.find(x=>String(x.id)===String(id));
+  let e=EXO_DATA.find(x=>x && x.id===id);
+  if(!e) e=EXO_DATA.find(x=>x && String(x.id)===String(id));
   if (!e) { if(typeof showToast==='function') showToast('⚠️ Exercice introuvable (id '+id+')'); return; }
   try{ renderFiche(e); document.getElementById('exo-fiche-overlay').style.display='block'; var _sc=document.getElementById('exo-fiche-scroll'); if(_sc)_sc.scrollTop=0; return; }
   catch(_err){ if(typeof showToast==='function') showToast('⚠️ Fiche : '+_err.message); console.error('showExoDetail',_err); return; }
