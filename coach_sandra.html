@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v7-sports-objectifs</div>
+  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v8-sports-objectifs</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -1063,7 +1063,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
   <!-- BANDEAU VERSION (visible) — pour vérifier que la bonne version est servie -->
   <div style="background:#2d6a4f;color:#fff;border-radius:10px;padding:8px 12px;margin:8px 0 4px;font-size:12px;font-weight:700;text-align:center;letter-spacing:.5px;">
-    ✅ VERSION v7 · objectifs · 2 juin
+    ✅ VERSION v8 · objectifs+séance · 2 juin
   </div>
 
   <!-- ===== ÉTAT VIDE : tout premier lancement, rien n'est encore défini ===== -->
@@ -1102,14 +1102,8 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
   <div id="sports-dashboard" style="display:none;">
   <div style="height:8px"></div>
 
-  <!-- Séance du jour -->
-  <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:6px 2px 8px;">À faire aujourd'hui</div>
-  <div class="card" style="background:linear-gradient(150deg,#fff,#fbe9ec);border-color:var(--accent-light);position:relative;overflow:hidden;">
-    <div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--accent);">Séance du jour</div>
-    <div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:24px;margin-top:6px;">Traction + souplesse</div>
-    <div style="font-size:13px;color:var(--muted);margin-top:3px;">5 exercices · ~24 min · sert tes 3 objectifs</div>
-    <button class="btn-add" style="margin-top:14px;width:100%;" onclick="showToast('▶️ Bientôt : démarrage de la séance')">▶️ Commencer l'entraînement</button>
-  </div>
+  <!-- Séance du jour (dynamique : seulement si un planning existe pour aujourd'hui) -->
+  <div id="sports-today"></div>
 
   <!-- Évolution des objectifs (dynamique) -->
   <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 2px 8px;">
@@ -2851,8 +2845,44 @@ function renderSportsHome(){
   var empty=document.getElementById('sports-empty');
   var dash=document.getElementById('sports-dashboard');
   if(!empty||!dash) return;
-  if(sportsHasContent()){ empty.style.display='none'; dash.style.display='block'; try{ renderObjectifs(); }catch(e){console.warn(e);} }
+  if(sportsHasContent()){ empty.style.display='none'; dash.style.display='block'; try{ renderObjectifs(); }catch(e){console.warn(e);} try{ renderToday(); }catch(e){console.warn(e);} }
   else { empty.style.display='block'; dash.style.display='none'; }
+}
+
+/* ===== Séance du jour réelle (basée sur le planning) ===== */
+function renderToday(){
+  var host=document.getElementById('sports-today'); if(!host) return;
+  var todayStr=new Date().toISOString().split('T')[0];
+  var seaId=null;
+  try{ seaId=getSeanceIdForDate(todayStr); }catch(e){ seaId=null; }
+  var sea=null;
+  if(seaId){ try{ sea=loadSea().find(function(s){return s&&String(s.id)===String(seaId);}); }catch(e){} }
+  var done=false;
+  try{ done=(loadRes()||[]).some(function(r){return r.date===todayStr;}); }catch(e){}
+
+  if(!sea){
+    // AUCUN planning défini pour aujourd'hui → pas de séance affichée
+    host.innerHTML='<div style="font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:6px 2px 8px;">À faire aujourd\u2019hui</div>'
+      +'<div class="card" style="text-align:center;color:var(--muted);">'
+      +'<div style="font-size:30px;">🗓️</div>'
+      +'<div style="font-weight:700;font-size:15px;color:var(--text);margin-top:6px;">Aucune séance planifiée</div>'
+      +'<div style="font-size:12.5px;margin-top:4px;line-height:1.5;">Définis un planning dans le module Sport pour voir ta séance du jour ici.</div>'
+      +'<button class="btn-claude" style="margin-top:12px;" onclick="showPage(\'sport\');setTimeout(function(){showSportTab(\'planning\');},60);">🗓️ Définir un planning</button>'
+      +'</div>';
+    return;
+  }
+
+  var nbExos=(sea.exercices||[]).length;
+  var mins=Math.round(nbExos*8+15);
+  host.innerHTML='<div style="font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:6px 2px 8px;">À faire aujourd\u2019hui</div>'
+    +'<div class="card" style="background:linear-gradient(150deg,#fff,#fbe9ec);border-color:var(--accent-light);">'
+    +'<div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--accent);">'+(done?'Séance faite ✅':'Séance du jour')+'</div>'
+    +'<div style="font-family:\'Cormorant Garamond\',serif;font-weight:800;font-size:24px;margin-top:6px;">'+(sea.emoji||'💪')+' '+seacEsc(sea.titre)+'</div>'
+    +'<div style="font-size:13px;color:var(--muted);margin-top:3px;">'+nbExos+' exercice'+(nbExos>1?'s':'')+' · ~'+mins+' min</div>'
+    +(done
+        ? '<button class="btn-claude" style="margin-top:14px;" onclick="showPage(\'sport\');setTimeout(function(){showSportTab(\'resultats\');},60);">👁️ Voir le récap</button>'
+        : '<button class="btn-add" style="margin-top:14px;width:100%;" onclick="commencerSeance(\''+todayStr+'\')">▶️ Commencer l\u2019entraînement</button>')
+    +'</div>';
 }
 
 /* ===== OBJECTIFS (privés par compte) — CRUD + rendu ===== */
@@ -2886,18 +2916,24 @@ function openObjForm(id){
   document.getElementById('objf-nom').value = o ? (o.nom||'') : '';
   _objEmoji = o ? (o.emoji||'🎯') : '🎯';
   _objColor = o ? (o.color||'#c0616a') : '#c0616a';
-  // sélecteurs
+  // sélecteurs (pas d'onclick inline : les emojis cassent l'attribut ; on délègue plus bas)
   document.getElementById('objf-emojis').innerHTML = OBJ_EMOJIS.map(e=>
-    '<button type="button" onclick="objPickEmoji('+JSON.stringify(e)+')" data-emo="'+e+'" style="width:42px;height:42px;border-radius:12px;border:2px solid '+(e===_objEmoji?'var(--accent)':'var(--border)')+';background:var(--surface);font-size:20px;cursor:pointer;">'+e+'</button>'
+    '<button type="button" class="objf-emo-btn" data-emo="'+e+'" style="width:42px;height:42px;border-radius:12px;border:2px solid '+(e===_objEmoji?'var(--accent)':'var(--border)')+';background:var(--surface);font-size:20px;cursor:pointer;">'+e+'</button>'
   ).join('');
   document.getElementById('objf-colors').innerHTML = OBJ_COLORS.map(c=>
-    '<button type="button" onclick="objPickColor('+JSON.stringify(c)+')" data-col="'+c+'" style="width:34px;height:34px;border-radius:50%;background:'+c+';border:3px solid '+(c===_objColor?'#1a1a1a':'transparent')+';cursor:pointer;"></button>'
+    '<button type="button" class="objf-col-btn" data-col="'+c+'" style="width:34px;height:34px;border-radius:50%;background:'+c+';border:3px solid '+(c===_objColor?'#1a1a1a':'transparent')+';cursor:pointer;"></button>'
   ).join('');
   document.getElementById('objf-delete').style.display = o ? 'block' : 'none';
   openModal('modal-obj');
 }
 function objPickEmoji(e){ _objEmoji=e; document.querySelectorAll('#objf-emojis [data-emo]').forEach(b=>b.style.borderColor=(b.dataset.emo===e?'var(--accent)':'var(--border)')); }
 function objPickColor(c){ _objColor=c; document.querySelectorAll('#objf-colors [data-col]').forEach(b=>b.style.borderColor=(b.dataset.col===c?'#1a1a1a':'transparent')); }
+// délégation des clics icône/couleur (robuste, marche avec les emojis)
+document.addEventListener('click', function(ev){
+  if(!ev.target||!ev.target.closest) return;
+  var eb=ev.target.closest('.objf-emo-btn'); if(eb){ objPickEmoji(eb.getAttribute('data-emo')); return; }
+  var cb=ev.target.closest('.objf-col-btn'); if(cb){ objPickColor(cb.getAttribute('data-col')); return; }
+});
 function saveObjForm(){
   const nom=(document.getElementById('objf-nom').value||'').trim();
   if(!nom){ showToast('⚠️ Donne un nom à l\u2019objectif'); return; }
