@@ -1060,6 +1060,41 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 </div>
 <!-- ========== PAGE SPORTS (accueil carrefour) ========== -->
 <div class="page" id="page-sports">
+
+  <!-- ===== ÉTAT VIDE : tout premier lancement, rien n'est encore défini ===== -->
+  <div id="sports-empty" style="display:none;">
+    <div style="height:14px"></div>
+    <div style="text-align:center;padding:8px 6px 2px;">
+      <div style="font-size:46px;">🏋️</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:26px;margin-top:8px;">Bienvenue dans le Sport</div>
+      <div style="font-size:13.5px;color:var(--muted);line-height:1.5;margin-top:8px;max-width:300px;margin-left:auto;margin-right:auto;">
+        Rien n'est encore défini. On commence par poser ce que tu veux travailler — l'app construira ensuite tes séances et ton suivi.
+      </div>
+    </div>
+
+    <!-- 3 étapes pour démarrer -->
+    <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:22px 2px 8px;">Pour démarrer</div>
+
+    <div class="card" style="display:flex;align-items:center;gap:14px;">
+      <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:800;font-size:16px;">1</div>
+      <div style="flex:1;"><div style="font-weight:700;font-size:14px;">Crée tes exercices</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">Suspension, négatives, tirages…</div></div>
+    </div>
+    <div class="card" style="display:flex;align-items:center;gap:14px;">
+      <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:800;font-size:16px;">2</div>
+      <div style="flex:1;"><div style="font-weight:700;font-size:14px;">Compose tes séances</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">Regroupe tes exercices (Séance A, B…)</div></div>
+    </div>
+    <div class="card" style="display:flex;align-items:center;gap:14px;">
+      <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:800;font-size:16px;">3</div>
+      <div style="flex:1;"><div style="font-weight:700;font-size:14px;">Planifie & entraîne-toi</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">Place tes séances et suis ta progression</div></div>
+    </div>
+
+    <div style="height:10px"></div>
+    <button class="btn-add" style="width:100%;" onclick="showPage('sport')">🏗️ Construire mon programme</button>
+    <button class="btn-claude" style="margin-top:10px;" onclick="showPage('sport');setTimeout(function(){showSportTab('exercices');},60);">➕ Commencer par créer un exercice</button>
+  </div>
+
+  <!-- ===== TABLEAU DE BORD : visible dès qu'il y a au moins une séance ===== -->
+  <div id="sports-dashboard" style="display:none;">
   <div style="height:8px"></div>
 
   <!-- Séance du jour -->
@@ -1115,6 +1150,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
   <div style="height:10px"></div>
   <button class="btn-claude" style="margin-top:6px;" onclick="showPage('sport')">🏋️ Ouvrir l'ancien module Sport (intact)</button>
+  </div><!-- /sports-dashboard -->
 </div>
 
 </main>
@@ -1365,7 +1401,7 @@ function showPage(id) {
     const rt = document.getElementById('rtab-recettes'); if (rt) rt.style.display = 'block';
     if (!recSelectMode) recGoEtage1();
   }
-  if (pageId === 'sports') { /* page statique : rien à charger */ }
+  if (pageId === 'sports') { try{ renderSportsHome(); }catch(e){ console.warn(e); } }
   if (pageId === 'sport') { ensureExoData(); }
 }
 
@@ -2791,6 +2827,22 @@ function ensureExoData(){
   document.body.appendChild(s);
 }
 function renderSport() { renderSportCalendar(); }
+
+// ===== Accueil Sports : état vide (from scratch) vs tableau de bord =====
+function sportsHasContent(){
+  // « rien rentré » = aucune séance ET aucun exercice perso créé
+  var sea=[], cx=[];
+  try{ sea=loadSea()||[]; }catch(e){}
+  try{ cx=loadCustomExos()||[]; }catch(e){}
+  return (sea.length>0) || (cx.length>0);
+}
+function renderSportsHome(){
+  var empty=document.getElementById('sports-empty');
+  var dash=document.getElementById('sports-dashboard');
+  if(!empty||!dash) return;
+  if(sportsHasContent()){ empty.style.display='none'; dash.style.display='block'; }
+  else { empty.style.display='block'; dash.style.display='none'; }
+}
 
 // ---- PLANNING / CALENDRIER ----
 let calMonthOff = 0;
