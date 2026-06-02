@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v14-sports-module</div>
+  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v15-sports-module</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -1064,7 +1064,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
   <!-- BANDEAU VERSION -->
   <div style="background:#2d6a4f;color:#fff;border-radius:10px;padding:8px 12px;margin:8px 0 4px;font-size:12px;font-weight:700;text-align:center;letter-spacing:.5px;">
-    ✅ VERSION v14 · module objectifs · 2 juin
+    ✅ VERSION v15 · modale corrigée · 2 juin
   </div>
 
   <style>
@@ -4343,6 +4343,19 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 <!-- ===== modales du module Sports ===== -->
+<style>
+/* styles du formulaire d'objectif — globaux car la modale est hors #page-sports */
+.sp-flab{font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--accent);margin:16px 2px 8px;display:block;}
+.sp-finput{display:block;width:100%;border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:12px 14px;font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--text);outline:none;box-sizing:border-box;}
+.sp-finput:focus{border-color:var(--accent);}
+.sp-emo{width:44px;height:44px;border-radius:12px;border:2px solid var(--border);background:var(--surface);font-size:21px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
+.sp-emo.on{border-color:var(--accent);background:#fdeff0;}
+.sp-col{width:36px;height:36px;border-radius:50%;border:3px solid transparent;cursor:pointer;padding:0;}
+.sp-col.on{border-color:#1a1a1a;}
+#sp-objm-emos{display:flex;flex-wrap:wrap;gap:8px;}
+#sp-objm-cols{display:flex;flex-wrap:wrap;gap:11px;}
+</style>
+
 <div class="sp-modal-bg" id="sp-objmodal">
   <div class="sp-modal">
     <h3 id="sp-objm-title">Nouvel objectif</h3>
