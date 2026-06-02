@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v8-sports-objectifs</div>
+  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v9-sports-objectifs</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -1063,7 +1063,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
   <!-- BANDEAU VERSION (visible) — pour vérifier que la bonne version est servie -->
   <div style="background:#2d6a4f;color:#fff;border-radius:10px;padding:8px 12px;margin:8px 0 4px;font-size:12px;font-weight:700;text-align:center;letter-spacing:.5px;">
-    ✅ VERSION v8 · objectifs+séance · 2 juin
+    ✅ VERSION v9 · carte objectif · 2 juin
   </div>
 
   <!-- ===== ÉTAT VIDE : tout premier lancement, rien n'est encore défini ===== -->
@@ -2898,13 +2898,16 @@ function renderObjectifs(){
     const col=o.color||'#c0616a';
     const pct=Math.max(0,Math.min(100, o.pct||0));
     const deg=Math.round(pct*3.6);
-    return '<div class="card" style="display:flex;align-items:center;gap:14px;">'
-      +'<div style="width:46px;height:46px;border-radius:50%;flex-shrink:0;background:conic-gradient('+col+' '+deg+'deg,#f0dede 0);display:flex;align-items:center;justify-content:center;">'
-        +'<div style="width:34px;height:34px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:18px;">'+(o.emoji||'🎯')+'</div>'
+    const nbex=(o&&Array.isArray(o.exos))?o.exos.length:0;
+    return '<div class="card" style="display:flex;align-items:center;gap:16px;">'
+      +'<div style="width:60px;height:60px;border-radius:50%;flex-shrink:0;background:conic-gradient('+col+' '+deg+'deg,#f0dede 0);display:flex;align-items:center;justify-content:center;">'
+        +'<div style="width:46px;height:46px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-family:\'Cormorant Garamond\',serif;font-weight:800;font-size:16px;color:'+col+';">'+pct+'%</div>'
       +'</div>'
-      +'<div style="flex:1;min-width:0;"><div style="font-family:\'Cormorant Garamond\',serif;font-weight:800;font-size:16px;">'+seacEsc(o.nom)+'</div>'
-        +'<div style="font-size:12px;color:var(--muted);">'+pct+'% · à construire</div></div>'
-      +'<button onclick="openObjForm('+JSON.stringify(o.id)+')" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;width:32px;height:32px;font-size:13px;cursor:pointer;">✎</button>'
+      +'<div style="flex:1;min-width:0;">'
+        +'<div style="font-family:\'Cormorant Garamond\',serif;font-weight:800;font-size:21px;line-height:1.1;">'+(o.emoji?o.emoji+' ':'')+seacEsc(o.nom)+'</div>'
+        +'<div style="font-size:13px;color:var(--muted);margin-top:4px;">'+nbex+' exercice'+(nbex>1?'s':'')+'</div>'
+      +'</div>'
+      +'<button onclick="openObjForm('+JSON.stringify(o.id)+')" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;width:32px;height:32px;font-size:13px;cursor:pointer;flex-shrink:0;">✎</button>'
       +'</div>';
   }).join('');
 }
