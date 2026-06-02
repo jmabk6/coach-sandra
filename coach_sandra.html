@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v13-sports-prog</div>
+  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v14-sports-module</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -1062,79 +1062,158 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 <!-- ========== PAGE SPORTS (accueil carrefour) ========== -->
 <div class="page" id="page-sports">
 
-  <!-- BANDEAU VERSION (visible) — pour vérifier que la bonne version est servie -->
+  <!-- BANDEAU VERSION -->
   <div style="background:#2d6a4f;color:#fff;border-radius:10px;padding:8px 12px;margin:8px 0 4px;font-size:12px;font-weight:700;text-align:center;letter-spacing:.5px;">
-    ✅ VERSION v13 · banque exercices · 2 juin
+    ✅ VERSION v14 · module objectifs · 2 juin
   </div>
 
-  <!-- ===== ÉTAT VIDE : tout premier lancement, rien n'est encore défini ===== -->
-  <div id="sports-empty" style="display:none;">
-    <div style="height:14px"></div>
-    <div style="text-align:center;padding:8px 6px 2px;">
+  <style>
+    #page-sports .sp-screen{display:none;}
+    #page-sports .sp-screen.on{display:block;}
+    #page-sports .sp-klabel{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+    #page-sports .sp-top{display:flex;align-items:center;gap:10px;margin:6px 0 14px;}
+    #page-sports .sp-back{width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:var(--surface);font-size:22px;color:var(--accent);cursor:pointer;line-height:1;flex-shrink:0;}
+    #page-sports .sp-ttl{font-family:'Cormorant Garamond',serif;font-weight:800;font-size:23px;flex:1;}
+    #page-sports .sp-pill{background:none;border:1px solid var(--accent);color:var(--accent);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;}
+    #page-sports .sp-hint{background:#fff7e6;border:1px solid #f3d9a8;color:#9a6b00;border-radius:13px;padding:11px 14px;font-size:12.5px;line-height:1.45;margin-bottom:14px;display:flex;gap:9px;align-items:flex-start;}
+    #page-sports .sp-step{display:flex;align-items:center;gap:13px;}
+    #page-sports .sp-step .n{width:34px;height:34px;border-radius:50%;flex-shrink:0;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:800;font-size:15px;}
+    #page-sports .sp-objcard{display:flex;align-items:center;gap:16px;cursor:pointer;}
+    #page-sports .sp-ring{width:60px;height:60px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+    #page-sports .sp-ring .in{width:46px;height:46px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:800;font-size:16px;}
+    #page-sports .sp-objname{font-family:'Cormorant Garamond',serif;font-weight:800;font-size:21px;line-height:1.1;}
+    #page-sports .sp-objsub{font-size:13px;color:var(--muted);margin-top:4px;}
+    #page-sports .sp-search{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:10px 13px;margin-bottom:14px;}
+    #page-sports .sp-search input{border:none;outline:none;flex:1;font-size:14px;background:none;}
+    #page-sports .sp-catgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+    #page-sports .sp-cat{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:14px 6px;text-align:center;cursor:pointer;}
+    #page-sports .sp-cat .e{font-size:30px;}
+    #page-sports .sp-cat .n{font-weight:600;font-size:12px;margin-top:5px;}
+    #page-sports .sp-cat .c{font-size:10px;color:var(--muted);}
+    #page-sports .sp-exo{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin-bottom:8px;}
+    #page-sports .sp-exo .th{width:46px;height:46px;border-radius:10px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;border:1px solid var(--border);}
+    #page-sports .sp-exo .nm{flex:1;font-weight:600;font-size:14px;}
+    #page-sports .sp-exo .chk{width:30px;height:30px;border-radius:50%;flex-shrink:0;border:2px solid var(--border);background:transparent;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;padding:0;cursor:pointer;line-height:1;}
+    #page-sports .sp-exo.on{border-color:var(--accent);}
+    #page-sports .sp-exo.on .chk{border-color:var(--accent);background:var(--accent);}
+    #page-sports .sp-badge{font-size:11px;font-weight:700;color:var(--accent);background:#fdeff0;border:1px solid var(--accent-light);border-radius:20px;padding:3px 9px;white-space:nowrap;}
+    #page-sports .sp-empty-mini{text-align:center;color:var(--muted);padding:16px;font-size:13px;}
+    #page-sports .sp-flab{font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--accent);margin:14px 2px 7px;display:block;}
+    #page-sports .sp-finput{width:100%;border:1px solid var(--border);border-radius:12px;background:var(--surface);padding:12px 14px;font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--text);outline:none;}
+    #page-sports .sp-emo{width:44px;height:44px;border-radius:12px;border:2px solid var(--border);background:var(--surface);font-size:21px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    #page-sports .sp-emo.on{border-color:var(--accent);background:#fdeff0;}
+    #page-sports .sp-col{width:36px;height:36px;border-radius:50%;border:3px solid transparent;cursor:pointer;}
+    #page-sports .sp-col.on{border-color:#1a1a1a;}
+    .sp-modal-bg{position:fixed;inset:0;background:rgba(40,20,20,.45);display:none;align-items:flex-end;z-index:620;}
+    .sp-modal-bg.open{display:flex;}
+    .sp-modal{background:var(--surface);width:100%;max-width:480px;margin:0 auto;border-radius:24px 24px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0));max-height:90%;overflow-y:auto;}
+    .sp-modal h3{font-family:'Cormorant Garamond',serif;font-weight:800;font-size:24px;margin-bottom:4px;}
+    .sp-modal .sub{font-size:12.5px;color:var(--muted);margin-bottom:8px;}
+    .sp-mrow{display:flex;gap:9px;margin-top:18px;}
+    .sp-mrow .pill{flex:1;border:1px solid var(--border);background:var(--surface);border-radius:13px;padding:13px;font-weight:600;font-size:14px;cursor:pointer;color:var(--text);}
+    .sp-mrow .save{background:var(--accent);color:#fff;border-color:var(--accent);}
+  </style>
+
+  <!-- ÉCRAN VIDE -->
+  <div class="sp-screen" id="sp-empty">
+    <div style="text-align:center;padding:18px 6px 2px;">
       <div style="font-size:46px;">🏋️</div>
-      <div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:26px;margin-top:8px;">Bienvenue dans le Sport</div>
-      <div style="font-size:13.5px;color:var(--muted);line-height:1.5;margin-top:8px;max-width:300px;margin-left:auto;margin-right:auto;">
-        Rien n'est encore défini. On commence par poser ce que tu veux travailler — l'app construira ensuite tes séances et ton suivi.
-      </div>
+      <div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:27px;margin-top:8px;">Bienvenue dans le Sport</div>
+      <div style="font-size:13.5px;color:var(--muted);line-height:1.5;margin-top:8px;">Rien n'est encore défini. On commence par poser ce que tu veux travailler.</div>
     </div>
-
-    <!-- 3 étapes pour démarrer -->
-    <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:22px 2px 8px;">Pour démarrer</div>
-
-    <div class="card" style="display:flex;align-items:center;gap:14px;">
-      <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:800;font-size:16px;">1</div>
-      <div style="flex:1;"><div style="font-weight:700;font-size:14px;">Crée tes objectifs</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">Ce que tu veux travailler</div></div>
-    </div>
-    <div class="card" style="display:flex;align-items:center;gap:14px;">
-      <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:800;font-size:16px;">2</div>
-      <div style="flex:1;"><div style="font-weight:700;font-size:14px;">Ajoute ou crée tes exercices</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">Depuis ta banque d'exercices</div></div>
-    </div>
-    <div class="card" style="display:flex;align-items:center;gap:14px;">
-      <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:800;font-size:16px;">3</div>
-      <div style="flex:1;"><div style="font-weight:700;font-size:14px;">Crée tes séances</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">Regroupe tes exercices (Séance A, B…)</div></div>
-    </div>
-    <div class="card" style="display:flex;align-items:center;gap:14px;">
-      <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:800;font-size:16px;">4</div>
-      <div style="flex:1;"><div style="font-weight:700;font-size:14px;">Planifie et entraîne-toi</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">Place tes séances et suis ta progression</div></div>
-    </div>
-
-    <div style="height:10px"></div>
-    <button class="btn-add" style="width:100%;" onclick="openObjForm()">🎯 Créer mon premier objectif</button>
-    <button class="btn-claude" style="margin-top:10px;" onclick="openBanque()">📚 Banque d'exercices</button>
+    <div class="sp-klabel" style="margin:24px 2px 10px;">Pour démarrer</div>
+    <div class="card sp-step"><div class="n">1</div><div><div style="font-weight:700;font-size:14px;">Crée tes objectifs</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Ce que tu veux travailler</div></div></div>
+    <div class="card sp-step"><div class="n">2</div><div><div style="font-weight:700;font-size:14px;">Ajoute ou crée tes exercices</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Depuis ta banque d'exercices</div></div></div>
+    <div class="card sp-step"><div class="n">3</div><div><div style="font-weight:700;font-size:14px;">Crée tes séances</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Regroupe tes exercices</div></div></div>
+    <div class="card sp-step"><div class="n">4</div><div><div style="font-weight:700;font-size:14px;">Planifie et entraîne-toi</div><div style="font-size:12px;color:var(--muted);margin-top:1px;">Place tes séances et suis ta progression</div></div></div>
+    <div style="height:8px"></div>
+    <button class="btn-add" style="width:100%;" onclick="spOpenObjModal()">🎯 Créer mon premier objectif</button>
   </div>
 
-  <!-- ===== TABLEAU DE BORD : visible dès qu'il y a au moins une séance ===== -->
-  <div id="sports-dashboard" style="display:none;">
-  <div style="height:8px"></div>
-
-  <!-- Séance du jour (dynamique : seulement si un planning existe pour aujourd'hui) -->
-  <div id="sports-today"></div>
-
-  <!-- Évolution des objectifs (dynamique) -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 2px 8px;">
-    <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">Mes objectifs</div>
-    <button onclick="openObjForm()" style="background:none;border:1px solid var(--accent);color:var(--accent);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;">+ Objectif</button>
-  </div>
-  <div id="objectifs-list"></div>
-
-  <!-- Les 2 portes -->
-  <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:20px 2px 8px;">Aller plus loin</div>
-  <div style="display:flex;gap:10px;">
-    <div class="card" style="flex:1;margin-bottom:0;cursor:pointer;text-align:center;" onclick="openProg()">
-      <div style="font-size:30px;">🏗️</div>
-      <div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:15px;margin-top:6px;">Mon programme</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:2px;">Objectifs, exercices, séances, planning</div>
+  <!-- ACCUEIL -->
+  <div class="sp-screen" id="sp-list">
+    <div class="sp-klabel" style="margin:6px 2px 8px;">Prochaine séance</div>
+    <div id="sp-today"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:24px 2px 8px;">
+      <div class="sp-klabel">Mes objectifs</div>
+      <button class="sp-pill" onclick="spOpenObjModal()">+ Objectif</button>
     </div>
-    <div class="card" style="flex:1;margin-bottom:0;cursor:pointer;text-align:center;" onclick="showPage('sport');setTimeout(function(){showSportTab('resultats');},60);showToast('Mes résultats')">
-      <div style="font-size:30px;">📊</div>
-      <div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:15px;margin-top:6px;">Mes résultats</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:2px;">Historique & progression</div>
-    </div>
+    <div id="sp-objs"></div>
   </div>
 
-  <div style="height:10px"></div>
-  <button class="btn-claude" style="margin-top:6px;" onclick="showPage('sport')">🏋️ Ouvrir l'ancien module Sport (intact)</button>
-  </div><!-- /sports-dashboard -->
+  <!-- DÉTAIL OBJECTIF -->
+  <div class="sp-screen" id="sp-obj">
+    <div class="sp-top"><button class="sp-back" onclick="spGo('list')">‹</button><div class="sp-ttl" id="sp-obj-ttl">Objectif</div></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 2px 8px;">
+      <div class="sp-klabel">Exercices associés</div>
+      <button class="sp-pill" onclick="spGo('pick')">+ Exercice</button>
+    </div>
+    <div id="sp-obj-exos"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:22px 2px 8px;">
+      <div class="sp-klabel">Séances de cet objectif</div>
+      <button class="sp-pill" onclick="spNewSeance()">+ Séance</button>
+    </div>
+    <div id="sp-obj-seas"></div>
+    <div class="sp-klabel" style="margin:22px 2px 8px;">Semaine type</div>
+    <div id="sp-obj-week"></div>
+  </div>
+
+  <!-- PICKER VIGNETTES -->
+  <div class="sp-screen" id="sp-pick">
+    <div class="sp-top"><button class="sp-back" onclick="spGo('obj')">‹</button><div class="sp-ttl">Ajouter un exercice</div></div>
+    <div class="sp-search"><span>🔍</span><input id="sp-search" placeholder="Rechercher un exercice…" oninput="spRenderSearch()"></div>
+    <div id="sp-results" style="display:none;"></div>
+    <div class="sp-catgrid" id="sp-catgrid"></div>
+    <button class="btn-add" style="width:100%;margin-top:16px;" onclick="spGo('obj')">✓ Terminé</button>
+  </div>
+
+  <!-- EXERCICES D'UNE CATÉGORIE -->
+  <div class="sp-screen" id="sp-cat">
+    <div class="sp-top"><button class="sp-back" onclick="spGo('pick')">‹</button><div class="sp-ttl" id="sp-cat-ttl">Catégorie</div></div>
+    <div class="sp-hint"><span>👉</span><span>Touche le <b>nom</b> pour la fiche, la <b>pastille</b> pour ajouter/retirer.</span></div>
+    <div id="sp-cat-exos"></div>
+    <button class="btn-add" style="width:100%;margin-top:16px;" onclick="spGo('obj')">✓ Terminé</button>
+  </div>
+
+  <!-- FICHE EXERCICE + PHASES -->
+  <div class="sp-screen" id="sp-exo">
+    <div class="sp-top"><button class="sp-back" onclick="spExoBack()">‹</button><div class="sp-ttl" id="sp-exo-ttl">Exercice</div></div>
+    <div class="card" style="display:flex;align-items:center;gap:14px;">
+      <div style="width:58px;height:58px;border-radius:14px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0;" id="sp-exo-emo">🏋️</div>
+      <div style="flex:1;"><div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:22px;line-height:1.1;" id="sp-exo-nom">Exercice</div><div style="font-size:12px;color:var(--muted);margin-top:3px;" id="sp-exo-cat">catégorie</div></div>
+    </div>
+    <div class="sp-klabel" style="margin:8px 2px 7px;">Description</div>
+    <div class="card" style="font-size:14px;line-height:1.55;" id="sp-exo-desc"></div>
+    <div class="sp-klabel" style="margin:18px 2px 7px;">Phases de progression</div>
+    <div id="sp-exo-phases"></div>
+    <button id="sp-exo-toggle" class="btn-add" style="margin-top:6px;width:100%;" onclick="spExoToggleFromPage()">+ Associer</button>
+  </div>
+
+  <!-- DÉTAIL SÉANCE -->
+  <div class="sp-screen" id="sp-seadetail">
+    <div class="sp-top"><button class="sp-back" onclick="spGo('obj')">‹</button><div class="sp-ttl">Séance</div></div>
+    <div style="font-size:12px;color:var(--muted);margin:-6px 2px 10px;" id="sp-sea-objname">de l'objectif…</div>
+    <label class="sp-flab">Nom de la séance</label>
+    <input class="sp-finput" id="sp-sea-nom" placeholder="ex. Traction A" oninput="spSeaRename()" style="margin-bottom:4px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:18px 2px 8px;">
+      <div class="sp-klabel">Exercices de la séance</div>
+      <button class="sp-pill" onclick="spGo('seapick')">+ Exercice</button>
+    </div>
+    <div id="sp-sea-exos"></div>
+    <div style="display:flex;gap:9px;margin-top:14px;">
+      <button class="btn-claude" style="flex:1;border:1px solid #c23b30;color:#c23b30;background:none;" onclick="spDeleteSeance()">🗑️ Supprimer</button>
+      <button class="btn-add" style="flex:1;" onclick="spSaveSeance()">💾 Enregistrer</button>
+    </div>
+  </div>
+
+  <!-- SÉLECTEUR SÉANCE -->
+  <div class="sp-screen" id="sp-seapick">
+    <div class="sp-top"><button class="sp-back" onclick="spGo('seadetail')">‹</button><div class="sp-ttl">Ajouter à la séance</div></div>
+    <div class="sp-hint"><span>💡</span><span>Choisis parmi les exercices associés à <b id="sp-seapick-obj">cet objectif</b>. Touche la pastille pour ajouter.</span></div>
+    <div id="sp-seapick-body"></div>
+    <button class="btn-add" style="width:100%;margin-top:16px;" onclick="spGo('seadetail')">✓ Terminé</button>
+  </div>
+
 </div>
 
 </main>
@@ -1387,7 +1466,7 @@ function showPage(id) {
     const rt = document.getElementById('rtab-recettes'); if (rt) rt.style.display = 'block';
     if (!recSelectMode) recGoEtage1();
   }
-  if (pageId === 'sports') { try{ renderSportsHome(); }catch(e){ console.warn(e); } }
+  if (pageId === 'sports') { try{ spInit(); }catch(e){ console.warn(e); } }
   if (pageId === 'sport') { ensureExoData(); }
 }
 
@@ -4263,5 +4342,381 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
+<!-- ===== modales du module Sports ===== -->
+<div class="sp-modal-bg" id="sp-objmodal">
+  <div class="sp-modal">
+    <h3 id="sp-objm-title">Nouvel objectif</h3>
+    <div class="sub">Donne-lui un nom, une icône et une couleur.</div>
+    <label class="sp-flab">Nom de l'objectif</label>
+    <input class="sp-finput" id="sp-objm-nom" placeholder="ex. Faire une traction" autocomplete="off">
+    <label class="sp-flab">Icône</label>
+    <div id="sp-objm-emos" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+    <label class="sp-flab">Couleur</label>
+    <div id="sp-objm-cols" style="display:flex;flex-wrap:wrap;gap:11px;"></div>
+    <div class="sp-mrow">
+      <button class="pill" onclick="spCloseObjModal()">Annuler</button>
+      <button class="pill save" onclick="spSaveObj()">💾 Enregistrer</button>
+    </div>
+    <button id="sp-objm-del" style="display:none;width:100%;margin-top:10px;background:none;border:none;color:#c23b30;font-size:13px;cursor:pointer;text-decoration:underline;" onclick="spDeleteObj()">🗑️ Supprimer cet objectif</button>
+  </div>
+</div>
+<div class="sp-modal-bg" id="sp-sheet">
+  <div class="sp-modal">
+    <h3>Faire aujourd'hui ?</h3>
+    <div class="sub" id="sp-sheet-sub"></div>
+    <button class="btn-add" style="width:100%;margin-top:6px;" onclick="spApplyMove('extra')">➕ En plus — garder le jour prévu</button>
+    <button class="btn-claude" style="width:100%;margin-top:10px;" onclick="spApplyMove('move')">↪️ À la place — déplacer ici</button>
+    <button class="btn-claude" style="width:100%;margin-top:10px;border:1px solid var(--border);color:var(--muted);background:none;" onclick="spCloseSheet()">Annuler</button>
+  </div>
+</div>
+
+<script>
+/* ===================== MODULE SPORTS (objectifs / exercices / séances / planning) ===================== */
+(function(){
+  // ---- catalogue d'exemple (avec phases) ----
+  const CATS=[
+    {key:'dos',e:'🎯',n:'Dos / Tractions'},{key:'jambes',e:'🦵',n:'Jambes'},{key:'souplesse',e:'🧘',n:'Souplesse'},
+    {key:'bras',e:'💪',n:'Bras'},{key:'pecs',e:'🏋️',n:'Pectoraux'},{key:'mobilite',e:'🤸',n:'Mobilité'},
+    {key:'gainage',e:'🔥',n:'Gainage'},{key:'cardio',e:'🚴',n:'Cardio'},{key:'rotation',e:'⛳',n:'Rotation'}
+  ];
+  const EXOS=[
+    {id:1,nom:'Suspension à la barre',cat:'dos',emoji:'🧗',desc:'Pendu à la barre, bras tendus, épaules engagées. Renforce la prise et les épaules.',phases:[{label:'Tenir 15 s',presc:'3 séries · repos 60 s',crit:'15 s sur les 3 séries'},{label:'Tenir 30 s',presc:'3 séries · repos 60 s',crit:'30 s sans lâcher'},{label:'Tenir 45 s',presc:'3 séries · repos 75 s',crit:'45 s proprement'},{label:'Tenir 60 s',presc:'3 séries · repos 90 s',crit:'60 s = prise solide'}]},
+    {id:2,nom:'Tractions négatives',cat:'dos',emoji:'⬇️',desc:'Pars menton au-dessus de la barre, descends très lentement.',phases:[{label:'Descente 4 s',presc:'3 × 3 · repos 90 s',crit:'3×3 maîtrisées'},{label:'Descente 5 s',presc:'4 × 4 · repos 90 s',crit:'4×4 sans à-coups'},{label:'Descente 8-10 s',presc:'3 × 3 · repos 2 min',crit:'descente lente'}]},
+    {id:3,nom:'Traction assistée élastique',cat:'dos',emoji:'🎀',desc:'Élastique sous les pieds pour alléger. On passe à plus fin en progressant.',phases:[{label:'Élastique épais',presc:'3 × 8',crit:'3×8 propres'},{label:'Élastique moyen',presc:'3 × 8',crit:'3×8 propres'},{label:'Élastique fin',presc:'3 × 6',crit:'3×6 propres'},{label:'Mini élastique',presc:'3 × 5',crit:'prêt pour la traction libre'}]},
+    {id:4,nom:'Tirage vertical',cat:'dos',emoji:'🪢',desc:'Poulie haute, tire la barre vers la poitrine. Charge réglable.',phases:[{label:'Charge légère',presc:'3 × 12',crit:'12 reps faciles'},{label:'Charge moyenne',presc:'3 × 10',crit:'10 reps contrôlées'},{label:'Proche du poids de corps',presc:'3 × 6',crit:'~PdC sur 5-6 reps'}]},
+    {id:5,nom:'Tirage horizontal',cat:'dos',emoji:'↔️',desc:'Tire vers le ventre, coudes près du corps, dos droit.',phases:[{label:'Angle 45°',presc:'3 × 10',crit:'10 reps propres'},{label:'À plat',presc:'3 × 10',crit:'10 reps à plat'},{label:'Pieds surélevés',presc:'3 × 8',crit:'8 reps strictes'}]},
+    {id:6,nom:'Squat',cat:'jambes',emoji:'🦵',desc:'Flexion des jambes, dos droit. Pas trop bas si genou sensible.',phases:[{label:'Au poids de corps',presc:'3 × 12',crit:'12 sans douleur'},{label:'Charge légère',presc:'3 × 10',crit:'10 contrôlées'}]},
+    {id:7,nom:'Fentes',cat:'jambes',emoji:'🚶',desc:'Un pied devant, descends le genou arrière.',phases:[{label:'Statiques',presc:'3 × 8 / jambe',crit:'équilibre stable'},{label:'Marchées',presc:'3 × 10 / jambe',crit:'fluide'}]},
+    {id:8,nom:'Étirement ischios',cat:'souplesse',emoji:'🧘',desc:'Jambe tendue, penche le buste sans forcer.',phases:[{label:'Mains aux genoux',presc:'3 × 30 s',crit:'tension douce'},{label:'Mains aux tibias',presc:'3 × 30 s',crit:'gain d\u2019amplitude'},{label:'Mains aux pieds',presc:'3 × 30 s',crit:'souplesse atteinte'}]},
+    {id:9,nom:'Ouverture épaules',cat:'souplesse',emoji:'🙆',desc:'Bras au mur ou avec un bâton, ouvre la poitrine.',phases:[{label:'Amplitude réduite',presc:'2 × 30 s',crit:'sans douleur'},{label:'Amplitude complète',presc:'3 × 30 s',crit:'épaules ouvertes'}]},
+    {id:10,nom:'Chat-vache (dos)',cat:'souplesse',emoji:'🐱',desc:'À quatre pattes, alterne dos rond et dos creux.',phases:[{label:'10 cycles lents',presc:'2 séries',crit:'mouvement fluide'},{label:'15 cycles',presc:'2 séries',crit:'colonne mobile'}]},
+    {id:11,nom:'Curl biceps',cat:'bras',emoji:'💪',desc:'Flexion des avant-bras, coudes fixes.',phases:[{label:'Léger',presc:'3 × 12',crit:'12 strictes'},{label:'Moyen',presc:'3 × 10',crit:'10 strictes'}]},
+    {id:12,nom:'Pompes',cat:'pecs',emoji:'🤜',desc:'Corps gainé, descends la poitrine. Variante genoux pour alléger.',phases:[{label:'Sur les genoux',presc:'3 × 8',crit:'8 propres'},{label:'Classiques',presc:'3 × 10',crit:'10 complètes'}]},
+    {id:13,nom:'Hanches 90/90',cat:'mobilite',emoji:'🤸',desc:'Assis, jambes à 90°, pivote d\u2019un côté à l\u2019autre.',phases:[{label:'Amplitude douce',presc:'2 × 8 / côté',crit:'sans forcer'},{label:'Amplitude complète',presc:'3 × 10 / côté',crit:'hanches mobiles'}]},
+    {id:14,nom:'Rotation thoracique',cat:'mobilite',emoji:'🔄',desc:'À genoux, main derrière la tête, ouvre le coude.',phases:[{label:'10 / côté',presc:'2 séries',crit:'rotation fluide'},{label:'15 / côté',presc:'3 séries',crit:'amplitude gagnée'}]},
+    {id:15,nom:'Gainage planche',cat:'gainage',emoji:'🔥',desc:'Appui avant-bras et pointes de pieds, corps aligné.',phases:[{label:'20 s',presc:'3 séries',crit:'20 s gainé'},{label:'40 s',presc:'3 séries',crit:'40 s sans casser'},{label:'60 s',presc:'3 séries',crit:'60 s solide'}]},
+    {id:16,nom:'Gainage anti-rotation',cat:'gainage',emoji:'🪵',desc:'Résiste à une traction latérale sans tourner le buste.',phases:[{label:'Tenue courte',presc:'3 × 10 s / côté',crit:'buste fixe'},{label:'Tenue longue',presc:'3 × 20 s / côté',crit:'aucune rotation'}]},
+    {id:17,nom:'Vélo',cat:'cardio',emoji:'🚴',desc:'Cardio à faible impact, doux pour les genoux.',phases:[{label:'15 min',presc:'allure modérée',crit:'à l\u2019aise'},{label:'25 min',presc:'allure modérée',crit:'endurance en hausse'}]},
+    {id:18,nom:'Swing golf à vide',cat:'rotation',emoji:'⛳',desc:'Mouvement de swing sans club, en contrôle.',phases:[{label:'Demi-amplitude',presc:'2 × 10',crit:'geste contrôlé'},{label:'Amplitude complète',presc:'3 × 10',crit:'rotation fluide'}]}
+  ];
+  const JOURS=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  const EMOJIS=['🎯','💪','🤸','🎾','⛳','🏃','🧘','🏋️','🚴','🔥','⭐','🦵'];
+  const COLORS=['#c0616a','#457b9d','#e76f51','#2d6a4f','#d97706','#7b6ca8'];
+
+  // ---- état persistant (clé mc_objectifs, synchro par compte) ----
+  const KEY='mc_objectifs';
+  let S={objs:[], prog:{}, exc:[]};
+  function load(){
+    try{
+      const raw=JSON.parse(localStorage.getItem(KEY)||'null');
+      if(!raw){ S={objs:[],prog:{},exc:[]}; return; }
+      if(Array.isArray(raw)){ S={objs:raw.map(normObj), prog:{}, exc:[]}; return; } // ancien format
+      S={objs:(raw.objs||[]).map(normObj), prog:raw.prog||{}, exc:raw.exc||[]};
+    }catch(e){ S={objs:[],prog:{},exc:[]}; }
+  }
+  function normObj(o){ return {id:o.id||Date.now()+Math.random(), nom:o.nom||'', emoji:o.emoji||'🎯', color:o.color||'#c0616a', exos:o.exos||[], seances:o.seances||[], days:o.days||[], planned:!!o.planned}; }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function toast(m){ if(typeof showToast==='function') showToast(m); }
+
+  // ---- navigation interne ----
+  let curObj=-1, curSea=-1, curExo=-1, exoFrom='cat', curCat=null;
+  let _objEdit=-1, _emoSel='🎯', _colSel='#c0616a', _mvOi=-1, _mvSea=-1;
+
+  function show(id){ document.querySelectorAll('#page-sports .sp-screen').forEach(s=>s.classList.remove('on')); const el=document.getElementById(id); if(el){ el.classList.add('on'); el.scrollTop=0; } window.scrollTo(0,0); }
+  function go(v){
+    const map={empty:'sp-empty',list:'sp-list',obj:'sp-obj',pick:'sp-pick',cat:'sp-cat',exo:'sp-exo',seadetail:'sp-seadetail',seapick:'sp-seapick'};
+    show(map[v]);
+    if(v==='list'){ renderList(); renderToday(); }
+    if(v==='obj') renderObj();
+    if(v==='pick'){ document.getElementById('sp-search').value=''; renderSearch(); renderCats(); }
+    if(v==='cat') renderCat();
+    if(v==='exo') renderExo();
+    if(v==='seadetail') renderSeaDetail();
+    if(v==='seapick') renderSeaPick();
+  }
+  function init(){ load(); if(S.objs.length){ go('list'); } else { show('sp-empty'); } }
+
+  // ---- objectifs ----
+  function curObjObj(){ return S.objs[curObj]; }
+  function buildPickers(){
+    document.getElementById('sp-objm-emos').innerHTML=EMOJIS.map(e=>`<button type="button" class="sp-emo ${e===_emoSel?'on':''}" data-e="${e}">${e}</button>`).join('');
+    document.getElementById('sp-objm-cols').innerHTML=COLORS.map(c=>`<button type="button" class="sp-col ${c===_colSel?'on':''}" data-c="${c}" style="background:${c}"></button>`).join('');
+  }
+  document.addEventListener('click',function(ev){
+    if(!ev.target||!ev.target.closest) return;
+    const em=ev.target.closest('#sp-objm-emos .sp-emo'); if(em){ _emoSel=em.getAttribute('data-e'); buildPickers(); return; }
+    const co=ev.target.closest('#sp-objm-cols .sp-col'); if(co){ _colSel=co.getAttribute('data-c'); buildPickers(); return; }
+  });
+  function openObjModal(id){
+    _objEdit=(id!==undefined)?id:-1;
+    const o=_objEdit>=0?S.objs.find(x=>String(x.id)===String(_objEdit)):null;
+    document.getElementById('sp-objm-title').textContent=o?'Modifier l\u2019objectif':'Nouvel objectif';
+    document.getElementById('sp-objm-nom').value=o?o.nom:'';
+    _emoSel=o?o.emoji:'🎯'; _colSel=o?o.color:'#c0616a';
+    buildPickers();
+    document.getElementById('sp-objm-del').style.display=o?'block':'none';
+    document.getElementById('sp-objmodal').classList.add('open');
+  }
+  function closeObjModal(){ document.getElementById('sp-objmodal').classList.remove('open'); }
+  function saveObjForm(){
+    const nom=(document.getElementById('sp-objm-nom').value||'').trim();
+    if(!nom){ toast('⚠️ Donne un nom'); return; }
+    if(_objEdit>=0){ const o=S.objs.find(x=>String(x.id)===String(_objEdit)); if(o){ o.nom=nom; o.emoji=_emoSel; o.color=_colSel; } toast('✅ Objectif modifié'); }
+    else { S.objs.push(normObj({id:Date.now(), nom, emoji:_emoSel, color:_colSel})); toast('✅ Objectif créé'); }
+    save(); closeObjModal(); go('list');
+  }
+  function deleteObjForm(){
+    if(_objEdit<0) return;
+    if(!confirm('Supprimer cet objectif ?')) return;
+    S.objs=S.objs.filter(x=>String(x.id)!==String(_objEdit)); save(); closeObjModal();
+    if(S.objs.length) go('list'); else show('sp-empty');
+    toast('🗑️ Objectif supprimé');
+  }
+  function pctOf(o){ // % = moyenne de progression des paliers des exercices associés
+    if(!o.exos.length) return 0;
+    let tot=0,don=0;
+    o.exos.forEach(id=>{ const e=EXOS.find(x=>x.id===id); const np=(e&&e.phases||[]).length||1; const cur=Math.min(S.prog[id]||1,np); tot+=np; don+=(cur-1); });
+    return tot?Math.round(don/tot*100):0;
+  }
+  function renderList(){
+    const el=document.getElementById('sp-objs'); if(!el) return;
+    if(!S.objs.length){ el.innerHTML='<div class="sp-empty-mini">Aucun objectif. Touche « + Objectif ».</div>'; return; }
+    el.innerHTML=S.objs.map((o,i)=>{
+      const pct=pctOf(o), deg=Math.round(pct*3.6), n=o.exos.length;
+      return `<div class="card sp-objcard" onclick="spOpenObj(${i})">
+        <div class="sp-ring" style="background:conic-gradient(${o.color} ${deg}deg,#f0dede 0)"><div class="in" style="color:${o.color}">${pct}%</div></div>
+        <div style="flex:1;min-width:0;"><div class="sp-objname">${esc(o.nom)}</div><div class="sp-objsub">${n} exercice${n>1?'s':''}</div></div>
+        <button onclick="event.stopPropagation();spOpenObjModal('${o.id}')" style="background:var(--bg);border:1px solid var(--border);border-radius:9px;width:34px;height:34px;font-size:13px;cursor:pointer;flex-shrink:0;">✎</button>
+      </div>`;
+    }).join('');
+  }
+  function openObj(i){ curObj=i; go('obj'); }
+  function curPhase(id){ const e=EXOS.find(x=>x.id===id); const np=(e&&e.phases||[]).length||1; return Math.min(S.prog[id]||1,np); }
+  function renderObj(){
+    const o=curObjObj(); if(!o){ go('list'); return; }
+    document.getElementById('sp-obj-ttl').textContent=o.nom;
+    const el=document.getElementById('sp-obj-exos');
+    if(!o.exos.length){ el.innerHTML='<div class="sp-empty-mini">Aucun exercice associé.</div>'; }
+    else el.innerHTML=o.exos.map(id=>{ const e=EXOS.find(x=>x.id===id); if(!e) return '';
+      const np=(e.phases||[]).length, cur=curPhase(id);
+      const badge=np?`<span class="sp-badge">Phase ${cur}/${np}</span>`:'';
+      return `<div class="sp-exo">
+        <div class="th" onclick="spShowDesc(${id})" style="cursor:pointer;">${e.emoji}</div>
+        <div class="nm" onclick="spShowDesc(${id})" style="cursor:pointer;">${esc(e.nom)} <span style="color:var(--accent-light);font-size:12px;">ⓘ</span></div>
+        ${badge}
+        <button onclick="spRemoveExo(${id})" style="background:var(--bg);border:1px solid var(--border);border-radius:9px;width:34px;height:34px;color:#c23b30;font-size:15px;cursor:pointer;flex-shrink:0;">✕</button>
+      </div>`;
+    }).join('');
+    const sl=document.getElementById('sp-obj-seas');
+    if(!o.seances.length){ sl.innerHTML='<div class="sp-empty-mini">Aucune séance.</div>'; }
+    else sl.innerHTML=o.seances.map((s,i)=>{ const n=s.exos.length;
+      return `<div class="card sp-objcard" onclick="spOpenSea(${i})">
+        <div style="width:44px;height:44px;border-radius:12px;flex-shrink:0;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;">📋</div>
+        <div style="flex:1;min-width:0;"><div class="sp-objname" style="font-size:17px;">${esc(s.nom||'(sans nom)')}</div><div class="sp-objsub">${n} exercice${n>1?'s':''}</div></div>
+        <div style="color:var(--muted);font-size:20px;">›</div></div>`;
+    }).join('');
+    renderWeek();
+  }
+  function removeExo(id){ const o=curObjObj(); o.exos=o.exos.filter(x=>x!==id); save(); renderObj(); }
+
+  // ---- picker ----
+  function renderCats(){
+    document.getElementById('sp-catgrid').innerHTML=CATS.map(c=>{ const n=EXOS.filter(e=>e.cat===c.key).length;
+      return `<div class="sp-cat" onclick="spOpenCat('${c.key}')"><div class="e">${c.e}</div><div class="n">${esc(c.n)}</div><div class="c">${n} exo${n>1?'s':''}</div></div>`;
+    }).join('');
+  }
+  function exoRow(e){ const o=curObjObj(); const on=o&&o.exos.includes(e.id);
+    return `<div class="sp-exo ${on?'on':''}">
+      <div class="th" onclick="spShowDesc(${e.id})" style="cursor:pointer;">${e.emoji}</div>
+      <div class="nm" onclick="spShowDesc(${e.id})" style="cursor:pointer;">${esc(e.nom)} <span style="color:var(--accent-light);font-size:12px;">ⓘ</span></div>
+      <button class="chk" onclick="spToggleExo(${e.id})" style="background:${on?'var(--accent)':'transparent'};">${on?'✓':'+'}</button>
+    </div>`;
+  }
+  function renderSearch(){
+    const q=(document.getElementById('sp-search').value||'').trim().toLowerCase();
+    const grid=document.getElementById('sp-catgrid'), res=document.getElementById('sp-results');
+    if(!q){ res.style.display='none'; res.innerHTML=''; grid.style.display='grid'; return; }
+    grid.style.display='none'; res.style.display='block';
+    const list=EXOS.filter(e=>e.nom.toLowerCase().includes(q));
+    res.innerHTML=list.length?list.map(exoRow).join(''):'<div class="sp-empty-mini">Aucun exercice trouvé.</div>';
+  }
+  function openCat(k){ curCat=k; go('cat'); }
+  function renderCat(){ const c=CATS.find(x=>x.key===curCat);
+    document.getElementById('sp-cat-ttl').textContent=c?c.e+' '+c.n:'Catégorie';
+    document.getElementById('sp-cat-exos').innerHTML=EXOS.filter(e=>e.cat===curCat).map(exoRow).join('');
+  }
+  function toggleExo(id){ const o=curObjObj(); if(!o) return;
+    if(o.exos.includes(id)){ o.exos=o.exos.filter(x=>x!==id); toast('➖ Retiré'); }
+    else { o.exos.push(id); toast('✅ Ajouté'); }
+    save();
+    if(document.getElementById('sp-cat').classList.contains('on')) renderCat(); else renderSearch();
+  }
+
+  // ---- fiche exercice ----
+  function showDesc(id){ curExo=id;
+    if(document.getElementById('sp-obj').classList.contains('on')) exoFrom='obj';
+    else if(document.getElementById('sp-cat').classList.contains('on')) exoFrom='cat';
+    else if(document.getElementById('sp-pick').classList.contains('on')) exoFrom='pick';
+    else if(document.getElementById('sp-seadetail').classList.contains('on')) exoFrom='seadetail';
+    else if(document.getElementById('sp-seapick').classList.contains('on')) exoFrom='seapick';
+    go('exo');
+  }
+  function openExoFrom(id,from){ curExo=id; exoFrom=from; go('exo'); }
+  function exoBack(){ go(exoFrom); }
+  function renderExo(){
+    const e=EXOS.find(x=>x.id===curExo); if(!e){ exoBack(); return; }
+    document.getElementById('sp-exo-ttl').textContent=e.nom;
+    document.getElementById('sp-exo-emo').textContent=e.emoji||'🏋️';
+    document.getElementById('sp-exo-nom').textContent=e.nom;
+    const c=CATS.find(x=>x.key===e.cat);
+    document.getElementById('sp-exo-cat').textContent=c?(c.e+' '+c.n):'—';
+    document.getElementById('sp-exo-desc').textContent=e.desc||'Pas de description.';
+    const ph=e.phases||[], cur=curPhase(e.id);
+    document.getElementById('sp-exo-phases').innerHTML=ph.length?ph.map((p,i)=>{
+      const isCur=(i+1)===cur, isDone=(i+1)<cur;
+      return `<div class="card" style="display:flex;gap:13px;align-items:flex-start;padding:13px 14px;${isCur?'border:2px solid var(--accent);background:#fdeff0;':''}">
+        <div style="width:30px;height:30px;border-radius:50%;flex-shrink:0;background:${isDone?'#2d6a4f':(isCur?'var(--accent)':'#e7d3d3')};color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:800;font-size:14px;">${isDone?'✓':(i+1)}</div>
+        <div style="flex:1;"><div style="font-weight:700;font-size:14px;">${esc(p.label)} ${isCur?'<span style=\"font-size:10px;color:var(--accent);font-weight:700;\">• EN COURS</span>':''}</div>
+          <div style="font-size:12.5px;color:var(--muted);margin-top:3px;">📋 ${esc(p.presc)}</div>
+          <div style="font-size:12.5px;color:#2d6a4f;margin-top:3px;">✅ ${esc(p.crit)}</div></div></div>`;
+    }).join(''):'<div class="sp-empty-mini">Aucune phase.</div>';
+    const btn=document.getElementById('sp-exo-toggle');
+    if(exoFrom==='seapick'||exoFrom==='seadetail'){
+      const o=curObjObj(); const s=o&&o.seances[curSea];
+      if(s){ const on=s.exos.includes(e.id); btn.style.display='block';
+        btn.textContent=on?'✓ Dans la séance — retirer':'+ Ajouter à la séance';
+        btn.style.background=on?'#7a3b42':'var(--accent)';
+        btn.onclick=function(){ seaToggle(e.id); renderExo(); };
+      } else btn.style.display='none';
+    } else {
+      const o=curObjObj();
+      if(o){ const on=o.exos.includes(e.id); btn.style.display='block';
+        btn.textContent=on?'✓ Associé — retirer':'+ Associer à l\u2019objectif';
+        btn.style.background=on?'#7a3b42':'var(--accent)';
+        btn.onclick=function(){ toggleExo(e.id); renderExo(); };
+      } else btn.style.display='none';
+    }
+  }
+
+  // ---- séances ----
+  function newSeance(){ const o=curObjObj(); if(!o) return;
+    if(!o.exos.length){ toast('⚠️ Associe d\u2019abord des exercices'); return; }
+    o.seances.push({nom:'',exos:[]}); curSea=o.seances.length-1; save(); go('seadetail');
+  }
+  function openSea(i){ curSea=i; go('seadetail'); }
+  function seaRename(){ const o=curObjObj(); const s=o&&o.seances[curSea]; if(s){ s.nom=document.getElementById('sp-sea-nom').value; save(); } }
+  function deleteSeance(){ const o=curObjObj(); const s=o&&o.seances[curSea]; if(!s) return;
+    if(!confirm('Supprimer cette séance ?')) return; o.seances.splice(curSea,1); save(); go('obj'); toast('🗑️ Séance supprimée');
+  }
+  function saveSeance(){ const o=curObjObj(); const s=o&&o.seances[curSea]; if(!s) return;
+    if(!(s.nom||'').trim()){ toast('⚠️ Donne un nom'); return; }
+    if(!s.exos.length){ toast('⚠️ Ajoute un exercice'); return; }
+    save(); go('obj'); toast('✅ Séance enregistrée');
+  }
+  function renderSeaDetail(){ const o=curObjObj(); if(!o){ go('list'); return; } const s=o.seances[curSea]; if(!s){ go('obj'); return; }
+    document.getElementById('sp-sea-objname').textContent='de l\u2019objectif « '+o.nom+' »';
+    document.getElementById('sp-sea-nom').value=s.nom||'';
+    const el=document.getElementById('sp-sea-exos');
+    if(!s.exos.length){ el.innerHTML='<div class="sp-empty-mini">Aucun exercice.</div>'; return; }
+    el.innerHTML=s.exos.map(id=>{ const e=EXOS.find(x=>x.id===id); if(!e) return '';
+      return `<div class="sp-exo">
+        <div class="th" onclick="spOpenExoFrom(${id},'seadetail')" style="cursor:pointer;">${e.emoji}</div>
+        <div class="nm" onclick="spOpenExoFrom(${id},'seadetail')" style="cursor:pointer;">${esc(e.nom)} <span style="color:var(--accent-light);font-size:12px;">ⓘ</span></div>
+        <button onclick="spSeaRemove(${id})" style="background:var(--bg);border:1px solid var(--border);border-radius:9px;width:34px;height:34px;color:#c23b30;font-size:15px;cursor:pointer;flex-shrink:0;">✕</button>
+      </div>`;
+    }).join('');
+  }
+  function seaRemove(id){ const o=curObjObj(); const s=o.seances[curSea]; s.exos=s.exos.filter(x=>x!==id); save(); renderSeaDetail(); }
+  function renderSeaPick(){ const o=curObjObj(); const s=o&&o.seances[curSea]; const el=document.getElementById('sp-seapick-body');
+    document.getElementById('sp-seapick-obj').textContent='« '+(o?o.nom:'cet objectif')+' »';
+    if(!o||!o.exos.length){ el.innerHTML='<div class="sp-empty-mini">Aucun exercice associé à cet objectif.</div>'; return; }
+    el.innerHTML=o.exos.map(id=>{ const e=EXOS.find(x=>x.id===id); if(!e) return ''; const on=s.exos.includes(id);
+      return `<div class="sp-exo ${on?'on':''}">
+        <div class="th" onclick="spOpenExoFrom(${id},'seapick')" style="cursor:pointer;">${e.emoji}</div>
+        <div class="nm" onclick="spOpenExoFrom(${id},'seapick')" style="cursor:pointer;">${esc(e.nom)} <span style="color:var(--accent-light);font-size:12px;">ⓘ</span></div>
+        <button class="chk" onclick="spSeaToggle(${id})" style="background:${on?'var(--accent)':'transparent'};">${on?'✓':'+'}</button>
+      </div>`;
+    }).join('');
+  }
+  function seaToggle(id){ const o=curObjObj(); const s=o&&o.seances[curSea]; if(!s) return;
+    if(s.exos.includes(id)){ s.exos=s.exos.filter(x=>x!==id); toast('➖ Retiré'); } else { s.exos.push(id); toast('✅ Ajouté'); }
+    save(); renderSeaPick();
+  }
+
+  // ---- semaine type ----
+  function toggleDay(i){ const o=curObjObj(); if(!o.days) o.days=[]; const k=o.days.indexOf(i); if(k>=0) o.days.splice(k,1); else o.days.push(i); save(); renderWeek(); }
+  function renderWeek(){ const o=curObjObj(); const host=document.getElementById('sp-obj-week'); if(!host) return;
+    if(!o.seances.length){ host.innerHTML='<div class="sp-empty-mini">Crée au moins une séance pour définir ta semaine.</div>'; return; }
+    if(!o.days) o.days=[]; const days=o.days.slice().sort((a,b)=>a-b);
+    let h='<div class="card"><div style="font-size:13px;color:var(--muted);margin-bottom:10px;">Choisis tes jours d\u2019entraînement :</div><div style="display:flex;gap:6px;justify-content:space-between;">';
+    JOURS.forEach((j,i)=>{ const on=o.days.includes(i);
+      h+=`<button onclick="spToggleDay(${i})" style="flex:1;height:46px;border-radius:11px;border:2px solid ${on?'var(--accent)':'var(--border)'};background:${on?'var(--accent)':'var(--surface)'};color:${on?'#fff':'var(--text)'};font-weight:700;font-size:13px;cursor:pointer;padding:0;">${j}</button>`;
+    }); h+='</div></div>';
+    if(days.length){
+      h+='<div class="card" style="padding:8px;">';
+      h+=days.map((d,k)=>{ const s=o.seances[k%o.seances.length]; const nom=s?(s.nom||'(séance)'):'(séance)';
+        return `<div style="display:flex;align-items:center;gap:10px;border-radius:10px;padding:9px 11px;margin:4px;background:#fdeff0;"><span style="font-family:'Cormorant Garamond',serif;font-weight:800;width:34px;color:var(--accent);">${JOURS[d]}</span><span style="flex:1;font-weight:600;font-size:13px;color:var(--accent);">${esc(nom)}</span></div>`;
+      }).join(''); h+='</div>';
+      if(o.seances.length>1) h+=`<div style="font-size:11.5px;color:var(--muted);text-align:center;margin-top:-4px;">Tes ${o.seances.length} séances sont alternées sur les jours choisis.</div>`;
+      h+='<button class="btn-add" style="width:100%;margin-top:12px;" onclick="spGenerer()">🗓️ Générer le planning</button>';
+    } else { h+='<div class="sp-empty-mini">Touche les jours où tu veux t\u2019entraîner.</div>'; }
+    host.innerHTML=h;
+  }
+  function generer(){ const o=curObjObj(); if(!o) return; if(!o.days||!o.days.length){ toast('⚠️ Choisis au moins un jour'); return; } o.planned=true; save(); go('list'); toast('✅ Planning généré'); }
+
+  // ---- prochaine séance + exceptions ----
+  function iso(d){ const p=n=>(n<10?'0':'')+n; return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); }
+  function fmt(d){ const p=n=>(n<10?'0':'')+n; return p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear(); }
+  function seanceForDay(o,dayIdx){ if(!o.planned||!o.days||!o.days.includes(dayIdx)||!o.seances.length) return null; const sorted=o.days.slice().sort((a,b)=>a-b); const pos=sorted.indexOf(dayIdx); return {s:o.seances[pos%o.seances.length], seaIdx:pos%o.seances.length}; }
+  function sessionsForDate(d){ const isoD=iso(d); const dayIdx=(d.getDay()+6)%7; let items=[];
+    S.objs.forEach((o,oi)=>{ const r=seanceForDay(o,dayIdx); if(r){ const moved=S.exc.some(e=>e.type==='move'&&e.fromISO===isoD&&e.oi===oi&&e.seaIdx===r.seaIdx); if(!moved) items.push({o,oi,s:r.s,seaIdx:r.seaIdx}); } });
+    S.exc.filter(e=>e.dateISO===isoD).forEach(e=>{ const o=S.objs[e.oi]; const s=o&&o.seances[e.seaIdx]; if(s) items.push({o,oi:e.oi,s,seaIdx:e.seaIdx,exc:true}); });
+    return items;
+  }
+  function renderToday(){ const host=document.getElementById('sp-today'); if(!host) return;
+    const planned=S.objs.filter(o=>o.planned&&o.days&&o.days.length);
+    if(!planned.length&&!S.exc.length){ host.innerHTML='<div class="card" style="text-align:center;color:var(--muted);"><div style="font-size:28px;">🗓️</div><div style="font-weight:700;font-size:15px;color:var(--text);margin-top:6px;">Aucun planning</div><div style="font-size:12.5px;margin-top:4px;">Génère un planning depuis un objectif.</div></div>'; return; }
+    let next=null;
+    for(let off=0;off<14&&!next;off++){ const d=new Date(); d.setDate(d.getDate()+off); const items=sessionsForDate(d); if(items.length) next={off,date:d,items}; }
+    let h='';
+    if(next){ const quand=next.off===0?'Aujourd\u2019hui':(next.off===1?'Demain':'le '+fmt(next.date));
+      h+=next.items.map(f=>{ const n=f.s.exos.length;
+        const mv=next.off>0?`<button onclick="event.stopPropagation();spOpenMove(${f.oi},${f.seaIdx})" style="margin-top:12px;width:100%;background:var(--accent);color:#fff;border:none;border-radius:11px;padding:11px;font-weight:700;font-size:13.5px;cursor:pointer;">▶️ Faire aujourd'hui</button>`:'';
+        return `<div class="card" style="background:linear-gradient(150deg,#fff,#fbe9ec);border-color:var(--accent-light);">
+          <div onclick="spOpenSeaByObj(${f.oi},${f.seaIdx})" style="cursor:pointer;">
+            <div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--accent);">${quand} · ${esc(f.o.nom)}${f.exc?' · exceptionnel':''}</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:24px;margin-top:5px;">📋 ${esc(f.s.nom||'(séance)')}</div>
+            <div style="font-size:12.5px;color:var(--muted);margin-top:3px;">${n} exercice${n>1?'s':''} · touche pour ouvrir</div>
+          </div>${mv}</div>`;
+      }).join('');
+    }
+    host.innerHTML=h;
+  }
+  function openMove(oi,seaIdx){ _mvOi=oi; _mvSea=seaIdx; const o=S.objs[oi]; const s=o&&o.seances[seaIdx];
+    document.getElementById('sp-sheet-sub').textContent='« '+(s?s.nom:'séance')+' » — que faire du jour prévu ?';
+    document.getElementById('sp-sheet').classList.add('open');
+  }
+  function closeSheet(){ document.getElementById('sp-sheet').classList.remove('open'); }
+  function applyMove(type){ const today=new Date(); let fromISO=null;
+    for(let off=1;off<14;off++){ const d=new Date(); d.setDate(d.getDate()+off); const items=sessionsForDate(d); if(items.some(it=>it.oi===_mvOi&&it.seaIdx===_mvSea)){ fromISO=iso(d); break; } }
+    S.exc.push({dateISO:iso(today),oi:_mvOi,seaIdx:_mvSea,type:type,fromISO:fromISO}); save(); closeSheet(); renderToday();
+    toast(type==='move'?'✅ Déplacée à aujourd\u2019hui':'✅ Ajoutée aujourd\u2019hui');
+  }
+  function openSeaByObj(oi,seaIdx){ curObj=oi; curSea=seaIdx; go('seadetail'); }
+
+  // ---- expose (appelé par onclick / showPage) ----
+  window.spInit=init;
+  window.spGo=go;
+  window.spOpenObjModal=openObjModal; window.spCloseObjModal=closeObjModal; window.spSaveObj=saveObjForm; window.spDeleteObj=deleteObjForm;
+  window.spOpenObj=openObj; window.spRemoveExo=removeExo;
+  window.spOpenCat=openCat; window.spRenderSearch=renderSearch; window.spToggleExo=toggleExo;
+  window.spShowDesc=showDesc; window.spOpenExoFrom=openExoFrom; window.spExoBack=exoBack; window.spExoToggleFromPage=function(){};
+  window.spNewSeance=newSeance; window.spOpenSea=openSea; window.spSeaRename=seaRename; window.spDeleteSeance=deleteSeance; window.spSaveSeance=saveSeance; window.spSeaRemove=seaRemove; window.spSeaToggle=seaToggle;
+  window.spToggleDay=toggleDay; window.spGenerer=generer;
+  window.spOpenMove=openMove; window.spCloseSheet=closeSheet; window.spApplyMove=applyMove; window.spOpenSeaByObj=openSeaByObj;
+})();
+</script>
+
 </body>
 </html>
