@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-seances</div>
+  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v2025-06-sports</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -1058,6 +1058,65 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
     </div>
   </div>
 </div>
+<!-- ========== PAGE SPORTS (accueil carrefour) ========== -->
+<div class="page" id="page-sports">
+  <div style="height:8px"></div>
+
+  <!-- Séance du jour -->
+  <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:6px 2px 8px;">À faire aujourd'hui</div>
+  <div class="card" style="background:linear-gradient(150deg,#fff,#fbe9ec);border-color:var(--accent-light);position:relative;overflow:hidden;">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--accent);">Séance du jour</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:24px;margin-top:6px;">Traction + souplesse</div>
+    <div style="font-size:13px;color:var(--muted);margin-top:3px;">5 exercices · ~24 min · sert tes 3 objectifs</div>
+    <button class="btn-add" style="margin-top:14px;width:100%;" onclick="showToast('▶️ Bientôt : démarrage de la séance')">▶️ Commencer l'entraînement</button>
+  </div>
+
+  <!-- Évolution des objectifs -->
+  <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:20px 2px 8px;">Mes objectifs</div>
+
+  <div class="card" style="display:flex;align-items:center;gap:14px;cursor:pointer;" onclick="showToast('→ Objectif Traction')">
+    <div style="width:46px;height:46px;border-radius:50%;flex-shrink:0;background:conic-gradient(var(--accent) 162deg,#f0dede 0);display:flex;align-items:center;justify-content:center;">
+      <div style="width:34px;height:34px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:800;font-size:12px;color:var(--accent);">45%</div>
+    </div>
+    <div style="flex:1;"><div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:16px;">Faire une traction</div><div style="font-size:12px;color:var(--muted);">Phase 2/4 · suspension & négatives</div></div>
+    <div style="color:var(--muted);font-size:20px;">›</div>
+  </div>
+
+  <div class="card" style="display:flex;align-items:center;gap:14px;cursor:pointer;" onclick="showToast('→ Objectif Souplesse')">
+    <div style="width:46px;height:46px;border-radius:50%;flex-shrink:0;background:conic-gradient(#457b9d 100deg,#f0dede 0);display:flex;align-items:center;justify-content:center;">
+      <div style="width:34px;height:34px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:800;font-size:12px;color:#457b9d;">28%</div>
+    </div>
+    <div style="flex:1;"><div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:16px;">M'assouplir <span style="font-size:9px;font-weight:700;text-transform:uppercase;color:#d97706;background:#fff8e1;padding:2px 6px;border-radius:20px;vertical-align:middle;">prioritaire</span></div><div style="font-size:12px;color:var(--muted);">Routine quotidienne · 8 min</div></div>
+    <div style="color:var(--muted);font-size:20px;">›</div>
+  </div>
+
+  <div class="card" style="display:flex;align-items:center;gap:14px;cursor:pointer;" onclick="showToast('→ Objectif Padel / Golf')">
+    <div style="width:46px;height:46px;border-radius:50%;flex-shrink:0;background:conic-gradient(#e76f51 72deg,#f0dede 0);display:flex;align-items:center;justify-content:center;">
+      <div style="width:34px;height:34px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:800;font-size:12px;color:#e76f51;">20%</div>
+    </div>
+    <div style="flex:1;"><div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:16px;">Padel & golf</div><div style="font-size:12px;color:var(--muted);">Rotation · hanches · gainage</div></div>
+    <div style="color:var(--muted);font-size:20px;">›</div>
+  </div>
+
+  <!-- Les 2 portes -->
+  <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:20px 2px 8px;">Aller plus loin</div>
+  <div style="display:flex;gap:10px;">
+    <div class="card" style="flex:1;margin-bottom:0;cursor:pointer;text-align:center;" onclick="showPage('sport');showToast('Module Sport complet')">
+      <div style="font-size:30px;">🏗️</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:15px;margin-top:6px;">Mon programme</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px;">Objectifs, exercices, séances, planning</div>
+    </div>
+    <div class="card" style="flex:1;margin-bottom:0;cursor:pointer;text-align:center;" onclick="showPage('sport');setTimeout(function(){showSportTab('resultats');},60);showToast('Mes résultats')">
+      <div style="font-size:30px;">📊</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:15px;margin-top:6px;">Mes résultats</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px;">Historique & progression</div>
+    </div>
+  </div>
+
+  <div style="height:10px"></div>
+  <button class="btn-claude" style="margin-top:6px;" onclick="showPage('sport')">🏋️ Ouvrir l'ancien module Sport (intact)</button>
+</div>
+
 </main>
 
 <nav class="bottom-nav">
@@ -1073,9 +1132,15 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
     <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M4 5a2 2 0 012-2h13v18H6a2 2 0 01-2-2V5z"/></svg>
     Recettes
   </button>
-  <button class="nav-item" id="nav-sport" onclick="showPage('sport')">
+  <!-- ANCIEN onglet Sport : masqué temporairement, RIEN n'est supprimé -->
+  <button class="nav-item" id="nav-sport" onclick="showPage('sport')" style="display:none;">
     <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6.5 6.5l11 11M21 21l-1-1M3 3l1 1M18 22l4-4M2 6l4-4M7 17l-2.5 2.5M17 7l2.5-2.5"/></svg>
     Sport
+  </button>
+  <!-- NOUVEL onglet Sports : ouvre l'accueil carrefour -->
+  <button class="nav-item" id="nav-sports" onclick="showPage('sports')">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6.5 6.5l11 11M21 21l-1-1M3 3l1 1M18 22l4-4M2 6l4-4M7 17l-2.5 2.5M17 7l2.5-2.5"/></svg>
+    Sports
   </button>
 </nav>
 
@@ -1282,7 +1347,7 @@ let currentAlimTab = 'journee';
 function showPage(id) {
   // 'repas' = ancien nom interne du module Alimentation
   const pageId = (id === 'repas') ? 'alimentation' : id;
-  const navId  = (id === 'repas') ? 'nav-alim' : (id === 'recettes' ? 'nav-rec' : (id === 'sport' ? 'nav-sport' : 'nav-poids'));
+  const navId  = (id === 'repas') ? 'nav-alim' : (id === 'recettes' ? 'nav-rec' : (id === 'sport' ? 'nav-sport' : (id === 'sports' ? 'nav-sports' : 'nav-poids')));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const pg = document.getElementById('page-' + pageId); if (pg) pg.classList.add('active');
@@ -1300,6 +1365,7 @@ function showPage(id) {
     const rt = document.getElementById('rtab-recettes'); if (rt) rt.style.display = 'block';
     if (!recSelectMode) recGoEtage1();
   }
+  if (pageId === 'sports') { /* page statique : rien à charger */ }
   if (pageId === 'sport') { ensureExoData(); }
 }
 
