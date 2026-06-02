@@ -1089,8 +1089,8 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
     </div>
 
     <div style="height:10px"></div>
-    <button class="btn-add" style="width:100%;" onclick="showPage('sport')">🏗️ Construire mon programme</button>
-    <button class="btn-claude" style="margin-top:10px;" onclick="showPage('sport');setTimeout(function(){showSportTab('exercices');},60);">➕ Commencer par créer un exercice</button>
+    <button class="btn-add" style="width:100%;" onclick="openObjForm()">🎯 Créer mon premier objectif</button>
+    <button class="btn-claude" style="margin-top:10px;" onclick="showPage('sport')">🏗️ Ouvrir le module Sport (exercices, séances…)</button>
   </div>
 
   <!-- ===== TABLEAU DE BORD : visible dès qu'il y a au moins une séance ===== -->
@@ -1106,32 +1106,12 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
     <button class="btn-add" style="margin-top:14px;width:100%;" onclick="showToast('▶️ Bientôt : démarrage de la séance')">▶️ Commencer l'entraînement</button>
   </div>
 
-  <!-- Évolution des objectifs -->
-  <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:20px 2px 8px;">Mes objectifs</div>
-
-  <div class="card" style="display:flex;align-items:center;gap:14px;cursor:pointer;" onclick="showToast('→ Objectif Traction')">
-    <div style="width:46px;height:46px;border-radius:50%;flex-shrink:0;background:conic-gradient(var(--accent) 162deg,#f0dede 0);display:flex;align-items:center;justify-content:center;">
-      <div style="width:34px;height:34px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:800;font-size:12px;color:var(--accent);">45%</div>
-    </div>
-    <div style="flex:1;"><div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:16px;">Faire une traction</div><div style="font-size:12px;color:var(--muted);">Phase 2/4 · suspension & négatives</div></div>
-    <div style="color:var(--muted);font-size:20px;">›</div>
+  <!-- Évolution des objectifs (dynamique) -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin:20px 2px 8px;">
+    <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">Mes objectifs</div>
+    <button onclick="openObjForm()" style="background:none;border:1px solid var(--accent);color:var(--accent);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;">+ Objectif</button>
   </div>
-
-  <div class="card" style="display:flex;align-items:center;gap:14px;cursor:pointer;" onclick="showToast('→ Objectif Souplesse')">
-    <div style="width:46px;height:46px;border-radius:50%;flex-shrink:0;background:conic-gradient(#457b9d 100deg,#f0dede 0);display:flex;align-items:center;justify-content:center;">
-      <div style="width:34px;height:34px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:800;font-size:12px;color:#457b9d;">28%</div>
-    </div>
-    <div style="flex:1;"><div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:16px;">M'assouplir <span style="font-size:9px;font-weight:700;text-transform:uppercase;color:#d97706;background:#fff8e1;padding:2px 6px;border-radius:20px;vertical-align:middle;">prioritaire</span></div><div style="font-size:12px;color:var(--muted);">Routine quotidienne · 8 min</div></div>
-    <div style="color:var(--muted);font-size:20px;">›</div>
-  </div>
-
-  <div class="card" style="display:flex;align-items:center;gap:14px;cursor:pointer;" onclick="showToast('→ Objectif Padel / Golf')">
-    <div style="width:46px;height:46px;border-radius:50%;flex-shrink:0;background:conic-gradient(#e76f51 72deg,#f0dede 0);display:flex;align-items:center;justify-content:center;">
-      <div style="width:34px;height:34px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:800;font-size:12px;color:#e76f51;">20%</div>
-    </div>
-    <div style="flex:1;"><div style="font-family:'Cormorant Garamond',serif;font-weight:800;font-size:16px;">Padel & golf</div><div style="font-size:12px;color:var(--muted);">Rotation · hanches · gainage</div></div>
-    <div style="color:var(--muted);font-size:20px;">›</div>
-  </div>
+  <div id="objectifs-list"></div>
 
   <!-- Les 2 portes -->
   <div style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:20px 2px 8px;">Aller plus loin</div>
@@ -1203,7 +1183,7 @@ const firebaseConfig = {
 // === Données COMMUNES (catalogue partagé entre TOUS les comptes) ===
 const SHARED_KEYS = ['sandra_ingredients','sandra_categories','sandra_recettes','sandra_cat_aliments','sandra_cat_exos','sandra_exos_custom'];
 // === Données PRIVÉES (propres à chaque compte) ===
-const PRIVATE_KEYS = ['sandra_poids','sandra_objectif','sandra_journal','sandra_repas','sandra_profil','mc_seances','mc_planning','mc_resultats'];
+const PRIVATE_KEYS = ['sandra_poids','sandra_objectif','sandra_journal','sandra_repas','sandra_profil','mc_seances','mc_planning','mc_resultats','mc_objectifs'];
 const SYNC_KEYS = SHARED_KEYS.concat(PRIVATE_KEYS);
 function isSyncKey(k){ return SYNC_KEYS.includes(k); }
 function isShared(k){ return SHARED_KEYS.includes(k); }
@@ -2727,6 +2707,23 @@ function renderRepasAll() { renderDay(); }
   </div>
 </div>
 
+<div class="modal-bg" id="modal-obj">
+  <div class="modal-box">
+    <h3 id="objf-title">Nouvel objectif</h3>
+    <label class="flabel">Nom de l'objectif</label>
+    <input class="finput" id="objf-nom" placeholder="ex. Faire une traction">
+    <label class="flabel">Icône</label>
+    <div id="objf-emojis" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;"></div>
+    <label class="flabel">Couleur</label>
+    <div id="objf-colors" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:6px;"></div>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="filter-pill" style="flex:1;padding:11px;" onclick="closeModal('modal-obj')">Annuler</button>
+      <button class="filter-pill" style="flex:1;padding:11px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="saveObjForm()">💾 Enregistrer</button>
+    </div>
+    <button id="objf-delete" style="display:none;width:100%;margin-top:10px;background:none;border:none;color:var(--accent);font-size:13px;cursor:pointer;text-decoration:underline;" onclick="deleteObj()">🗑️ Supprimer cet objectif</button>
+  </div>
+</div>
+
 <div class="modal-bg" id="modal-cat">
   <div class="modal-box">
     <h3 id="cf-title">Nouvelle catégorie</h3>
@@ -2752,10 +2749,14 @@ let _exoLoaded = false;
 const SEA_KEY  = 'mc_seances';
 const PLAN_KEY = 'mc_planning';
 const RES_KEY  = 'mc_resultats';
+const OBJ_KEY  = 'mc_objectifs';
 
 let calMonthOffset = 0;
 let exoCatFilter   = 'tous';
 let currentResExos = [];
+
+function loadObjs() { try { return JSON.parse(localStorage.getItem(OBJ_KEY)||'[]'); } catch(e){return[];} }
+function saveObjs(d){ try { localStorage.setItem(OBJ_KEY, JSON.stringify(d)); } catch(e){} }
 
 function loadSea()  { try { return JSON.parse(localStorage.getItem(SEA_KEY) ||'[]'); } catch(e){return[];} }
 function saveSea(d) { try { localStorage.setItem(SEA_KEY, JSON.stringify(d)); } catch(e){} }
@@ -2830,18 +2831,92 @@ function renderSport() { renderSportCalendar(); }
 
 // ===== Accueil Sports : état vide (from scratch) vs tableau de bord =====
 function sportsHasContent(){
-  // « rien rentré » = aucune séance ET aucun exercice perso créé
-  var sea=[], cx=[];
-  try{ sea=loadSea()||[]; }catch(e){}
-  try{ cx=loadCustomExos()||[]; }catch(e){}
-  return (sea.length>0) || (cx.length>0);
+  // Override de test via l'URL : ?vide force l'écran vide, ?plein force le tableau de bord
+  try{
+    var q=(location.search||'')+(location.hash||'');
+    if(/[?&#]vide\b/i.test(q))  return false;
+    if(/[?&#]plein\b/i.test(q)) return true;
+  }catch(e){}
+  // « rien rentré » = aucun OBJECTIF défini
+  var objs=[];
+  try{ objs=loadObjs()||[]; }catch(e){}
+  return objs.length>0;
 }
 function renderSportsHome(){
   var empty=document.getElementById('sports-empty');
   var dash=document.getElementById('sports-dashboard');
   if(!empty||!dash) return;
-  if(sportsHasContent()){ empty.style.display='none'; dash.style.display='block'; }
+  if(sportsHasContent()){ empty.style.display='none'; dash.style.display='block'; try{ renderObjectifs(); }catch(e){console.warn(e);} }
   else { empty.style.display='block'; dash.style.display='none'; }
+}
+
+/* ===== OBJECTIFS (privés par compte) — CRUD + rendu ===== */
+const OBJ_EMOJIS = ['🎯','💪','🤸','🎾','⛳','🏃','🧘','🏋️','🚴','🔥','⭐','🦵'];
+const OBJ_COLORS = ['#c0616a','#457b9d','#e76f51','#2d6a4f','#d97706','#7b6ca8'];
+let _objEditId = null, _objEmoji = '🎯', _objColor = '#c0616a';
+
+function renderObjectifs(){
+  const el=document.getElementById('objectifs-list'); if(!el) return;
+  const objs=loadObjs();
+  if(!objs.length){ el.innerHTML='<div style="font-size:13px;color:var(--muted);padding:6px 2px 4px;">Aucun objectif. Tape « + Objectif » pour en créer un.</div>'; return; }
+  el.innerHTML=objs.map(o=>{
+    const col=o.color||'#c0616a';
+    const pct=Math.max(0,Math.min(100, o.pct||0));
+    const deg=Math.round(pct*3.6);
+    return '<div class="card" style="display:flex;align-items:center;gap:14px;">'
+      +'<div style="width:46px;height:46px;border-radius:50%;flex-shrink:0;background:conic-gradient('+col+' '+deg+'deg,#f0dede 0);display:flex;align-items:center;justify-content:center;">'
+        +'<div style="width:34px;height:34px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:18px;">'+(o.emoji||'🎯')+'</div>'
+      +'</div>'
+      +'<div style="flex:1;min-width:0;"><div style="font-family:\'Cormorant Garamond\',serif;font-weight:800;font-size:16px;">'+seacEsc(o.nom)+'</div>'
+        +'<div style="font-size:12px;color:var(--muted);">'+pct+'% · à construire</div></div>'
+      +'<button onclick="openObjForm('+JSON.stringify(o.id)+')" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;width:32px;height:32px;font-size:13px;cursor:pointer;">✎</button>'
+      +'</div>';
+  }).join('');
+}
+
+function openObjForm(id){
+  _objEditId = (id!==undefined && id!==null) ? id : null;
+  const o = _objEditId!=null ? loadObjs().find(x=>String(x.id)===String(_objEditId)) : null;
+  document.getElementById('objf-title').textContent = o ? 'Modifier l\u2019objectif' : 'Nouvel objectif';
+  document.getElementById('objf-nom').value = o ? (o.nom||'') : '';
+  _objEmoji = o ? (o.emoji||'🎯') : '🎯';
+  _objColor = o ? (o.color||'#c0616a') : '#c0616a';
+  // sélecteurs
+  document.getElementById('objf-emojis').innerHTML = OBJ_EMOJIS.map(e=>
+    '<button type="button" onclick="objPickEmoji('+JSON.stringify(e)+')" data-emo="'+e+'" style="width:42px;height:42px;border-radius:12px;border:2px solid '+(e===_objEmoji?'var(--accent)':'var(--border)')+';background:var(--surface);font-size:20px;cursor:pointer;">'+e+'</button>'
+  ).join('');
+  document.getElementById('objf-colors').innerHTML = OBJ_COLORS.map(c=>
+    '<button type="button" onclick="objPickColor('+JSON.stringify(c)+')" data-col="'+c+'" style="width:34px;height:34px;border-radius:50%;background:'+c+';border:3px solid '+(c===_objColor?'#1a1a1a':'transparent')+';cursor:pointer;"></button>'
+  ).join('');
+  document.getElementById('objf-delete').style.display = o ? 'block' : 'none';
+  openModal('modal-obj');
+}
+function objPickEmoji(e){ _objEmoji=e; document.querySelectorAll('#objf-emojis [data-emo]').forEach(b=>b.style.borderColor=(b.dataset.emo===e?'var(--accent)':'var(--border)')); }
+function objPickColor(c){ _objColor=c; document.querySelectorAll('#objf-colors [data-col]').forEach(b=>b.style.borderColor=(b.dataset.col===c?'#1a1a1a':'transparent')); }
+function saveObjForm(){
+  const nom=(document.getElementById('objf-nom').value||'').trim();
+  if(!nom){ showToast('⚠️ Donne un nom à l\u2019objectif'); return; }
+  let objs=loadObjs();
+  if(_objEditId!=null){
+    objs=objs.map(o=>String(o.id)===String(_objEditId)?{...o,nom,emoji:_objEmoji,color:_objColor}:o);
+    showToast('✅ Objectif modifié');
+  } else {
+    objs.push({id:Date.now(),nom,emoji:_objEmoji,color:_objColor,pct:0});
+    showToast('✅ Objectif créé');
+  }
+  saveObjs(objs);
+  _objEditId=null;
+  closeModal('modal-obj');
+  renderSportsHome();
+}
+function deleteObj(){
+  if(_objEditId==null) return;
+  if(!confirm('Supprimer cet objectif ?')) return;
+  saveObjs(loadObjs().filter(o=>String(o.id)!==String(_objEditId)));
+  _objEditId=null;
+  closeModal('modal-obj');
+  renderSportsHome();
+  showToast('🗑️ Objectif supprimé');
 }
 
 // ---- PLANNING / CALENDRIER ----
