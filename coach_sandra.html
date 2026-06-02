@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v12-sports-prog</div>
+  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v13-sports-prog</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -993,6 +993,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
             <div class="exoc-btnrow" style="margin-top:10px;"><button class="exoc-btn p" id="exoc-fillbtn" onclick="exocImport()" disabled>Remplir la fiche</button><button class="exoc-btn g" onclick="exocCloseZones()">Annuler</button></div>
           </div>
           <div class="exoc-msg" id="exoc-msg"></div>
+          <button id="exoc-delete" onclick="deleteExo()" style="display:none;width:100%;margin-top:14px;background:none;border:none;color:#c23b30;font-size:13.5px;cursor:pointer;text-decoration:underline;padding:6px;">🗑️ Supprimer cet exercice</button>
         </div>
 
         <button class="exoc-save" onclick="exocSave()">Enregistrer l'exercice</button>
@@ -1063,7 +1064,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
   <!-- BANDEAU VERSION (visible) — pour vérifier que la bonne version est servie -->
   <div style="background:#2d6a4f;color:#fff;border-radius:10px;padding:8px 12px;margin:8px 0 4px;font-size:12px;font-weight:700;text-align:center;letter-spacing:.5px;">
-    ✅ VERSION v12 · catalogue réel · 2 juin
+    ✅ VERSION v13 · banque exercices · 2 juin
   </div>
 
   <!-- ===== ÉTAT VIDE : tout premier lancement, rien n'est encore défini ===== -->
@@ -1082,20 +1083,24 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
     <div class="card" style="display:flex;align-items:center;gap:14px;">
       <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:800;font-size:16px;">1</div>
-      <div style="flex:1;"><div style="font-weight:700;font-size:14px;">Crée tes exercices</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">Suspension, négatives, tirages…</div></div>
+      <div style="flex:1;"><div style="font-weight:700;font-size:14px;">Crée tes objectifs</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">Ce que tu veux travailler</div></div>
     </div>
     <div class="card" style="display:flex;align-items:center;gap:14px;">
       <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:800;font-size:16px;">2</div>
-      <div style="flex:1;"><div style="font-weight:700;font-size:14px;">Compose tes séances</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">Regroupe tes exercices (Séance A, B…)</div></div>
+      <div style="flex:1;"><div style="font-weight:700;font-size:14px;">Ajoute ou crée tes exercices</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">Depuis ta banque d'exercices</div></div>
     </div>
     <div class="card" style="display:flex;align-items:center;gap:14px;">
       <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:800;font-size:16px;">3</div>
-      <div style="flex:1;"><div style="font-weight:700;font-size:14px;">Planifie & entraîne-toi</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">Place tes séances et suis ta progression</div></div>
+      <div style="flex:1;"><div style="font-weight:700;font-size:14px;">Crée tes séances</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">Regroupe tes exercices (Séance A, B…)</div></div>
+    </div>
+    <div class="card" style="display:flex;align-items:center;gap:14px;">
+      <div style="width:36px;height:36px;border-radius:50%;flex-shrink:0;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-weight:800;font-size:16px;">4</div>
+      <div style="flex:1;"><div style="font-weight:700;font-size:14px;">Planifie et entraîne-toi</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">Place tes séances et suis ta progression</div></div>
     </div>
 
     <div style="height:10px"></div>
     <button class="btn-add" style="width:100%;" onclick="openObjForm()">🎯 Créer mon premier objectif</button>
-    <button class="btn-claude" style="margin-top:10px;" onclick="showPage('sport')">🏗️ Ouvrir le module Sport (exercices, séances…)</button>
+    <button class="btn-claude" style="margin-top:10px;" onclick="openBanque()">📚 Banque d'exercices</button>
   </div>
 
   <!-- ===== TABLEAU DE BORD : visible dès qu'il y a au moins une séance ===== -->
@@ -1734,6 +1739,9 @@ function saveECats(d){ localStorage.setItem(ECAT_KEY, JSON.stringify(d)); }
 const CUSTOM_EXO_KEY = 'sandra_exos_custom';
 function loadCustomExos(){ try{ return JSON.parse(localStorage.getItem(CUSTOM_EXO_KEY)||'[]'); }catch(e){ return []; } }
 function saveCustomExos(a){ localStorage.setItem(CUSTOM_EXO_KEY, JSON.stringify(a)); }
+const HIDDEN_EXO_KEY = 'sandra_exos_hidden';
+function loadHiddenExos(){ try{ return JSON.parse(localStorage.getItem(HIDDEN_EXO_KEY)||'[]'); }catch(e){ return []; } }
+function saveHiddenExos(a){ try{ localStorage.setItem(HIDDEN_EXO_KEY, JSON.stringify(a)); }catch(e){} }
 function eCatLabel(key){ const c=loadECats().find(c=>c.key===key); return c?c.emoji+' '+c.name:(key||''); }
 function eCatCount(key){ return (window.EXO_DATA||EXO_DATA||[]).filter(e=>e.cat===key).length; }
 
@@ -2831,6 +2839,7 @@ function ensureExoData(){
         });
       }
     }catch(e){ console.warn('custom exos', e); }
+    try{ var _hid=loadHiddenExos(); if(_hid&&_hid.length){ var _hs=new Set(_hid.map(String)); EXO_DATA=EXO_DATA.filter(e=>e&&!_hs.has(String(e.id))); } }catch(_e){}
     const w=document.getElementById('exo-loading'); if(w) w.remove();
     try{ renderSport(); }catch(e){ console.warn(e); }
   };
@@ -2982,6 +2991,17 @@ let _progView='list', _progObjId=null, _progPickCat=null;
 let _progPickMode=false, _progPickObjId=null;
 
 function openProg(){ _progView='list'; _progObjId=null; document.getElementById('prog-overlay').style.display='block'; progRender(); window.scrollTo(0,0); }
+// Banque d'exercices = l'écran Exercices réel (ajouter / modifier / supprimer), hors mode sélection
+function openBanque(){
+  _progPickMode=false;
+  if(typeof progPickHideBanner==='function') progPickHideBanner();
+  var po=document.getElementById('prog-overlay'); if(po) po.style.display='none';
+  showPage('sport');
+  setTimeout(function(){
+    if(typeof showSportTab==='function') showSportTab('exercices');
+    if(typeof exoGoEtage1==='function') exoGoEtage1();
+  },70);
+}
 function closeProg(){ document.getElementById('prog-overlay').style.display='none'; renderSportsHome(); }
 function progBack(){
   if(_progView==='pick'){ _progView='obj'; progRender(); return; }
@@ -3052,6 +3072,7 @@ function progRenderList(body){
 
   // === SÉANCES & PLANNING (accès) ===
   h+='<div style="font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:22px 2px 8px;">Construire</div>';
+  h+='<div class="card" style="display:flex;align-items:center;gap:14px;cursor:pointer;" onclick="openBanque()"><div style="font-size:26px;">📚</div><div style="flex:1;"><div style="font-family:\'Cormorant Garamond\',serif;font-weight:800;font-size:16px;">Banque d\u2019exercices</div><div style="font-size:12px;color:var(--muted);">Ajouter, modifier ou supprimer des exercices</div></div><div style="color:var(--muted);font-size:20px;">›</div></div>';
   h+='<div style="display:flex;gap:10px;">'
     +'<div class="card" style="flex:1;margin-bottom:0;text-align:center;cursor:pointer;" onclick="closeProg();showPage(\'sport\');setTimeout(function(){showSportTab(\'seances\');},60);"><div style="font-size:26px;">📋</div><div style="font-family:\'Cormorant Garamond\',serif;font-weight:800;font-size:14px;margin-top:5px;">Séances</div><div style="font-size:11px;color:var(--muted);">'+sea.length+' créée'+(sea.length>1?'s':'')+'</div></div>'
     +'<div class="card" style="flex:1;margin-bottom:0;text-align:center;cursor:pointer;" onclick="closeProg();showPage(\'sport\');setTimeout(function(){showSportTab(\'planning\');},60);"><div style="font-size:26px;">🗓️</div><div style="font-family:\'Cormorant Garamond\',serif;font-weight:800;font-size:14px;margin-top:5px;">Planning</div><div style="font-size:11px;color:var(--muted);">semaine type</div></div>'
@@ -4007,6 +4028,7 @@ function openExoCreate(){
   exocBuildCatMenu();
   exocResetForm();
   const t=document.querySelector('#exoc-panel .exoc-head .t'); if(t) t.textContent='Créer un exercice';
+  var _d=document.getElementById('exoc-delete'); if(_d) _d.style.display='none';
   // bind placeholder dynamique
   EXOC_FIELDS.forEach(function(k){
     const el=document.getElementById('exoc-'+k);
@@ -4043,6 +4065,7 @@ function openExoEdit(id){
   exocRenderField('exoc-charge', f.charge);
   exocRenderField('exoc-volume', f.volume);
   const t=document.querySelector('#exoc-panel .exoc-head .t'); if(t) t.textContent='Modifier l\u2019exercice';
+  var _d=document.getElementById('exoc-delete'); if(_d) _d.style.display='block';
   EXOC_FIELDS.forEach(function(k){
     const el=document.getElementById('exoc-'+k);
     el.oninput=function(){ if(el.textContent.trim()) el.classList.remove('empty'); else el.classList.add('empty'); };
@@ -4051,6 +4074,28 @@ function openExoEdit(id){
   document.getElementById('exoc-panel').scrollTop=0;
 }
 function closeExoCreate(){ document.getElementById('exoc-overlay').style.display='none'; }
+function deleteExo(){
+  if(exocEditId==null){ closeExoCreate(); return; }
+  var id=exocEditId;
+  var e=(EXO_DATA||[]).find(x=>x&&String(x.id)===String(id));
+  var nom=e?e.nom:'cet exercice';
+  if(!confirm('Supprimer « '+nom+' » de ta banque d\u2019exercices ?')) return;
+  try{
+    // retirer des exercices perso
+    var cx=loadCustomExos().filter(x=>x&&String(x.id)!==String(id));
+    saveCustomExos(cx);
+    // masquer s'il venait du catalogue de base (pour qu'il ne réapparaisse pas)
+    var hid=loadHiddenExos(); if(hid.indexOf(String(id))<0 && hid.indexOf(id)<0){ hid.push(String(id)); saveHiddenExos(hid); }
+    // retirer de la mémoire
+    if(Array.isArray(EXO_DATA)){ var j=EXO_DATA.findIndex(x=>x&&String(x.id)===String(id)); if(j>=0) EXO_DATA.splice(j,1); }
+    // détacher de tous les objectifs
+    if(typeof loadObjs==='function'){ var objs=loadObjs(); var ch=false; objs.forEach(o=>{ if(o.exos){ var n=o.exos.length; o.exos=o.exos.filter(x=>String(x.id)!==String(id)); if(o.exos.length!==n) ch=true; } }); if(ch) saveObjs(objs); }
+  }catch(err){ if(typeof showToast==='function') showToast('⚠️ '+err.message); return; }
+  exocEditId=null;
+  closeExoCreate();
+  if(typeof exoGoEtage1==='function') exoGoEtage1();
+  if(typeof showToast==='function') showToast('🗑️ « '+nom+' » supprimé');
+}
 
 // --- Sauvegarde ---
 function exocParseCharges(arr){
