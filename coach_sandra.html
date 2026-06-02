@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v10-sports-prog</div>
+  <div style="position:fixed;bottom:62px;right:8px;font-size:9px;color:#bbb;z-index:50;pointer-events:none;">v12-sports-prog</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -1063,7 +1063,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
   <!-- BANDEAU VERSION (visible) — pour vérifier que la bonne version est servie -->
   <div style="background:#2d6a4f;color:#fff;border-radius:10px;padding:8px 12px;margin:8px 0 4px;font-size:12px;font-weight:700;text-align:center;letter-spacing:.5px;">
-    ✅ VERSION v10 · mon programme · 2 juin
+    ✅ VERSION v12 · catalogue réel · 2 juin
   </div>
 
   <!-- ===== ÉTAT VIDE : tout premier lancement, rien n'est encore défini ===== -->
@@ -1362,6 +1362,8 @@ let currentAlimTab = 'journee';
 function showPage(id) {
   // 'repas' = ancien nom interne du module Alimentation
   const pageId = (id === 'repas') ? 'alimentation' : id;
+  // si on quitte le module Sport alors qu'on était en mode sélection d'exercices → on coupe proprement
+  if(pageId!=='sport' && typeof _progPickMode!=='undefined' && _progPickMode){ _progPickMode=false; if(typeof progPickHideBanner==='function') progPickHideBanner(); }
   const navId  = (id === 'repas') ? 'nav-alim' : (id === 'recettes' ? 'nav-rec' : (id === 'sport' ? 'nav-sport' : (id === 'sports' ? 'nav-sports' : 'nav-poids')));
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -2977,6 +2979,7 @@ function deleteObj(){
 /* ===================== MON PROGRAMME ===================== */
 /* Vue : 'list' (objectifs) → 'obj' (exercices liés d'un objectif) → 'pick' (catalogue) */
 let _progView='list', _progObjId=null, _progPickCat=null;
+let _progPickMode=false, _progPickObjId=null;
 
 function openProg(){ _progView='list'; _progObjId=null; document.getElementById('prog-overlay').style.display='block'; progRender(); window.scrollTo(0,0); }
 function closeProg(){ document.getElementById('prog-overlay').style.display='none'; renderSportsHome(); }
@@ -2993,24 +2996,66 @@ function progRender(){
   if(!body) return;
   if(_progView==='list'){ title.textContent='Mon programme'; progRenderList(body); return; }
   if(_progView==='obj'){ const o=progCurObj(); title.textContent=o?o.nom:'Objectif'; progRenderObj(body); return; }
-  if(_progView==='pick'){ title.textContent='Ajouter un exercice'; progRenderPick(body); return; }
+}
+
+function progWeekOverview(){
+  // Semaine type depuis le planning réel
+  const plan=(typeof loadPlan==='function')?loadPlan():{};
+  const sea=(typeof loadSea==='function')?loadSea():[];
+  const JOURS=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  const KEYS=['lun','mar','mer','jeu','ven','sam','dim'];
+  let any=false;
+  let rows=KEYS.map((k,i)=>{
+    const id=plan[k]; let titre=null;
+    if(id){ const s=sea.find(x=>x&&String(x.id)===String(id)); titre=s?s.titre:null; if(titre) any=true; }
+    const rest=!titre;
+    return '<div style="display:flex;align-items:center;gap:10px;border-radius:9px;padding:7px 10px;background:'+(rest?'var(--bg)':'#fdeff0')+';margin-bottom:5px;'+(rest?'opacity:.65;':'')+'">'
+      +'<span style="font-family:\'Cormorant Garamond\',serif;font-weight:800;width:32px;color:var(--muted);">'+JOURS[i]+'</span>'
+      +'<span style="flex:1;font-size:13px;font-weight:600;color:'+(rest?'var(--muted)':'var(--accent)')+';">'+(titre?seacEsc(titre):'Repos')+'</span></div>';
+  }).join('');
+  if(!any) return '';
+  return '<div class="card"><div style="font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Ma semaine type</div>'+rows+'</div>';
 }
 
 function progRenderList(body){
   const objs=loadObjs();
-  let h='<div style="font-size:13px;color:var(--muted);margin:2px 2px 12px;line-height:1.5;">Choisis un objectif pour lui rattacher des exercices.</div>';
+  const sea=(typeof loadSea==='function')?loadSea():[];
+
+  // === VUE D'ENSEMBLE (données réelles) ===
+  let h='<div style="font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:2px 2px 8px;">Vue d\u2019ensemble</div>';
+  h+='<div class="stats-grid" style="margin-bottom:12px;">'
+    +'<div class="stat-card"><div class="stat-label">Objectifs</div><div class="stat-value" style="color:var(--accent);font-size:26px;">'+objs.length+'</div></div>'
+    +'<div class="stat-card"><div class="stat-label">Séances</div><div class="stat-value" style="color:#2d6a4f;font-size:26px;">'+sea.length+'</div></div>'
+    +'</div>';
+  const wk=progWeekOverview();
+  if(wk) h+=wk;
+
+  // === OBJECTIFS ===
+  h+='<div style="display:flex;align-items:center;justify-content:space-between;margin:20px 2px 8px;">'
+    +'<div style="font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);">Mes objectifs</div>'
+    +'<button onclick="closeProg();openObjForm()" style="background:none;border:1px solid var(--accent);color:var(--accent);border-radius:20px;padding:4px 11px;font-size:12px;font-weight:600;cursor:pointer;">+ Objectif</button></div>';
   if(!objs.length){
-    h+='<div class="card" style="text-align:center;color:var(--muted);"><div style="font-size:30px;">🎯</div><div style="margin-top:6px;">Aucun objectif pour l\u2019instant.</div><button class="btn-add" style="margin-top:12px;" onclick="closeProg();openObjForm()">+ Créer un objectif</button></div>';
+    h+='<div class="card" style="text-align:center;color:var(--muted);"><div style="font-size:30px;">🎯</div><div style="margin-top:6px;">Aucun objectif. Crée-en un pour commencer.</div></div>';
     body.innerHTML=h; return;
   }
+  h+='<div style="font-size:12px;color:var(--muted);margin:0 2px 8px;">Tape un objectif pour lui rattacher des exercices.</div>';
   h+=objs.map(o=>{
     const col=o.color||'#c0616a';
     const n=(o.exos&&o.exos.length)||0;
+    const pct=Math.max(0,Math.min(100,o.pct||0));
     return '<div class="card" style="display:flex;align-items:center;gap:14px;cursor:pointer;border-left:5px solid '+col+';" onclick="progOpenObj('+JSON.stringify(o.id)+')">'
+      +'<div style="width:46px;height:46px;border-radius:50%;flex-shrink:0;background:conic-gradient('+col+' '+Math.round(pct*3.6)+'deg,#f0dede 0);display:flex;align-items:center;justify-content:center;"><div style="width:34px;height:34px;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-family:\'Cormorant Garamond\',serif;font-weight:800;font-size:12px;color:'+col+';">'+pct+'%</div></div>'
       +'<div style="flex:1;min-width:0;"><div style="font-family:\'Cormorant Garamond\',serif;font-weight:800;font-size:18px;">'+seacEsc(o.nom)+'</div>'
-      +'<div style="font-size:12px;color:var(--muted);margin-top:2px;">'+n+' exercice'+(n>1?'s':'')+' rattaché'+(n>1?'s':'')+'</div></div>'
+      +'<div style="font-size:12px;color:var(--muted);margin-top:2px;">'+n+' exercice'+(n>1?'s':'')+'</div></div>'
       +'<div style="color:var(--muted);font-size:20px;">›</div></div>';
   }).join('');
+
+  // === SÉANCES & PLANNING (accès) ===
+  h+='<div style="font-family:\'Cormorant Garamond\',serif;font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:22px 2px 8px;">Construire</div>';
+  h+='<div style="display:flex;gap:10px;">'
+    +'<div class="card" style="flex:1;margin-bottom:0;text-align:center;cursor:pointer;" onclick="closeProg();showPage(\'sport\');setTimeout(function(){showSportTab(\'seances\');},60);"><div style="font-size:26px;">📋</div><div style="font-family:\'Cormorant Garamond\',serif;font-weight:800;font-size:14px;margin-top:5px;">Séances</div><div style="font-size:11px;color:var(--muted);">'+sea.length+' créée'+(sea.length>1?'s':'')+'</div></div>'
+    +'<div class="card" style="flex:1;margin-bottom:0;text-align:center;cursor:pointer;" onclick="closeProg();showPage(\'sport\');setTimeout(function(){showSportTab(\'planning\');},60);"><div style="font-size:26px;">🗓️</div><div style="font-family:\'Cormorant Garamond\',serif;font-weight:800;font-size:14px;margin-top:5px;">Planning</div><div style="font-size:11px;color:var(--muted);">semaine type</div></div>'
+    +'</div>';
   body.innerHTML=h;
 }
 
@@ -3043,50 +3088,51 @@ function progRemoveExo(exoId){
 }
 
 function progOpenPick(){
-  _progView='pick'; _progPickCat=null; progRender();
-  if(typeof ensureExoData==='function' && !_exoLoaded){ ensureExoData(); }
+  // On réutilise le VRAI écran Exercices (recherche + Créer + 9 vignettes + liste) en mode sélection
+  _progPickMode=true; _progPickObjId=_progObjId;
+  document.getElementById('prog-overlay').style.display='none';
+  showPage('sport');
+  setTimeout(function(){
+    if(typeof showSportTab==='function') showSportTab('exercices');
+    if(typeof exoGoEtage1==='function') exoGoEtage1();
+    progPickShowBanner();
+  },70);
 }
-
-function progRenderPick(body){
-  // pas encore de catégorie choisie → liste des catégories
-  if(!_progPickCat){
-    const cats=(typeof loadECats==='function')?loadECats():[];
-    let h='<div style="font-size:13px;color:var(--muted);margin:2px 2px 12px;">Choisis une catégorie, puis tape un exercice pour l\u2019ajouter ou le retirer.</div>';
-    if(!(EXO_DATA&&EXO_DATA.length)){ h+='<div style="text-align:center;color:var(--muted);padding:30px;">⏳ Chargement des exercices…</div>'; body.innerHTML=h; setTimeout(()=>{ if(_progView==='pick'&&!_progPickCat) progRenderPick(body); },400); return; }
-    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
-    h+=cats.map(c=>{ const n=(EXO_DATA||[]).filter(e=>e&&e.cat===c.key).length;
-      return '<div class="card" style="margin-bottom:0;text-align:center;cursor:pointer;padding:16px 8px;" onclick="progPickCat('+JSON.stringify(c.key)+')"><div style="font-size:30px;">'+c.emoji+'</div><div style="font-family:\'Cormorant Garamond\',serif;font-weight:800;font-size:15px;margin-top:4px;">'+seacEsc(c.name)+'</div><div style="font-size:11px;color:var(--muted);">'+n+' exercice'+(n>1?'s':'')+'</div></div>';
-    }).join('');
-    h+='</div>';
-    body.innerHTML=h; return;
+function progPickShowBanner(){
+  var o=loadObjs().find(x=>String(x.id)===String(_progPickObjId));
+  var nom=o?o.nom:'objectif';
+  var b=document.getElementById('progpick-banner');
+  if(!b){
+    b=document.createElement('div'); b.id='progpick-banner';
+    b.style.cssText='position:fixed;left:0;right:0;bottom:64px;z-index:300;display:flex;align-items:center;gap:10px;max-width:430px;margin:0 auto;padding:10px 14px;background:var(--accent);color:#fff;border-radius:14px;box-shadow:0 6px 20px rgba(0,0,0,.18);';
+    document.body.appendChild(b);
   }
-  // catégorie choisie → exercices, avec coche si déjà rattaché
-  const o=progCurObj(); const have=new Set((o&&o.exos||[]).map(e=>String(e.id)));
-  const cat=(typeof loadECats==='function')?loadECats().find(c=>c.key===_progPickCat):null;
-  const list=(EXO_DATA||[]).filter(e=>e&&e.cat===_progPickCat);
-  let h='<button onclick="_progPickCat=null;progRender();" style="background:none;border:none;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px;padding:4px 0;">‹ Catégories</button>';
-  h+='<div style="font-family:\'Cormorant Garamond\',serif;font-weight:800;font-size:20px;margin-bottom:10px;">'+(cat?cat.emoji+' '+seacEsc(cat.name):'')+'</div>';
-  if(!list.length){ h+='<div style="color:var(--muted);padding:16px;text-align:center;">Aucun exercice dans cette catégorie.</div>'; }
-  else h+=list.map(e=>{ const on=have.has(String(e.id));
-    return '<div class="card" style="display:flex;align-items:center;gap:12px;padding:10px 12px;cursor:pointer;border-color:'+(on?'var(--accent)':'var(--border)')+';" onclick="progToggleExo('+JSON.stringify(String(e.id))+')">'
-      +(e.thumb?'<img src="'+e.thumb+'" style="width:42px;height:42px;border-radius:10px;object-fit:cover;flex-shrink:0;border:1px solid var(--border);">':'<div style="width:42px;height:42px;border-radius:10px;flex-shrink:0;border:1px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:22px;">'+(e.emoji||'🏋️')+'</div>')
-      +'<div style="flex:1;font-weight:600;font-size:14px;">'+seacEsc(e.nom)+'</div>'
-      +'<div style="width:26px;height:26px;border-radius:50%;flex-shrink:0;border:2px solid '+(on?'var(--accent)':'var(--border)')+';background:'+(on?'var(--accent)':'transparent')+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;">'+(on?'✓':'+')+'</div></div>';
-  }).join('');
-  body.innerHTML=h;
+  b.innerHTML='<div style="flex:1;font-size:13px;line-height:1.3;">Ajout à <b>'+seacEsc(nom)+'</b><br><span style="opacity:.85;font-size:11.5px;">Touche un exercice pour l\u2019ajouter</span></div>'
+    +'<button onclick="progPickDone()" style="background:#fff;color:var(--accent);border:none;border-radius:10px;padding:8px 14px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;">✓ Terminé</button>';
+  b.style.display='flex';
 }
-function progPickCat(catKey){ _progPickCat=catKey; progRender(); }
-function progToggleExo(exoId){
-  const objs=loadObjs(); const o=objs.find(x=>String(x.id)===String(_progObjId)); if(!o) return;
+function progPickHideBanner(){ var b=document.getElementById('progpick-banner'); if(b) b.style.display='none'; }
+function progPickDone(){
+  _progPickMode=false;
+  progPickHideBanner();
+  showPage('sports');
+  setTimeout(function(){ openProg(); progOpenObj(_progPickObjId); },70);
+}
+// Appelé par le handler de clic quand on tape un exercice en mode sélection
+function progPickToggle(exoId){
+  var objs=loadObjs(); var o=objs.find(x=>String(x.id)===String(_progPickObjId)); if(!o) return;
   if(!o.exos) o.exos=[];
-  const i=o.exos.findIndex(e=>String(e.id)===String(exoId));
-  if(i>=0){ o.exos.splice(i,1); }
+  var i=o.exos.findIndex(e=>String(e.id)===String(exoId));
+  if(i>=0){ o.exos.splice(i,1); showToast('➖ Retiré'); }
   else{
-    const e=(EXO_DATA||[]).find(x=>x&&String(x.id)===String(exoId));
-    if(e) o.exos.push({id:e.id, nom:e.nom, emoji:e.emoji||'🏋️', thumb:e.thumb||null, cat:e.cat});
+    var e=(EXO_DATA||[]).find(x=>x&&String(x.id)===String(exoId));
+    if(e){ o.exos.push({id:e.id, nom:e.nom, emoji:e.emoji||'🏋️', thumb:e.thumb||null, cat:e.cat}); showToast('✅ Ajouté'); }
   }
-  saveObjs(objs); progRender();
+  saveObjs(objs);
+  // rafraîchir l'affichage courant (liste catégorie ou recherche) pour la coche
+  try{ if(document.getElementById('exo-search-all') && document.getElementById('exo-search-all').value.trim()){ renderExoSearchAll(); } else { renderExercices(); } }catch(_e){}
 }
+function progToggleExo(exoId){ /* conservé pour compat : utilisé nulle part désormais */ }
 /* =================== FIN MON PROGRAMME =================== */
 
 // ---- PLANNING / CALENDRIER ----
@@ -3638,6 +3684,12 @@ function exoCardHTML(e){
        <span style="background:#e8f5e9;color:#2d6a4f;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">🟢${_ch[2]}</span>
        <span style="background:#fff8e1;color:#d97706;border-radius:6px;padding:2px 6px;font-size:10px;font-weight:600;">⭐${_ch[3]}</span>`;
   const isSpecial = e.id===10;
+  let _rightIco = '<div style="color:var(--muted);font-size:18px;">›</div>';
+  if(_progPickMode){
+    var _o=loadObjs().find(x=>String(x.id)===String(_progPickObjId));
+    var _on=!!(_o&&_o.exos&&_o.exos.some(x=>String(x.id)===String(e.id)));
+    _rightIco='<div style="width:28px;height:28px;border-radius:50%;flex-shrink:0;border:2px solid '+(_on?'var(--accent)':'var(--border)')+';background:'+(_on?'var(--accent)':'transparent')+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;">'+(_on?'✓':'+')+'</div>';
+  }
   return `<div data-fiche-id="${e.id}" style="display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:14px;padding:10px 12px;margin-bottom:8px;border:${isSpecial?'1px solid #f59e0b':'1px solid var(--border)'};cursor:pointer;${isSpecial?'border-left:3px solid #f59e0b;':''}">
     ${e.thumb ? `<img src="${e.thumb}" style="width:56px;height:56px;border-radius:10px;object-fit:cover;flex-shrink:0;border:1px solid var(--border);">` : `<div style="width:56px;height:56px;border-radius:10px;flex-shrink:0;border:1px solid var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:30px;">${e.emoji||'🏋️'}</div>`}
     <div style="flex:1;min-width:0;">
@@ -3647,7 +3699,7 @@ function exoCardHTML(e){
       </div>
       <div style="display:flex;gap:4px;flex-wrap:wrap;">${chargesHtml}</div>
     </div>
-    <div style="color:var(--muted);font-size:18px;">›</div>
+    ${_rightIco}
   </div>`;
 }
 function renderExercices() {
@@ -3758,7 +3810,10 @@ function openExoFicheEdit(){ const id=_ficCurrentId; closeExoFiche(); if(id!=nul
 // Clic fiabilisé sur les cartes d'exercice (délégué) — marche aussi pour les exos créés
 document.addEventListener('click', function(ev){
   const c = ev.target && ev.target.closest ? ev.target.closest('[data-fiche-id]') : null;
-  if(c){ showExoDetail(c.getAttribute('data-fiche-id')); }
+  if(c){
+    if(_progPickMode){ progPickToggle(c.getAttribute('data-fiche-id')); return; }
+    showExoDetail(c.getAttribute('data-fiche-id'));
+  }
 });
 
 // ===== CRÉATION D'EXERCICE =====
