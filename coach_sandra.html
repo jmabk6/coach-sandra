@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:70px;left:0;right:0;text-align:center;font-size:9px;color:#1a1a1a;opacity:.2;z-index:50;pointer-events:none;">v32</div>
+  <div style="position:fixed;bottom:70px;left:0;right:0;text-align:center;font-size:9px;color:#1a1a1a;opacity:.2;z-index:50;pointer-events:none;">v33</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -671,6 +671,16 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
           <div class="compo-cell"><div class="lbl" style="color:#d97706;">🥑 Lipides</div><div class="inrow"><input type="number" id="rf-lip" placeholder="0"><span class="u">g</span></div></div>
           <div class="compo-cell"><div class="lbl" style="color:#52b788;">🌿 Fibres</div><div class="inrow"><input type="number" id="rf-fib" placeholder="0"><span class="u">g</span></div></div>
         </div>
+      </div>
+
+      <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;">
+        <button type="button" onclick="recaiPrompt()" style="width:100%;border:1.5px solid var(--accent);background:rgba(192,97,106,0.06);color:var(--accent);font-weight:700;font-size:14px;border-radius:12px;padding:12px;cursor:pointer;margin-bottom:8px;">🤖 Contexte pour l'IA</button>
+        <textarea id="recai-box" placeholder="1) Touche « Contexte pour l'IA »  2) Copier  3) colle ce texte dans l'IA  4) recolle ici sa réponse JSON  5) Importer" style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:12px;padding:11px;font-family:'Inter',sans-serif;font-size:13px;min-height:120px;resize:vertical;background:var(--surface);color:var(--text);outline:none;"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button type="button" onclick="recaiCopy()" style="flex:1;border:none;cursor:pointer;background:var(--accent);color:#fff;font-weight:700;font-size:14px;border-radius:12px;padding:11px;">📋 Copier</button>
+          <button type="button" onclick="recaiImport()" style="flex:1;border:1.5px solid var(--accent);cursor:pointer;background:#fff;color:var(--accent);font-weight:700;font-size:14px;border-radius:12px;padding:11px;">📥 Importer</button>
+        </div>
+        <div id="recai-msg" style="display:none;margin-top:8px;font-size:13px;font-weight:600;border-radius:10px;padding:9px 12px;"></div>
       </div>
 
       <div style="display:flex;gap:8px;margin-top:12px;">
@@ -2027,6 +2037,70 @@ function renderRecetteList(){
 }
 
 /* ============ MODAL RECETTE ============ */
+/* ===== Contexte pour l'IA (recette) : prompt -> copier -> coller la réponse JSON -> importer ===== */
+function recaiMsg(type,text){
+  var m=document.getElementById('recai-msg'); if(!m) return;
+  m.style.display=text?'block':'none';
+  m.style.background=(type==='err')?'#f8d7da':(type==='ok'?'#e8f5e9':'transparent');
+  m.style.color=(type==='err')?'#a02a37':'#2d6a4f';
+  m.textContent=text;
+}
+function recaiReset(){ var b=document.getElementById('recai-box'); if(b) b.value=''; recaiMsg('',''); }
+function recaiPrompt(){
+  var nom=((document.getElementById('rf-nom')||{}).value||'').trim();
+  if(!nom){ recaiMsg('err','Écris d\u2019abord le nom de la recette.'); return; }
+  var np=parseInt(((document.getElementById('rf-nb-pers')||{}).value),10);
+  var pers=(np && np>0)?np:4;
+  var p='Tu es chef cuisinier et nutritionniste. Donne la recette de : "'+nom+'" pour '+pers+' personne(s).\n'+
+    'Réponds UNIQUEMENT par un objet JSON valide, sans aucun texte autour, sans balise Markdown.\n'+
+    '- "personnes" : le nombre de personnes (entier).\n'+
+    '- "ingredients" : liste de chaînes, une par ingrédient, avec la quantité.\n'+
+    '- "recette" : liste de chaînes, les étapes de préparation dans l\u2019ordre.\n'+
+    '- "composition_1_personne" : les valeurs POUR UNE SEULE personne (kcal + macros en grammes, nombres uniquement).\n'+
+    'Clés exactes :\n'+
+    '{\n  "personnes": '+pers+',\n  "ingredients": ["...", "..."],\n  "recette": ["...", "..."],\n  "composition_1_personne": { "kcal": 0, "prot": 0, "gluc": 0, "lip": 0, "fibres": 0 }\n}';
+  var b=document.getElementById('recai-box'); if(b) b.value=p;
+  recaiMsg('ok','Prompt prêt. Touche « Copier », colle-le dans l\u2019IA, puis recolle sa réponse ici et touche « Importer ».');
+}
+function recaiCopy(){
+  var ta=document.getElementById('recai-box'); if(!ta) return;
+  if(!ta.value.trim()){ recaiMsg('err','La boîte est vide — génère d\u2019abord le contexte.'); return; }
+  ta.focus(); ta.select(); try{ ta.setSelectionRange(0,99999); }catch(e){}
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(ta.value).then(function(){ recaiMsg('ok','✅ Copié ! Colle-le dans l\u2019IA.'); }).catch(function(){ recaiMsg('ok','Texte sélectionné — fais Copier à la main.'); });
+  } else { recaiMsg('ok','Texte sélectionné — fais Copier à la main.'); }
+}
+function recaiImport(){
+  var raw=((document.getElementById('recai-box')||{}).value||'').trim();
+  if(!raw){ recaiMsg('err','Colle d\u2019abord la réponse de l\u2019IA.'); return; }
+  raw=raw.replace(/```json/gi,'').replace(/```/g,'');
+  raw=raw.replace(/[\u201C\u201D\u201E\u201F]/g,'"').replace(/[\u2018\u2019]/g,"'");
+  var s=raw.indexOf('{'), e=raw.lastIndexOf('}');
+  if(s===-1||e===-1){ recaiMsg('err','Pas de JSON trouvé. Recolle la réponse complète.'); return; }
+  var data; try{ data=JSON.parse(raw.slice(s,e+1)); }catch(err){ recaiMsg('err','JSON illisible. Recopie toute la réponse.'); return; }
+  function pick(o){ for(var i=1;i<arguments.length;i++){ var k=arguments[i]; if(o && o[k]!==undefined && o[k]!==null && o[k]!=='') return o[k]; } return undefined; }
+  function num(v){ if(v===undefined||v===null||v==='') return undefined; var n=parseFloat(String(v).replace(',','.').replace(/[^0-9.\-]/g,'')); return isNaN(n)?undefined:n; }
+  function toLines(v){ if(Array.isArray(v)) return v.map(function(x){ return String(x).trim(); }).filter(Boolean).join('\n'); return (v==null?'':String(v)); }
+  var done=[];
+  var pers=num(pick(data,'personnes','nb_personnes','nbPers','servings','portions','couverts'));
+  if(pers!==undefined){ var npEl=document.getElementById('rf-nb-pers'); if(npEl){ npEl.value=Math.max(1,Math.round(pers)); done.push('personnes'); } }
+  var ings=pick(data,'ingredients','ingrédients','ingredient');
+  if(ings!==undefined){ var it=document.getElementById('rf-ings-texte'); if(it){ it.value=toLines(ings); if(typeof autoGrow==='function') autoGrow(it); done.push('ingrédients'); } }
+  var rec=pick(data,'recette','preparation','préparation','etapes','étapes','steps','instructions');
+  if(rec!==undefined){ var tx=document.getElementById('rf-texte'); if(tx){
+      var lines = Array.isArray(rec) ? rec.map(function(x,i){ return (i+1)+'. '+String(x).trim(); }).filter(Boolean).join('\n') : toLines(rec);
+      tx.value=lines; if(typeof autoGrow==='function') autoGrow(tx); done.push('recette'); } }
+  var comp=pick(data,'composition_1_personne','composition_1personne','composition_par_personne','composition','nutrition','valeurs') || data;
+  var mapc=[['rf-kcal',num(pick(comp,'kcal','calories','energie','énergie'))],
+            ['rf-prot',num(pick(comp,'prot','proteines','protéines','protein'))],
+            ['rf-gluc',num(pick(comp,'gluc','glucides','glucide','carbs'))],
+            ['rf-lip', num(pick(comp,'lip','lipides','lipide','fat','graisses'))],
+            ['rf-fib', num(pick(comp,'fib','fibres','fibre','fiber'))]];
+  var nc=0; mapc.forEach(function(m){ if(m[1]!==undefined){ var el=document.getElementById(m[0]); if(el){ el.value=m[1]; nc++; } } });
+  if(nc) done.push('composition('+nc+'/5)');
+  if(!done.length){ recaiMsg('err','JSON valide mais aucun champ reconnu (personnes, ingredients, recette, composition).'); return; }
+  recaiMsg('ok','✅ Importé : '+done.join(', ')+'. Vérifie, puis touche « Enregistrer ».');
+}
 function openRecetteForm(id){
   editingRecetteId = (typeof id==='number') ? id : null;
   const r = editingRecetteId ? loadRecettes().find(x=>x.id===editingRecetteId) : null;
@@ -2052,6 +2126,7 @@ function openRecetteForm(id){
   setv('rf-lip', r?r.lip:''); setv('rf-fib', r?r.fib:'');
   rfPhoto = r && r.photo ? r.photo : null;
   rfSetPhotoPreview(rfPhoto);
+  recaiReset();
   recShow(3);
   window.scrollTo({top:0,behavior:'smooth'});
   // autoGrow APRÈS l'affichage : les textareas doivent être visibles pour que scrollHeight soit correct
