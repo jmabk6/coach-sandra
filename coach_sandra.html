@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:70px;left:0;right:0;text-align:center;font-size:9px;color:#1a1a1a;opacity:.2;z-index:50;pointer-events:none;">v33</div>
+  <div style="position:fixed;bottom:70px;left:0;right:0;text-align:center;font-size:9px;color:#1a1a1a;opacity:.2;z-index:50;pointer-events:none;">v34</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -2065,10 +2065,18 @@ function recaiPrompt(){
 function recaiCopy(){
   var ta=document.getElementById('recai-box'); if(!ta) return;
   if(!ta.value.trim()){ recaiMsg('err','La boîte est vide — génère d\u2019abord le contexte.'); return; }
-  ta.focus(); ta.select(); try{ ta.setSelectionRange(0,99999); }catch(e){}
+  var text=ta.value;
   if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(ta.value).then(function(){ recaiMsg('ok','✅ Copié ! Colle-le dans l\u2019IA.'); }).catch(function(){ recaiMsg('ok','Texte sélectionné — fais Copier à la main.'); });
-  } else { recaiMsg('ok','Texte sélectionné — fais Copier à la main.'); }
+    navigator.clipboard.writeText(text).then(function(){
+      ta.value=''; recaiMsg('ok','✅ Copié ! Boîte vidée : colle la réponse de l\u2019IA, puis touche « Importer ».');
+    }).catch(function(){
+      ta.focus(); ta.select(); try{ ta.setSelectionRange(0,99999); }catch(e){}
+      recaiMsg('ok','Texte sélectionné — fais Copier, puis efface et colle la réponse.');
+    });
+  } else {
+    ta.focus(); ta.select(); try{ ta.setSelectionRange(0,99999); }catch(e){}
+    recaiMsg('ok','Texte sélectionné — fais Copier, puis efface et colle la réponse.');
+  }
 }
 function recaiImport(){
   var raw=((document.getElementById('recai-box')||{}).value||'').trim();
@@ -2834,10 +2842,18 @@ function ingaiPrompt(){
 function ingaiCopy(){
   var ta=document.getElementById('ingai-box'); if(!ta) return;
   if(!ta.value.trim()){ ingaiMsg('err','La boîte est vide — génère d\u2019abord le contexte.'); return; }
-  ta.focus(); ta.select(); try{ ta.setSelectionRange(0,99999); }catch(e){}
+  var text=ta.value;
   if(navigator.clipboard && navigator.clipboard.writeText){
-    navigator.clipboard.writeText(ta.value).then(function(){ ingaiMsg('ok','✅ Copié ! Colle-le dans l\u2019IA.'); }).catch(function(){ ingaiMsg('ok','Texte sélectionné — fais Copier à la main.'); });
-  } else { ingaiMsg('ok','Texte sélectionné — fais Copier à la main.'); }
+    navigator.clipboard.writeText(text).then(function(){
+      ta.value=''; ingaiMsg('ok','✅ Copié ! Boîte vidée : colle la réponse de l\u2019IA, puis touche « Importer ».');
+    }).catch(function(){
+      ta.focus(); ta.select(); try{ ta.setSelectionRange(0,99999); }catch(e){}
+      ingaiMsg('ok','Texte sélectionné — fais Copier, puis efface et colle la réponse.');
+    });
+  } else {
+    ta.focus(); ta.select(); try{ ta.setSelectionRange(0,99999); }catch(e){}
+    ingaiMsg('ok','Texte sélectionné — fais Copier, puis efface et colle la réponse.');
+  }
 }
 function ingaiImport(){
   var raw=((document.getElementById('ingai-box')||{}).value||'').trim();
