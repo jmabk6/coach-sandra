@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:70px;left:0;right:0;text-align:center;font-size:9px;color:#1a1a1a;opacity:.2;z-index:50;pointer-events:none;">v20</div>
+  <div style="position:fixed;bottom:70px;left:0;right:0;text-align:center;font-size:9px;color:#1a1a1a;opacity:.2;z-index:50;pointer-events:none;">v21</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -4427,7 +4427,7 @@ function seaById(id){return seas.find(s=>s.id===id);}
 function evOn(iso){return events.filter(e=>e.date===iso);}
 
 let curSea=-1,curExo=-1,moveMode=null; // moveMode={evId}
-function go(v){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));const map={cal:'s-cal',ref:'s-ref',sea:'s-sea',exo:'s-exo',objd:'s-objd',week:'s-week',live:'s-live',recap:'s-recap'};const el=document.getElementById(map[v]);el.classList.add('on');el.scrollTop=0;if(v==='cal'){renderCal();renderToday();renderMoveBar();}if(v==='ref'){renderRef();refTab('objs');}if(v==='sea')renderSea();if(v==='exo')renderExo();if(v==='objd')renderObjDetail();if(v==='week')renderWeekScreen();if(v==='live')renderLive();if(v==='recap')renderRecap();}
+function go(v){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));const map={cal:'s-cal',ref:'s-ref',sea:'s-sea',exo:'s-exo',objd:'s-objd',week:'s-week',live:'s-live',recap:'s-recap'};const el=document.getElementById(map[v]);el.classList.add('on');el.scrollTop=0;if(v==='cal'){renderCal();renderToday();renderMoveBar();}if(v==='ref'){renderRef();refTab(_refTab);}if(v==='sea')renderSea();if(v==='exo')renderExo();if(v==='objd')renderObjDetail();if(v==='week')renderWeekScreen();if(v==='live')renderLive();if(v==='recap')renderRecap();}
 
 /* ---- calendrier ---- */
 function prevMonth(){viewM--;if(viewM<0){viewM=11;viewY--;}seedMonth(viewY,viewM);renderCal();}
@@ -4545,7 +4545,8 @@ function exoBack(){go(_exoBack);}
 let _seaBack='ref';
 function openSeaById(id,from){curSea=id;_seaBack=from||'ref';go('sea');}
 function seaBack(){go(_seaBack);}
-function refTab(t){const o=t==='objs';document.getElementById('ref-objs-wrap').style.display=o?'block':'none';document.getElementById('ref-seas-wrap').style.display=o?'none':'block';document.getElementById('tab-objs').classList.toggle('on',o);document.getElementById('tab-seas').classList.toggle('on',!o);}
+let _refTab='objs';
+function refTab(t){_refTab=t;const o=t==='objs';document.getElementById('ref-objs-wrap').style.display=o?'block':'none';document.getElementById('ref-seas-wrap').style.display=o?'none':'block';document.getElementById('tab-objs').classList.toggle('on',o);document.getElementById('tab-seas').classList.toggle('on',!o);}
 function curPhase(id){const e=EXOS.find(x=>x.id===id);const np=(e&&e.phases||[]).length||1;return Math.min(prog[id]||1,np);}
 function renderSea(){const s=seaById(curSea);if(!s){go('ref');return;}document.getElementById('sea-ttl').textContent=s.nom;document.getElementById('sea-rep').innerHTML=s.exos.length?repBarHTML(s):'<div class="empty-mini">—</div>';const b=splitBlocks(s);function row(id){const e=EXOS.find(x=>x.id===id);if(!e)return '';const os=exoObjs(id);const dots=os.map(o=>`<span style="width:8px;height:8px;border-radius:50%;background:${o.color};display:inline-block;margin-left:3px;"></span>`).join('');return `<div class="exo" onclick="SP.openExo(${id})" style="cursor:pointer;"><div class="th">${e.emoji}</div><div class="nm">${esc(e.nom)} ${dots}</div>${exoBadge(id)}</div>`;}function block(title,emoji,arr,color){if(!arr.length)return '';return `<div style="border-left:3px solid ${color};padding-left:11px;margin:14px 0 6px;"><div style="display:flex;align-items:center;justify-content:space-between;margin:0 2px 8px;"><div class="klabel" style="color:${color};">${emoji} ${title}</div><span style="font-size:11.5px;color:var(--muted);font-weight:700;">~${blockMin(arr)} min</span></div>`+arr.map(row).join('')+`</div>`;}document.getElementById('sea-exos').innerHTML=block('Échauffement','🔥',b.warm,'#e8a33d')+block('Corps de la séance','💪',b.corps,'#c0616a')+block('Retour au calme','🧘',b.cool,'#457b9d');}
 function drawType(e){const id=e.id;if([1,2,3,4,5].includes(id))return'pull';if(id===12)return'push';if([15,16].includes(id))return'plank';if(id===10)return'catcow';if([14,18,24,25,26].includes(id))return'twist';if([28,23,19,20].includes(id))return'run';if(id===17)return'bike';if(id===22)return'press';return'stretch';}
@@ -4566,6 +4567,10 @@ EXOIMG[31]="images/mollets-mur.png";
 EXOIMG[32]="images/rotation-lombaire-allongee.png";
 EXOIMG[33]="images/adducteurs-papillon.png";
 EXOIMG[34]="images/quadriceps-debout.png";
+EXOIMG[12]="images/pompes.png";
+EXOIMG[17]="images/velo.png";
+EXOIMG[20]="images/elliptique.png";
+EXOIMG[28]="images/course-tapis.png";
 function exoArt(e){const A='stroke="#b25a64" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"';const G='stroke="#e3d0d3" stroke-width="3" fill="none" stroke-linecap="round"';const H='fill="#b25a64"';let i='';switch(drawType(e)){
  case'catcow':i=`<text x="44" y="105" text-anchor="middle" font-size="10" fill="#9a8e90" font-family="Georgia,serif" font-style="italic">dos rond</text><text x="126" y="105" text-anchor="middle" font-size="10" fill="#9a8e90" font-family="Georgia,serif" font-style="italic">dos creux</text><line x1="12" y1="90" x2="76" y2="90" ${G}/><path d="M22 62 V88" ${A}/><path d="M36 62 V88" ${A}/><path d="M52 62 V88" ${A}/><path d="M66 62 V88" ${A}/><path d="M16 62 Q44 28 72 62" ${A}/><circle cx="13" cy="60" r="8" ${H}/><path d="M72 62 q10 -1 12 -11" ${A}/><line x1="92" y1="90" x2="156" y2="90" ${G}/><path d="M102 58 V88" ${A}/><path d="M116 58 V88" ${A}/><path d="M138 58 V88" ${A}/><path d="M152 58 V88" ${A}/><path d="M102 58 Q127 84 152 58" ${A}/><circle cx="99" cy="56" r="8" ${H}/><path d="M152 58 q10 2 12 11" ${A}/>`;break;
  case'pull':i=`<line x1="24" y1="22" x2="142" y2="22" ${A}/><path d="M68 22 L72 42" ${A}/><path d="M98 22 L94 42" ${A}/><circle cx="83" cy="50" r="9" ${H}/><path d="M83 59 V84" ${A}/><path d="M83 84 L73 102" ${A}/><path d="M83 84 L93 102" ${A}/>`;break;
