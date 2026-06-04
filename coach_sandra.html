@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:70px;left:0;right:0;text-align:center;font-size:9px;color:#1a1a1a;opacity:.2;z-index:50;pointer-events:none;">v31</div>
+  <div style="position:fixed;bottom:70px;left:0;right:0;text-align:center;font-size:9px;color:#1a1a1a;opacity:.2;z-index:50;pointer-events:none;">v32</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -544,7 +544,8 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
     <div class="card" id="form-ingr" style="display:none;">
       <div class="card-title" style="color:var(--accent);">➕ Nouvel aliment</div>
       <input type="text" id="ingr-nom" class="form-input" placeholder="Nom de l'aliment" style="margin-bottom:8px;">
-      <select id="ingr-cat" class="form-input" style="margin-bottom:8px;appearance:none;"></select>
+      <div style="margin-bottom:8px;font-family:'Inter',sans-serif;font-size:14px;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:11px 12px;display:flex;align-items:center;gap:8px;"><span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);">Catégorie</span><span id="ingr-cat-label" style="font-weight:600;color:var(--text);">—</span><span style="margin-left:auto;font-size:14px;opacity:.5;">🔒</span></div>
+      <input type="hidden" id="ingr-cat">
       <select id="ingr-unit" class="form-input" style="margin-bottom:8px;appearance:none;" onchange="updateUnitLabel()">
         <optgroup label="Portions (recommandé)">
           <option value="portion">🍽️ Par portion (1 assiette)</option>
@@ -571,6 +572,15 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
         <div><div class="macro-field-label" style="color:#457b9d;">🌾 Glucides</div><div class="macro-input-wrap"><input type="number" id="ingr-gluc" class="macro-input" placeholder="0"><span class="macro-unit">g</span></div></div>
         <div><div class="macro-field-label" style="color:#d97706;">🥑 Lipides</div><div class="macro-input-wrap"><input type="number" id="ingr-lip" class="macro-input" placeholder="0"><span class="macro-unit">g</span></div></div>
         <div><div class="macro-field-label" style="color:#52b788;">🌿 Fibres</div><div class="macro-input-wrap"><input type="number" id="ingr-fibres" class="macro-input" placeholder="0"><span class="macro-unit">g</span></div></div>
+      </div>
+      <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+        <button type="button" onclick="ingaiPrompt()" style="width:100%;border:1.5px solid var(--accent);background:rgba(192,97,106,0.06);color:var(--accent);font-weight:700;font-size:14px;border-radius:12px;padding:12px;cursor:pointer;margin-bottom:8px;">🤖 Contexte pour l'IA</button>
+        <textarea id="ingai-box" placeholder="1) Touche « Contexte pour l'IA »  2) Copier  3) colle ce texte dans l'IA  4) recolle ici sa réponse JSON  5) Importer" style="width:100%;box-sizing:border-box;border:1px solid var(--border);border-radius:12px;padding:11px;font-family:'Inter',sans-serif;font-size:13px;min-height:120px;resize:vertical;background:var(--surface);color:var(--text);outline:none;"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button type="button" onclick="ingaiCopy()" style="flex:1;border:none;cursor:pointer;background:var(--accent);color:#fff;font-weight:700;font-size:14px;border-radius:12px;padding:11px;">📋 Copier</button>
+          <button type="button" onclick="ingaiImport()" style="flex:1;border:1.5px solid var(--accent);cursor:pointer;background:#fff;color:var(--accent);font-weight:700;font-size:14px;border-radius:12px;padding:11px;">📥 Importer</button>
+        </div>
+        <div id="ingai-msg" style="display:none;margin-top:8px;font-size:13px;font-weight:600;border-radius:10px;padding:9px 12px;"></div>
       </div>
       <div style="display:flex;gap:8px;margin-top:8px;">
         <button onclick="saveIngredient()" class="btn-primary" style="margin-bottom:0;flex:1;">💾 Enregistrer</button>
@@ -2719,6 +2729,67 @@ function ingGoEtage2(key){
   const f=document.getElementById('form-ingr'); if(f) f.style.display='none';
   renderIngredients();
 }
+function ingrSetLockedCat(key){
+  if(!key || key==='tous'){ var cs=loadACats(); key=(cs[0]&&cs[0].key)||'condiments'; }
+  var h=document.getElementById('ingr-cat'); if(h) h.value=key;
+  var lbl=document.getElementById('ingr-cat-label'); if(lbl) lbl.textContent=aCatLabel(key);
+}
+/* ===== Contexte pour l'IA (aliment) : générer un prompt -> copier -> coller la réponse JSON -> importer ===== */
+function ingaiMsg(type,text){
+  var m=document.getElementById('ingai-msg'); if(!m) return;
+  m.style.display=text?'block':'none';
+  m.style.background=(type==='err')?'#f8d7da':(type==='ok'?'#e8f5e9':'transparent');
+  m.style.color=(type==='err')?'#a02a37':'#2d6a4f';
+  m.textContent=text;
+}
+function ingaiReset(){ var b=document.getElementById('ingai-box'); if(b) b.value=''; ingaiMsg('',''); }
+function ingaiPrompt(){
+  var nom=((document.getElementById('ingr-nom')||{}).value||'').trim();
+  if(!nom){ ingaiMsg('err','Écris d\u2019abord le nom de l\u2019aliment.'); return; }
+  var unit=((document.getElementById('ingr-unit')||{}).value)||'100g';
+  var mesure=(typeof UNIT_LABELS!=='undefined' && UNIT_LABELS[unit]) ? UNIT_LABELS[unit] : unit;
+  var p='Tu es nutritionniste. Donne les valeurs nutritionnelles de l\u2019aliment : "'+nom+'".\n'+
+    'IMPORTANT : les valeurs doivent correspondre EXACTEMENT à cette mesure : '+mesure+'.\n'+
+    'Réponds UNIQUEMENT par un objet JSON valide, sans aucun texte autour, sans balise Markdown.\n'+
+    'Macros en grammes, énergie en kcal, nombres uniquement. Clés exactes :\n'+
+    '{\n  "kcal": 0,\n  "prot": 0,\n  "gluc": 0,\n  "lip": 0,\n  "fibres": 0\n}';
+  var b=document.getElementById('ingai-box'); if(b) b.value=p;
+  ingaiMsg('ok','Prompt prêt. Touche « Copier », colle-le dans l\u2019IA, puis recolle sa réponse ici et touche « Importer ».');
+}
+function ingaiCopy(){
+  var ta=document.getElementById('ingai-box'); if(!ta) return;
+  if(!ta.value.trim()){ ingaiMsg('err','La boîte est vide — génère d\u2019abord le contexte.'); return; }
+  ta.focus(); ta.select(); try{ ta.setSelectionRange(0,99999); }catch(e){}
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(ta.value).then(function(){ ingaiMsg('ok','✅ Copié ! Colle-le dans l\u2019IA.'); }).catch(function(){ ingaiMsg('ok','Texte sélectionné — fais Copier à la main.'); });
+  } else { ingaiMsg('ok','Texte sélectionné — fais Copier à la main.'); }
+}
+function ingaiImport(){
+  var raw=((document.getElementById('ingai-box')||{}).value||'').trim();
+  if(!raw){ ingaiMsg('err','Colle d\u2019abord la réponse de l\u2019IA.'); return; }
+  raw=raw.replace(/```json/gi,'').replace(/```/g,'');
+  raw=raw.replace(/[\u201C\u201D\u201E\u201F]/g,'"').replace(/[\u2018\u2019]/g,"'");
+  var s=raw.indexOf('{'), e=raw.lastIndexOf('}');
+  if(s===-1||e===-1){ ingaiMsg('err','Pas de JSON trouvé. Recolle la réponse complète de l\u2019IA.'); return; }
+  var data; try{ data=JSON.parse(raw.slice(s,e+1)); }catch(err){ ingaiMsg('err','JSON illisible. Recopie toute la réponse.'); return; }
+  function pick(){ for(var i=0;i<arguments.length;i++){ var k=arguments[i]; if(data[k]!==undefined && data[k]!==null && data[k]!=='') return data[k]; } return undefined; }
+  var map=[
+    ['ingr-kcal',   pick('kcal','calories','energie','énergie','energy')],
+    ['ingr-prot',   pick('prot','proteines','protéines','proteins','protein','prot_g')],
+    ['ingr-gluc',   pick('gluc','glucides','glucide','carbs','carbohydrates','glucides_g')],
+    ['ingr-lip',    pick('lip','lipides','lipide','fat','fats','graisses','lipides_g')],
+    ['ingr-fibres', pick('fibres','fibre','fiber','fibers','fibres_g')]
+  ];
+  var filled=0;
+  map.forEach(function(m){
+    if(m[1]!==undefined){
+      var v=parseFloat(String(m[1]).replace(',','.').replace(/[^0-9.\-]/g,''));
+      if(!isNaN(v)){ var el=document.getElementById(m[0]); if(el){ el.value=v; filled++; } }
+    }
+  });
+  if(filled===0){ ingaiMsg('err','JSON valide mais aucune valeur reconnue (kcal, prot, gluc, lip, fibres).'); return; }
+  ingaiMsg('ok','✅ '+filled+'/5 valeurs importées. Vérifie, puis touche « Enregistrer ».');
+}
 function renderIngCatGrid(){
   const grid=document.getElementById('ing-cat-grid'); if(!grid) return;
   const cats=loadACats();
@@ -2733,7 +2804,7 @@ function openFormIngrNew(){
   // ouvre le formulaire de création ; si on est dans une catégorie, pré-sélectionne-la
   editingIngrId=null;
   ['ingr-nom','ingr-kcal','ingr-prot','ingr-gluc','ingr-lip','ingr-fibres'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
-  renderIngrCatSelect(ingrCatFilter!=='tous'?ingrCatFilter:'');
+  ingrSetLockedCat(ingrCatFilter); ingaiReset();
   const us=document.getElementById('ingr-unit'); if(us) us.value='100g';
   updateUnitLabel();
   const t=document.querySelector('#form-ingr .card-title'); if(t) t.textContent='➕ Nouvel aliment';
@@ -2807,7 +2878,7 @@ function toggleFormIngr() {
     // Ouverture via "+ Créer" → on force le mode création (formulaire vierge)
     editingIngrId = null;
     ['ingr-nom','ingr-kcal','ingr-prot','ingr-gluc','ingr-lip','ingr-fibres'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
-    renderIngrCatSelect();
+    ingrSetLockedCat(ingrCatFilter); ingaiReset();
     const us=document.getElementById('ingr-unit'); if(us) us.value='100g';
     updateUnitLabel();
     const t=document.querySelector('#form-ingr .card-title'); if(t) t.textContent='➕ Nouvel aliment';
@@ -2866,8 +2937,7 @@ function editIngr(id) {
   editingIngrId = id;
   const set=(k,v)=>{const e=document.getElementById(k); if(e) e.value=v;};
   set('ingr-nom', ingr.nom);
-  renderIngrCatSelect(ingr.cat||'');
-  const catSel=document.getElementById('ingr-cat'); if(catSel) catSel.value=ingr.cat||'autres';
+  ingrSetLockedCat(ingr.cat||''); ingaiReset();
   const unitSel=document.getElementById('ingr-unit'); if(unitSel) unitSel.value=ingr.unit||'100g';
   updateUnitLabel();
   set('ingr-kcal', ingr.kcal); set('ingr-prot', ingr.prot);
