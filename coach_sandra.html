@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:70px;left:0;right:0;text-align:center;font-size:9px;color:#1a1a1a;opacity:.2;z-index:50;pointer-events:none;">v27</div>
+  <div style="position:fixed;bottom:70px;left:0;right:0;text-align:center;font-size:9px;color:#1a1a1a;opacity:.2;z-index:50;pointer-events:none;">v30</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -489,7 +489,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
       <div id="day-add-actions" style="display:none;">
         <button onclick="dayAddIngredient()" style="width:100%;border:none;cursor:pointer;background:rgba(192,97,106,0.10);color:var(--accent);font-weight:700;font-size:15px;border-radius:14px;padding:15px;display:flex;align-items:center;justify-content:center;gap:8px;">＋ Ajouter un aliment</button>
         <div style="margin-top:12px;">
-          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px;">⚡ Saisie rapide <span style="font-weight:600;text-transform:none;letter-spacing:0;">(tape ou dicte 🎤)</span></div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px;">⚡ Saisie rapide <span style="font-weight:600;text-transform:none;letter-spacing:0;">(tape, ou dicte avec le 🎤 du clavier)</span></div>
           <textarea id="spq-input" rows="2" placeholder="Ex. : amandes, noix, jus d'ananas" oninput="autoGrow(this)" style="width:100%;box-sizing:border-box;border:1.5px solid var(--border);border-radius:12px;padding:10px 12px;font-family:'Inter',sans-serif;font-size:14px;line-height:1.4;resize:none;background:var(--bg,#fff);color:var(--text);"></textarea>
           <button onclick="spqRun()" style="margin-top:8px;width:100%;border:none;cursor:pointer;background:var(--accent);color:#fff;font-weight:700;font-size:14px;border-radius:12px;padding:12px;">Ajouter à la journée</button>
           <div id="spq-result" style="margin-top:8px;"></div>
@@ -2514,21 +2514,47 @@ function spqCleanToken(t){
     .replace(/^(?:une?|deux|trois|quatre|cinq|six|sept|huit|du|de la|de l'|des|d'|un peu de|quelques)\s+/i,'')
     .replace(/\s+/g,' ').trim();
 }
+function spqLev(a,b){
+  var m=a.length, n=b.length;
+  if(Math.abs(m-n)>2) return 99;
+  var dp=[]; for(var i=0;i<=m;i++){ dp[i]=[i]; }
+  for(var j=0;j<=n;j++){ dp[0][j]=j; }
+  for(var i2=1;i2<=m;i2++){
+    for(var j2=1;j2<=n;j2++){
+      var cost=(a.charAt(i2-1)===b.charAt(j2-1))?0:1;
+      dp[i2][j2]=Math.min(dp[i2-1][j2]+1, dp[i2][j2-1]+1, dp[i2-1][j2-1]+cost);
+    }
+  }
+  return dp[m][n];
+}
 function spqMatch(tok, lib){
   var t=spqNorm(tok); if(!t) return null;
   var ts=spqStem(t);
+  var tw=t.split(' ');
   var best=null, bestScore=39;   // seuil : on n'accepte qu'à partir de 40
   for(var k=0;k<lib.length;k++){
-    var i=lib[k]; var n=spqNorm(i.nom); var sc=-1;
+    var i=lib[k]; var n=spqNorm(i.nom); var nw=n.split(' '); var sc=-1;
     if(n===t) sc=100;
     else if(spqStem(n)===ts) sc=90;
     else {
-      var tw=t.split(' '), nw=n.split(' ');
       var allTinN = tw.every(function(w){ return nw.some(function(x){ return spqStem(x)===spqStem(w); }); });
       var allNinT = nw.every(function(w){ return tw.some(function(x){ return spqStem(x)===spqStem(w); }); });
       if(allTinN) sc=70 - Math.abs(nw.length-tw.length);
       else if(allNinT) sc=60 - Math.abs(nw.length-tw.length);
       else if(n.indexOf(t)>=0 || t.indexOf(n)>=0) sc=40 - Math.abs(n.length-t.length)*0.5;
+    }
+    // Tolérance aux fautes de dictée (amende -> amande) : 1 faute (2 pour les mots longs)
+    if(sc<56){
+      for(var a=0;a<tw.length;a++){
+        for(var b=0;b<nw.length;b++){
+          var wa=spqStem(tw[a]), wb=spqStem(nw[b]);
+          if(wa.length>=4 && wb.length>=4){
+            var d=spqLev(wa,wb);
+            var mx=(Math.max(wa.length,wb.length)>=8)?2:1;
+            if(d<=mx){ var fs=56-d*4-Math.abs(nw.length-tw.length); if(fs>sc) sc=fs; }
+          }
+        }
+      }
     }
     if(sc>bestScore){ bestScore=sc; best=i; }
   }
@@ -2576,40 +2602,10 @@ function spqRun(){
 }
 function spqRenderResult(added, missing, moment){
   var res=document.getElementById('spq-result'); if(!res) return;
-  var h='';
-  if(added.length){
-    h+='<div style="font-size:13px;color:#2d6a4f;font-weight:600;margin-bottom:'+(missing.length?'8px':'0')+';">✅ Ajouté à '+spqEsc(moment)+' : '+added.map(spqEsc).join(', ')+'</div>';
-  }
-  if(missing.length){
-    h+='<div style="font-size:13px;color:#b5651d;font-weight:600;margin-bottom:6px;">❓ Pas dans la bibliothèque :</div>';
-    h+='<div style="display:flex;flex-wrap:wrap;gap:6px;">'+missing.map(function(m){
-      return '<button data-spqmiss="'+spqEsc(m)+'" onclick="spqCreate(this)" style="border:1px solid var(--accent);background:rgba(192,97,106,0.08);color:var(--accent);border-radius:10px;padding:6px 10px;font-size:13px;cursor:pointer;font-weight:600;">➕ '+spqEsc(m)+'</button>';
-    }).join('')+'</div>';
-    h+='<div style="font-size:11px;color:var(--muted);margin-top:5px;">Touche un aliment pour le créer (calories à 0, à ajuster dans Aliments) et l\'ajouter.</div>';
-  }
-  res.innerHTML=h;
-  res._moment=moment;
-}
-function spqCreate(btn){
-  var name=btn.getAttribute('data-spqmiss'); if(!name) return;
-  var res=document.getElementById('spq-result');
-  var moment=(res&&res._moment)||dayAddMoment||spqDefaultMoment();
-  var data=loadIngr();
-  var s=null;
-  for(var i=0;i<data.length;i++){ if(spqNorm(data[i].nom)===spqNorm(name)){ s=data[i]; break; } }
-  if(!s){
-    var cats=loadACats();
-    var cat=(cats[0]&&cats[0].key)||'condiments';
-    s={id:Date.now(), nom:name, cat:cat, unit:'100g', kcal:0, prot:0, gluc:0, lip:0, fibres:0};
-    data.push(s); saveIngr(data);
-  }
-  var ing={nom:s.nom, unit:s.unit||'100g', qty:(s.unit==='100g'||!s.unit?100:1), kcalU:s.kcal, protU:s.prot, glucU:s.gluc, lipU:s.lip, fibU:s.fibres||0};
-  var j=loadJournal();
-  j.push({id:Date.now()+1, date:selectedDate, moment:moment, nom:s.nom, type:'ingredient', ings:[ing], collapsed:false});
-  saveJournal(j);
-  showToast('➕ '+s.nom+' créé et ajouté');
-  renderDay();
-  btn.outerHTML='<span style="display:inline-block;font-size:13px;color:#2d6a4f;font-weight:600;padding:6px 10px;">✅ '+spqEsc(name)+'</span>';
+  if(!missing.length){ res.innerHTML=''; return; }   // si tout est compris, rien à afficher : on le voit dans la journée
+  res.innerHTML = missing.map(function(m){
+    return '<div style="font-size:13px;color:#b5651d;font-weight:600;margin-bottom:2px;">'+spqEsc(m)+' introuvable</div>';
+  }).join('');
 }
 
 /* compat : ancien mode sélection d'ingrédient (désormais inutilisé) */
