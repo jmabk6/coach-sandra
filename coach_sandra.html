@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:70px;left:0;right:0;text-align:center;font-size:9px;color:#1a1a1a;opacity:.2;z-index:50;pointer-events:none;">v23</div>
+  <div style="position:fixed;bottom:70px;left:0;right:0;text-align:center;font-size:9px;color:#1a1a1a;opacity:.2;z-index:50;pointer-events:none;">v24</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -4392,19 +4392,13 @@ const seas=[
  {id:107,nom:'Course (endurance)',color:'#00b4d8',exos:[27,13,10,28,15,16,8,29,30,31,34,32,9]},
  {id:108,nom:'Course (fractionné)',color:'#f4c20d',exos:[27,13,10,28,8,29,30,31,34,32,9]}
 ];
-const prog={1:2,2:1,3:1,8:2,13:1,14:1,26:3,28:1,12:1};
+const prog={};
 const SUIVI=new Set([1,2,3,4,5,8,12,15,16,19,20,22,26,28]); // exercices mesurés (paliers)
 const ACT=new Set([24,25,17,23]); // activités libres (padel, golf, vélo, footing)
 function isSuivi(id){return SUIVI.has(id);}
 function exoBadge(id){const e=EXOS.find(x=>x.id===id);if(SUIVI.has(id)){const np=(e&&e.phases||[]).length,cur=curPhase(id);return `<span class="badge">Phase ${cur}/${np}</span>`;}if(ACT.has(id))return '<span class="badge" style="color:#9b5de5;background:#f1e9fb;border-color:#d9c4f0;">Activité</span>';return '<span class="badge" style="color:#5a7a8c;background:#eef4f8;border-color:#cfe0ea;">Entretien</span>';}
 /* historique d'exemple (mockup) : début, séances faites, progression chiffrée par exercice */
-const hist={
- 1:{start:'2026-04-15',seances:18,byType:{'Force':10,'Volume':8},exos:{1:{from:'15 s',now:'32 s'},2:{from:'2 reps',now:'4 reps'},3:{from:'50 kg d\u2019aide',now:'30 kg d\u2019aide'},4:{from:'15 kg',now:'25 kg'},5:{from:'3×8',now:'3×10'}}},
- 2:{start:'2026-04-15',seances:34,byType:{'Intégrée aux séances':34},exos:{8:{from:'genoux',now:'mi-tibias'},26:{from:'main à 30 cm',now:'main à 12 cm'}}},
- 4:{start:'2026-04-15',weighins:[['15/04',85],['29/04',84],['13/05',83.5],['27/05',83]]},
- 5:{start:'2026-05-26',seances:2,byType:{'Reprise course/marche':2},exos:{28:{from:'—',now:'1′ course / 1′ marche'}}},
- 6:{start:'2026-06-02',seances:1,byType:{'Pompes (volume)':1},exos:{12:{from:'—',now:'5 pompes en 1 série'}}}
-};
+const hist={};
 function weeksSince(isoDate){const[y,m,d]=isoDate.split('-').map(Number);const start=new Date(y,m-1,d);return Math.max(0,Math.round((new Date()-start)/(7*864e5)));}
 function fmtStart(isoDate){const[y,m,d]=isoDate.split('-').map(Number);return d+' '+MOIS[m-1]+' '+y;}
 const JOURS=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
@@ -4641,8 +4635,9 @@ function renderRecap(){const lg=logs[curRecap];const host=document.getElementByI
 
 /* ===== persistance + init (intégration coach_sandra) ===== */
 var SPKEY='mc_sport';
-function spSave(){try{localStorage.setItem(SPKEY,JSON.stringify({events:events,pattern:pattern,logs:logs,_eid:_eid}));}catch(e){}}
-function spLoad(){try{var s=JSON.parse(localStorage.getItem(SPKEY)||'null');if(s&&typeof s==='object'){if(Array.isArray(s.events))events=s.events;if(s.pattern&&typeof s.pattern==='object')pattern=s.pattern;if(s.logs&&typeof s.logs==='object')logs=s.logs;if(s._eid)_eid=s._eid;return true;}}catch(e){}return false;}
+function spSave(){try{localStorage.setItem(SPKEY,JSON.stringify({events:events,pattern:pattern,logs:logs,_eid:_eid,seedV:SPSEEDV}));}catch(e){}}
+var SPSEEDV='reset-2026-06-04';let _loadedSeedV=null;
+function spLoad(){try{var s=JSON.parse(localStorage.getItem(SPKEY)||'null');if(s&&typeof s==='object'){if(Array.isArray(s.events))events=s.events;if(s.pattern&&typeof s.pattern==='object')pattern=s.pattern;if(s.logs&&typeof s.logs==='object')logs=s.logs;if(s._eid)_eid=s._eid;_loadedSeedV=(s.seedV||null);return true;}}catch(e){}return false;}
 function spWireWeight(){try{
   var w=(typeof loadWeights==='function')?loadWeights():[];
   var dep=(typeof getDepart==='function'&&getDepart())||(w.length?w[0].poids:null);
@@ -4656,7 +4651,7 @@ function spWireWeight(){try{
 window.spInit=function(){
   spWireWeight();
   var had=spLoad();
-  if(!had){var now=new Date();seedMonth(now.getFullYear(),now.getMonth());var nx=new Date(now.getFullYear(),now.getMonth()+1,1);seedMonth(nx.getFullYear(),nx.getMonth());spSave();}
+  if(!had||_loadedSeedV!==SPSEEDV){events=[];logs={};_eid=1;pattern={0:101,1:107,3:105,5:103,6:108};var now=new Date();seedMonth(now.getFullYear(),now.getMonth());var nx=new Date(now.getFullYear(),now.getMonth()+1,1);seedMonth(nx.getFullYear(),nx.getMonth());var _t=isoOf(new Date());events=events.filter(function(e){return e.date>_t;});_loadedSeedV=SPSEEDV;spSave();}
   viewY=new Date().getFullYear();viewM=new Date().getMonth();
   go('cal');
 };
