@@ -294,7 +294,7 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
 
 <!-- ========== PAGE POIDS ========== -->
 <div class="page active" id="page-poids">
-  <div style="position:fixed;bottom:70px;left:0;right:0;text-align:center;font-size:9px;color:#1a1a1a;opacity:.2;z-index:50;pointer-events:none;">v34</div>
+  <div style="position:fixed;bottom:70px;left:0;right:0;text-align:center;font-size:9px;color:#1a1a1a;opacity:.2;z-index:50;pointer-events:none;">v35</div>
 
   <div style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
     <div id="poids-hello" style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--accent);font-weight:600;">👋 Bonjour</div>
@@ -640,6 +640,9 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
       <label class="flabel">Nom de la recette</label>
       <input class="finput" id="rf-nom" placeholder="ex. Quiche au saumon">
 
+      <label class="flabel" style="margin-top:10px;">Desiderata <span style="font-weight:400;color:var(--muted);">(transmis à l'IA)</span></label>
+      <input class="finput" id="rf-desiderata" placeholder="ex. sans beurre, le moins calorique possible…">
+
       <div style="display:flex;gap:14px;margin-bottom:14px;align-items:stretch;">
         <div style="display:flex;flex-direction:column;gap:6px;width:130px;flex-shrink:0;">
           <div id="rf-photo-preview" style="width:130px;height:130px;border-radius:14px;background:var(--bg);border:1.5px solid var(--border);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:44px;color:var(--muted);">🍽️</div>
@@ -687,6 +690,30 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
         <button class="filter-pill" style="flex:1;padding:11px;" onclick="closeRecetteForm()">Annuler</button>
         <button class="filter-pill" style="flex:1;padding:11px;background:var(--accent);color:#fff;border-color:var(--accent);" onclick="saveRecette()">💾 Enregistrer</button>
       </div>
+    </div>
+
+    <!-- ÉCRAN 4 : LECTURE -->
+    <div id="rec-etage4" style="display:none;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        <button onclick="recGoEtage2()" style="background:none;border:1px solid var(--border);border-radius:10px;padding:7px 12px;font-size:14px;cursor:pointer;color:var(--muted);white-space:nowrap;">‹ Retour</button>
+        <div style="flex:1;"></div>
+      </div>
+      <div id="rec-read-photo" style="width:100%;height:180px;border-radius:16px;background:var(--bg);border:1.5px solid var(--border);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-size:60px;color:var(--muted);margin-bottom:12px;">🍽️</div>
+      <div id="rec-read-nom" style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:28px;line-height:1.15;margin-bottom:6px;">—</div>
+      <div id="rec-read-meta" style="font-size:13px;color:var(--muted);margin-bottom:18px;"></div>
+
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);margin-bottom:6px;">🧾 Ingrédients</div>
+      <div id="rec-read-ings" style="font-size:14px;line-height:1.55;margin-bottom:20px;"></div>
+
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);margin-bottom:6px;">👨‍🍳 Préparation</div>
+      <div id="rec-read-texte" style="font-size:14px;line-height:1.6;white-space:pre-wrap;margin-bottom:20px;"></div>
+
+      <div class="compo-box">
+        <div class="compo-head"><span style="font-size:20px;">📊</span><span class="t">Composition</span><span class="s">pour 1 portion</span></div>
+        <div id="rec-read-compo" style="display:flex;flex-wrap:wrap;gap:6px;padding:6px 2px 2px;"></div>
+      </div>
+
+      <button onclick="openRecetteForm(readingRecetteId)" style="width:100%;margin-top:18px;border:none;cursor:pointer;background:var(--accent);color:#fff;font-weight:700;font-size:15px;border-radius:14px;padding:15px;">✏️ Modifier la recette</button>
     </div>
   </div>
 </div>
@@ -1962,6 +1989,7 @@ function recShow(n){
   document.getElementById('rec-etage1').style.display = (n===1)?'block':'none';
   document.getElementById('rec-etage2').style.display = (n===2)?'block':'none';
   document.getElementById('rec-etage3').style.display = (n===3)?'block':'none';
+  var e4=document.getElementById('rec-etage4'); if(e4) e4.style.display = (n===4)?'block':'none';
 }
 function recGoEtage1(){
   recCurrentCat=null;
@@ -1989,7 +2017,7 @@ function renderRecSearchAll(){
       const chips = empty ? '<span class="rchip rchip-empty">à compléter</span>'
         : '<span class="rchip rchip-kcal">🔥'+r.kcal+'</span><span class="rchip rchip-prot">💪'+r.prot+'g</span>';
       const catn = (r.cats&&r.cats[0])?recCatName(r.cats[0]):'';
-      return '<div class="rec-card" onclick="openRecetteForm('+r.id+')"><div style="flex:1;"><div class="rnom">'+r.nom+'</div><div class="rchips">'+chips+'</div><div class="rmeta">'+catn+'</div></div></div>';
+      return '<div class="rec-card" onclick="openRecetteRead('+r.id+')"><div style="flex:1;"><div class="rnom">'+r.nom+'</div><div class="rchips">'+chips+'</div><div class="rmeta">'+catn+'</div></div></div>';
     }).join('') : '<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-text">Aucune recette trouvée.</div></div>';
   }
 }
@@ -2024,7 +2052,7 @@ function renderRecetteList(){
       : `<span class="rchip rchip-kcal">🔥${r.kcal}</span><span class="rchip rchip-prot">💪${r.prot}g</span><span class="rchip rchip-gluc">🌾${r.gluc}g</span><span class="rchip rchip-lip">🥑${r.lip}g</span><span class="rchip rchip-fib">🌿${r.fib}g</span>`;
     const right = recSelectMode ? '<span class="rec-plus">+</span>'
       : `<button class="btn-del" onclick="event.stopPropagation();delRecette(${r.id})">✕</button>`;
-    const click = recSelectMode ? `pickRecette(${r.id})` : `openRecetteForm(${r.id})`;
+    const click = recSelectMode ? `pickRecette(${r.id})` : `openRecetteRead(${r.id})`;
     const avatar = r.photo
       ? `<div style="width:46px;height:46px;border-radius:50%;background-image:url('${r.photo}');background-size:cover;background-position:center;flex-shrink:0;margin-right:12px;border:1.5px solid var(--border);"></div>`
       : '';
@@ -2037,6 +2065,40 @@ function renderRecetteList(){
 }
 
 /* ============ MODAL RECETTE ============ */
+/* ===== Mode LECTURE d'une recette ===== */
+let readingRecetteId=null;
+function recReadEsc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function openRecetteRead(id){
+  const r=loadRecettes().find(x=>x.id===id);
+  if(!r){ if(typeof showToast==='function') showToast('⚠️ Recette introuvable'); return; }
+  readingRecetteId=id;
+  const ph=document.getElementById('rec-read-photo');
+  if(ph){ if(r.photo){ ph.style.backgroundImage="url('"+r.photo+"')"; ph.textContent=''; } else { ph.style.backgroundImage='none'; ph.textContent='🍽️'; } }
+  const nm=document.getElementById('rec-read-nom'); if(nm) nm.textContent=r.nom||'';
+  const catn=(r.cats&&r.cats[0])?recCatName(r.cats[0]):'';
+  const meta=document.getElementById('rec-read-meta'); if(meta) meta.textContent=[catn, r.nbPers?('👥 '+r.nbPers+' pers.'):''].filter(Boolean).join('  ·  ');
+  const ie=document.getElementById('rec-read-ings');
+  if(ie){
+    const lines=(r.ingsTexte||'').split('\n').map(function(s){return s.trim();}).filter(Boolean);
+    ie.innerHTML = lines.length ? lines.map(function(l){ return '<div style="display:flex;gap:8px;margin-bottom:3px;"><span style="color:var(--accent);">•</span><span>'+recReadEsc(l)+'</span></div>'; }).join('') : '<div style="color:var(--muted);font-style:italic;">Aucun ingrédient renseigné.</div>';
+  }
+  const te=document.getElementById('rec-read-texte');
+  if(te){
+    const t=(r.texte||'').trim();
+    if(t){ te.textContent=t; te.style.color=''; te.style.fontStyle=''; }
+    else { te.textContent='Aucune préparation renseignée.'; te.style.color='var(--muted)'; te.style.fontStyle='italic'; }
+  }
+  const ce=document.getElementById('rec-read-compo');
+  if(ce){
+    const chip=function(c,l){ return '<span style="background:'+c+';border-radius:8px;padding:4px 10px;font-size:13px;font-weight:600;">'+l+'</span>'; };
+    const empty=!(r.kcal||r.prot||r.gluc||r.lip||r.fib);
+    ce.innerHTML = empty ? '<span style="color:var(--muted);font-style:italic;font-size:13px;">À compléter</span>'
+      : chip('#fff3e0','🔥 '+r.kcal+' kcal')+chip('#e8f5e9','💪 '+r.prot+' g')+chip('#e3f2fd','🌾 '+r.gluc+' g')+chip('#fff8e1','🥑 '+r.lip+' g')+chip('#f1f8e9','🌿 '+(r.fib||0)+' g');
+  }
+  recShow(4);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
 /* ===== Contexte pour l'IA (recette) : prompt -> copier -> coller la réponse JSON -> importer ===== */
 function recaiMsg(type,text){
   var m=document.getElementById('recai-msg'); if(!m) return;
@@ -2051,7 +2113,9 @@ function recaiPrompt(){
   if(!nom){ recaiMsg('err','Écris d\u2019abord le nom de la recette.'); return; }
   var np=parseInt(((document.getElementById('rf-nb-pers')||{}).value),10);
   var pers=(np && np>0)?np:4;
+  var desid=((document.getElementById('rf-desiderata')||{}).value||'').trim();
   var p='Tu es chef cuisinier et nutritionniste. Donne la recette de : "'+nom+'" pour '+pers+' personne(s).\n'+
+    (desid?('Contraintes / souhaits à respecter ABSOLUMENT : '+desid+'.\n'):'')+
     'Réponds UNIQUEMENT par un objet JSON valide, sans aucun texte autour, sans balise Markdown.\n'+
     '- "personnes" : le nombre de personnes (entier).\n'+
     '- "ingredients" : liste de chaînes, une par ingrédient, avec la quantité.\n'+
@@ -2114,6 +2178,7 @@ function openRecetteForm(id){
   const r = editingRecetteId ? loadRecettes().find(x=>x.id===editingRecetteId) : null;
   const t=document.getElementById('form-recette-title'); if(t) t.textContent = r ? '✏️ Modifier la recette' : '➕ Nouvelle recette';
   document.getElementById('rf-nom').value = r ? r.nom : '';
+  var rfd=document.getElementById('rf-desiderata'); if(rfd) rfd.value = (r && r.desiderata) ? r.desiderata : '';
   const sel = r ? [...(r.cats||[])] : (recCurrentCat?[recCurrentCat]:[]);
   const selKey = sel[0] || (recCurrentCat||'');
   const csel = document.getElementById('rf-cat-select');
@@ -2210,16 +2275,17 @@ function saveRecette(){
   const cats=[csel.value];
   const texte=(document.getElementById('rf-texte')?.value||'').trim();
   const ingsTexte=(document.getElementById('rf-ings-texte')?.value||'').trim();
+  const desiderata=(document.getElementById('rf-desiderata')?.value||'').trim();
   const nbPers=parseInt(document.getElementById('rf-nb-pers')?.value)||4;
   const num=id=>{const v=parseFloat(document.getElementById(id)?.value); return isNaN(v)?0:v;};
   const t={kcal:Math.round(num('rf-kcal')), prot:num('rf-prot'), gluc:num('rf-gluc'), lip:num('rf-lip'), fib:num('rf-fib')};
   let data=loadRecettes();
   if(editingRecetteId){
-    data = data.map(r=> r.id===editingRecetteId ? {...r, nom, cats, photo:rfPhoto||null, texte, ingsTexte, nbPers, ings:[], kcal:t.kcal,prot:t.prot,gluc:t.gluc,lip:t.lip,fib:t.fib} : r);
+    data = data.map(r=> r.id===editingRecetteId ? {...r, nom, cats, photo:rfPhoto||null, texte, ingsTexte, desiderata, nbPers, ings:[], kcal:t.kcal,prot:t.prot,gluc:t.gluc,lip:t.lip,fib:t.fib} : r);
     showToast('✅ Recette modifiée');
   } else {
     const id=Math.max(0,...data.map(r=>r.id||0))+1;
-    data.push({id, nom, cats, photo:rfPhoto||null, texte, ingsTexte, nbPers, ings:[], kcal:t.kcal,prot:t.prot,gluc:t.gluc,lip:t.lip,fib:t.fib});
+    data.push({id, nom, cats, photo:rfPhoto||null, texte, ingsTexte, desiderata, nbPers, ings:[], kcal:t.kcal,prot:t.prot,gluc:t.gluc,lip:t.lip,fib:t.fib});
     showToast('✅ Recette créée');
   }
   saveRecettes(data);
