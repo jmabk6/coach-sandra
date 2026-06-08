@@ -1,4 +1,4 @@
-const CACHE = 'coach-sandra-v2';
+const CACHE = 'coach-sandra-v3';
 const ASSETS = [
   './coach_sandra.html',
   './manifest.json',

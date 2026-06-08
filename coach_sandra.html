@@ -465,13 +465,13 @@ body { background:var(--bg); font-family:'Inter',sans-serif; max-width:430px; ma
           </svg>
           <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
             <span id="recap-kcal" style="font-family:'Cormorant Garamond',serif;font-weight:700;font-size:26px;color:var(--accent);line-height:1;">0</span>
-            <span style="font-size:10px;color:var(--muted);">/1500 kcal</span>
+            <span id="recap-obj-lbl" style="font-size:10px;color:var(--muted);">/1500 kcal</span>
           </div>
         </div>
         <!-- colonne droite : pastilles + macros -->
         <div class="recapx-right">
           <div class="recapx-pills" style="margin-bottom:14px;">
-            <div class="recapx-pill"><div class="l">Restant</div><div class="v" id="recap-restant">1500</div><div class="u">kcal</div></div>
+            <div class="recapx-pill"><div class="l" id="recap-restant-lbl">Restant</div><div class="v" id="recap-restant">1500</div><div class="u">kcal</div></div>
             <div class="recapx-pill"><div class="l">Repas</div><div class="v" id="recap-nb">0</div><div class="u">pris</div></div>
           </div>
           <div id="recap-macros"></div>
@@ -1525,7 +1525,9 @@ _auth.onAuthStateChanged(async user=>{
 
 // ==================== UTILITAIRES ====================
 const TAILLE = 1.61;
-const KCAL_OBJ = 1500;
+// Objectif calorique : désormais PROPRE À CHAQUE PROFIL (voir PROFILES.objCal / getKcalObj()).
+// Sandra doit PRENDRE du poids (objectif = minimum à atteindre) ; Jean-Michel doit en PERDRE
+// (objectif = plafond à ne pas dépasser). Un seul chiffre ne pouvait pas convenir aux deux.
 const PROT_OBJ  = 70;
 const GLUC_OBJ  = 180;
 const LIP_OBJ   = 55;
@@ -1572,14 +1574,22 @@ function showPage(id) {
 
 // ==================== POIDS ====================
 /* ===== PROFILS (poids + journal privés par profil ; recettes/aliments communs) ===== */
+// objCal = objectif calorique quotidien ; gain=true → on cherche à PRENDRE du poids
+// (objectif = minimum à atteindre), gain=false → à en PERDRE (objectif = plafond).
+// ⚠️ Ces chiffres kcal sont des points de départ raisonnables — à valider/ajuster avec
+//    le médecin ou la nutritionniste.
 const PROFILES = [
-  { id:'sandra',     name:'Sandra',      taille:1.61, objDef:46, prefix:'sandra_' },
-  { id:'jeanmichel', name:'Jean-Michel', taille:1.78, objDef:84, prefix:'jeanmichel_' },
-  { id:'levana',     name:'Lévana',      taille:1.65, objDef:50, prefix:'levana_' }
+  { id:'sandra',     name:'Sandra',      taille:1.61, objDef:46, objCal:1800, gain:true,  prefix:'sandra_' },
+  { id:'jeanmichel', name:'Jean-Michel', taille:1.78, objDef:75, objCal:1800, gain:false, prefix:'jeanmichel_' },
+  { id:'levana',     name:'Lévana',      taille:1.65, objDef:50, objCal:1500, gain:false, prefix:'levana_' }
 ];
 function getProfileId(){ return localStorage.getItem('coach_profile') || 'sandra'; }
 function setProfileId(id){ localStorage.setItem('coach_profile', id); }
 function curProfile(){ return PROFILES.find(p=>p.id===getProfileId()) || PROFILES[0]; }
+// Objectif calorique du profil courant (défaut 1500 si non défini)
+function getKcalObj(){ const o=curProfile().objCal; return (o&&o>0)?o:1500; }
+// true si le profil vise une PRISE de poids (objectif kcal = minimum à atteindre)
+function isGainMode(){ return !!curProfile().gain; }
 // Clés privées dynamiques. Sandra conserve EXACTEMENT ses clés historiques (sandra_poids…)
 function W_KEY(){ return curProfile().prefix + 'poids'; }
 function O_KEY(){ return curProfile().prefix + 'objectif'; }
@@ -1833,7 +1843,7 @@ const SANDRA_INGREDIENTS_DEFAULT = [
   {id:14, nom:"Tomate",            cat:"legumes",    kcal:18,  prot:0.9,  gluc:2.9, lip:0.2,  fibres:1.2},
   {id:15, nom:"Poivron",           cat:"legumes",    kcal:26,  prot:1,    gluc:4.6, lip:0.3,  fibres:2},
   {id:16, nom:"Courgette",         cat:"legumes",    kcal:17,  prot:1.2,  gluc:2.1, lip:0.3,  fibres:1.1},
-  {id:17, nom:"Carotte",           cat:"legumes",    kcal:41,  prot:0.9,  gluc:7,   lip:0.2,  fibres:2.8},
+  {id:17, nom:"Carotte",          cat:"legumes",    kcal:41,  prot:0.9,  gluc:7,   lip:0.2,  fibres:2.8},
   {id:18, nom:"Céleri rave",       cat:"legumes",    kcal:42,  prot:1.5,  gluc:7,   lip:0.3,  fibres:1.8},
   {id:19, nom:"Fenouil",           cat:"legumes",    kcal:31,  prot:1.2,  gluc:4,   lip:0.2,  fibres:3.1},
   {id:20, nom:"Haricots verts",    cat:"legumes",    kcal:31,  prot:1.8,  gluc:4,   lip:0.2,  fibres:3},
@@ -2471,10 +2481,24 @@ function renderDayRecap(){
   const kcal=Math.round(tot.kcal);
   const kc=document.getElementById('recap-kcal'); if(kc) kc.textContent=kcal;
   // anneau : circonférence 2*pi*36 ≈ 226
-  const C=276, pct=Math.min(1, KCAL_OBJ? kcal/KCAL_OBJ : 0);
+  const OBJ=getKcalObj(), gain=isGainMode();
+  const C=276, pct=Math.min(1, OBJ? kcal/OBJ : 0);
   const ring=document.getElementById('recap-ring'); if(ring) ring.style.strokeDashoffset = C*(1-pct);
-  const rest=Math.max(0, KCAL_OBJ-kcal);
-  const rr=document.getElementById('recap-restant'); if(rr) rr.textContent=rest;
+  // label "/XXXX kcal" sous l'anneau
+  const ol=document.getElementById('recap-obj-lbl'); if(ol) ol.textContent='/'+OBJ+' kcal';
+  // Sens de lecture OPPOSÉ selon le profil :
+  //  - prise (Sandra) : objectif = minimum à ATTEINDRE → "Encore X" à manger, "✅" une fois atteint
+  //  - perte (Jean-Michel) : objectif = plafond à NE PAS dépasser → "Restant X", "+X" en rouge si dépassé
+  const diff=OBJ-kcal;  // >0 = encore sous l'objectif
+  const rr=document.getElementById('recap-restant');
+  const rl=document.getElementById('recap-restant-lbl');
+  if(gain){
+    if(rl) rl.textContent = diff>0 ? 'Encore' : 'Atteint';
+    if(rr){ rr.textContent = diff>0 ? Math.round(diff) : '✅'; rr.style.color=''; }
+  } else {
+    if(rl) rl.textContent = diff>=0 ? 'Restant' : 'De trop';
+    if(rr){ rr.textContent = diff>=0 ? Math.round(diff) : ('+'+Math.round(-diff)); rr.style.color = diff>=0 ? '' : '#b3433f'; }
+  }
   const nb=document.getElementById('recap-nb'); if(nb) nb.textContent=items.length;
   const macros=[
     {lbl:'Protéines', emoji:'💪', val:tot.prot, obj:PROT_OBJ, col:'#a8e6cf'},
@@ -4757,7 +4781,8 @@ function copierSeanceClaudeBtn() {
     const rep=document.getElementById(`res-rep-${idx}`)?.value||e.reps;
     return `• ${e.nom} : ${ser}×${rep} à ${chg}kg`;
   }).join('\n');
-  const texte=`Analyse ma séance "${sea.titre}" :\n\n${exos}\n\nHomme 58 ans, 84kg objectif 75kg, artère 40%, ménisque, L2-L3-L4. Objectif : silhouette, traction, padel.\n\nDonne-moi : score /10, points positifs, points d'amélioration, conseil pour la prochaine séance.`;
+  const _w=loadWeights(); const _cur=_w.length?Math.round(_w[_w.length-1].poids):85; const _obj=getObjectif();
+  const texte=`Analyse ma séance "${sea.titre}" :\n\n${exos}\n\nHomme 58 ans, ${_cur}kg objectif ${_obj}kg, artère 40%, ménisque, L5-L6. Objectif : silhouette, traction, padel.\n\nDonne-moi : score /10, points positifs, points d'amélioration, conseil pour la prochaine séance.`;
   navigator.clipboard.writeText(texte).then(()=>showToast('📋 Copié !')).catch(()=>prompt('Copie :',texte));
 }
 /* =============== FIN MODULE SPORT =============== */
@@ -4778,30 +4803,30 @@ if ('serviceWorker' in navigator) {
 /* ===== CONTENU FIXE (non modifiable) ===== */
 const CATS=[{key:'dos',e:'🎯',n:'Dos / Tractions'},{key:'jambes',e:'🦵',n:'Jambes'},{key:'souplesse',e:'🧘',n:'Souplesse'},{key:'mobilite',e:'🤸',n:'Mobilité'},{key:'gainage',e:'🔥',n:'Gainage'},{key:'cardio',e:'🚴',n:'Cardio'},{key:'rotation',e:'⛳',n:'Rotation'},{key:'pecs',e:'🏋️',n:'Pectoraux'}];
 const EXOS=[
- {id:1,nom:'Suspension à la barre',cat:'dos',emoji:'🧗',desc:'Pendu à la barre, épaules engagées.',phases:[{label:'Tenir 15 s',presc:'3 séries · repos 60 s',crit:'15 s sur 3 séries'},{label:'Tenir 30 s',presc:'3 séries',crit:'30 s'},{label:'Tenir 45 s',presc:'3 séries',crit:'45 s'},{label:'Tenir 60 s',presc:'3 séries',crit:'60 s'}]},
- {id:2,nom:'Tractions négatives',cat:'dos',emoji:'⬇️',desc:'Descente lente depuis le haut.',phases:[{label:'Descente 4 s',presc:'3 × 3',crit:'3×3'},{label:'Descente 5 s',presc:'4 × 4',crit:'4×4'},{label:'Descente 8-10 s',presc:'3 × 3',crit:'lente'}]},
+ {id:1,nom:'Suspension à la barre',cat:'dos',emoji:'🧗',desc:'Pendu à la barre, bras tendus, ÉPAULES ENGAGÉES (pas pendu mort : abaisse et serre les omoplates) — et tu respires normalement, jamais en apnée. Bonus pour toi : la barre met la colonne en traction → soulage la compression L5-L6. 🎯 Repère de niveau : 30 s = correct · 60 s = solide (grip béton) · 90 s+ = grip de grimpeur.',phases:[{label:'Tenir 15 s',presc:'3 séries · repos 60 s · épaules engagées',crit:'15 s sur 3 séries → on vise 30 s'},{label:'Tenir 30 s · Correct',presc:'3 séries · respiration libre',crit:'30 s'},{label:'Tenir 45 s',presc:'3 séries',crit:'45 s'},{label:'Tenir 60 s · Solide 🎯',presc:'3 séries',crit:'60 s — grip solide, plus jamais un facteur limitant'},{label:'Tenir 90 s · Grip de grimpeur 💪',presc:'2-3 séries',crit:'90 s — endurance de poigne au top'}]},
+ {id:2,nom:'Tractions négatives',cat:'dos',emoji:'⬇️',desc:'Hisse-toi en haut (saut ou marche), menton au-dessus de la barre, puis DESCENDS le plus lentement possible — c\'est la phase où tu es le plus fort, donc celle qui construit ta traction. Épaules engagées, tu souffles à la descente (jamais en apnée), et tu contrôles JUSQU\'EN BAS (pas de lâcher sec). À travailler en parallèle de la suspension. 🎯 Une descente de 10 s parfaitement maîtrisée = tu as la force pour ta 1ʳᵉ traction, il ne manque que la montée.',phases:[{label:'Descente 3-4 s',presc:'3 × 3 · repos 90 s',crit:'descente contrôlée → on ralentit'},{label:'Descente 5-6 s',presc:'3 × 4',crit:'4 reps régulières'},{label:'Descente 8-10 s · Maîtrise 🎯',presc:'3 × 5 · contrôlé jusqu\'en bas',crit:'10 s nets → tente une traction complète !'}]},
  {id:3,nom:'Traction assistée (machine)',cat:'dos',emoji:'🏋️',desc:'Machine \u00e0 tractions assist\u00e9es : le poids s\u00e9lectionn\u00e9 = l\'aide (contrepoids qui te soul\u00e8ve). Plus de kg = plus facile. On commence vers 50 kg d\'aide et on descend par paliers de 10 kg jusqu\'\u00e0 0 = traction libre. Tu souffles \u00e0 la mont\u00e9e, jamais en apn\u00e9e.',phases:[{label:'50 kg d\'aide',presc:'3 \u00d7 5 \u00b7 d\u00e9part',crit:'3\u00d75 propres \u2192 r\u00e9duire l\'aide de 10 kg'},{label:'40 kg d\'aide',presc:'3 \u00d7 5',crit:'3\u00d75 propres \u2192 r\u00e9duire'},{label:'30 kg d\'aide',presc:'3 \u00d7 5',crit:'3\u00d75 propres \u2192 r\u00e9duire'},{label:'20 kg d\'aide',presc:'3 \u00d7 4',crit:'3\u00d74 propres \u2192 r\u00e9duire'},{label:'10 kg d\'aide',presc:'3 \u00d7 3',crit:'3\u00d73 propres \u2192 presque libre'},{label:'Traction libre (0 kg)',presc:'tente 1 r\u00e9p\u00e9tition',crit:'1 traction compl\u00e8te = objectif atteint \ud83c\udf89'}]},
  {id:4,nom:'Tirage vertical',cat:'dos',emoji:'🪢',desc:'Poulie haute, barre tir\u00e9e vers le haut de la poitrine, dos l\u00e9g\u00e8rement gain\u00e9. Tu souffles en tirant, jamais en apn\u00e9e. On monte le poids quand le geste reste propre, sans forcer en fin de s\u00e9rie.',phases:[{label:'25 kg',presc:'3 \u00d7 12',crit:'3\u00d712 propres en soufflant \u2192 +5 kg'},{label:'30 kg',presc:'3 \u00d7 10',crit:'3\u00d710 propres \u2192 +5 kg'},{label:'35 kg',presc:'3 \u00d7 10',crit:'3\u00d710 propres \u2192 +5 kg'},{label:'40 kg',presc:'3 \u00d7 10',crit:'3\u00d710 propres \u2192 +5 kg'},{label:'45 kg',presc:'3 \u00d7 8',crit:'3\u00d78 propres \u2192 +5 kg'},{label:'50 kg',presc:'3 \u00d7 8',crit:'3\u00d78 propres \u2192 +5 kg'}]},
  {id:5,nom:'Tirage horizontal',cat:'dos',emoji:'↔️',desc:'Rowing assis \u00e0 la poulie : tire vers le nombril, dos droit et gain\u00e9, \u00e9paules basses. Tu souffles en tirant. On monte le poids quand c\'est fluide, sans \u00e0-coups ni \u00e9chec.',phases:[{label:'20 kg',presc:'3 \u00d7 12',crit:'3\u00d712 propres en soufflant \u2192 +5 kg'},{label:'25 kg',presc:'3 \u00d7 12',crit:'3\u00d712 propres \u2192 +5 kg'},{label:'30 kg',presc:'3 \u00d7 10',crit:'3\u00d710 propres \u2192 +5 kg'},{label:'35 kg',presc:'3 \u00d7 10',crit:'3\u00d710 propres \u2192 +5 kg'},{label:'40 kg',presc:'3 \u00d7 10',crit:'3\u00d710 propres \u2192 +5 kg'},{label:'45 kg',presc:'3 \u00d7 8',crit:'3\u00d78 propres \u2192 +5 kg'}]},
  {id:8,nom:'\u00c9tirement ischios (jambes au mur)',cat:'souplesse',emoji:'\ud83e\uddd8',desc:'Allong\u00e9 sur le dos, fesses vers le mur, jambes qui montent le long du mur, le plus tendues possible. Le bas du dos reste pos\u00e9 et d\u00e9tendu au sol \u2192 impossible de l\'arrondir. La progression : rapprocher les fesses du mur (plus pr\u00e8s = plus \u00e7a tire derri\u00e8re les cuisses). Si tu es trop raide, commence un peu plus loin du mur et rapproche-toi au fil des semaines. Tension douce, jamais de douleur, tu souffles. \u00c7a se tient longtemps (1 \u00e0 2 min).',phases:[{label:'Loin du mur',presc:'1 \u00e0 2 min',crit:'jambes tendues, dos d\u00e9tendu \u2192 se rapprocher'},{label:'\u00c0 mi-distance',presc:'1 \u00e0 2 min',crit:'gagne en amplitude'},{label:'Fesses au mur',presc:'1 \u00e0 2 min',crit:'fesses contre le mur, jambes bien tendues'}]},
  {id:9,nom:'Ouverture \u00e9paules (b\u00e2ton)',cat:'souplesse',emoji:'\ud83e\uddaf',desc:'Mobilit\u00e9 active des \u00e9paules au b\u00e2ton (manche \u00e0 balai). Mains TR\u00c8S \u00e9cart\u00e9es, bras tendus, tu passes le b\u00e2ton de devant vers l\'arri\u00e8re au-dessus de la t\u00eate puis tu reviens. Coudes tendus tout du long (si \u00e7a bloque, \u00e9carte encore les mains). Tu souffles sur le mouvement et tu ne cambres pas le bas du dos. \u00c0 faire en \u00e9chauffement avant le dos/tractions.',consigne:'8 \u00e0 10 passages lents \u00b7 1 \u00e0 2 s\u00e9ries',phases:[{label:'Mains larges',presc:'8-10 passages',crit:'fluide \u2192 rapprocher un peu les mains'},{label:'Mains plus serr\u00e9es',presc:'8-10 passages',crit:'amplitude compl\u00e8te sans plier les coudes'}]},
  {id:10,nom:'Chat-vache',cat:'souplesse',emoji:'🐱',desc:'À quatre pattes (mains sous les épaules, genoux sous les hanches). Souffle en arrondissant le dos vers le plafond (dos rond = le chat), puis inspire en creusant doucement le dos, tête et fessiers vers le haut (dos creux = la vache). Enchaîne lentement, au rythme de ta respiration.',consigne:'8 à 10 mouvements lents · 1 à 2 séries (1 mouvement = 1 dos rond + 1 dos creux)',phases:[]},
- {id:12,nom:'Pompes',cat:'pecs',emoji:'🤜',desc:'Corps gainé, on descend la poitrine, on souffle à la remontée. Travaille pectoraux et triceps. Défi : 100 pompes en une série — par paliers, avec des séries sous-maximales (jamais à l\'échec, jamais en apnée).',phases:[{label:'5 pompes en 1 série',presc:'4-5 séries sous-maximales (3-4 reps) · souffler à la montée · repos 60-90 s',crit:'test : 5 d\'affilée, propres'},{label:'8 en 1 série',presc:'séries sous-maximales · jamais à l\'échec',crit:'test : 8 d\'affilée'},{label:'12 en 1 série',presc:'volume progressif',crit:'test : 12 d\'affilée'},{label:'20 en 1 série',presc:'volume progressif',crit:'test : 20 d\'affilée'},{label:'30 en 1 série',presc:'volume progressif',crit:'test : 30 d\'affilée'},{label:'40 en 1 série',presc:'volume progressif',crit:'test : 40 d\'affilée'},{label:'50 en 1 série',presc:'volume progressif',crit:'test : 50 d\'affilée'},{label:'60 en 1 série',presc:'volume progressif',crit:'test : 60 d\'affilée'},{label:'70 en 1 série',presc:'volume progressif',crit:'test : 70 d\'affilée'},{label:'80 en 1 série',presc:'volume progressif',crit:'test : 80 d\'affilée'},{label:'90 en 1 série',presc:'volume progressif',crit:'test : 90 d\'affilée'},{label:'100 en 1 série',presc:'volume progressif',crit:'objectif atteint 🎯'}]},
+ {id:12,nom:'Pompes',cat:'pecs',emoji:'🤜',desc:'Corps gainé, on descend la poitrine, on souffle à la remontée. Travaille pectoraux et triceps — complément « poussée » de tes tractions.',consigne:'3 × 8-12 · tronc verrouillé (fesses + abdos), côtes basses · souffler à la montée, jamais à l\'échec · inclinées (mains surélevées) si besoin.',phases:[]},
  {id:13,nom:'Hanches 90/90',cat:'mobilite',emoji:'\ud83e\udd38',desc:'Assis au sol, les DEUX genoux pli\u00e9s \u00e0 angle droit : tibia de la jambe avant pos\u00e9 devant toi (hanche en rotation externe), jambe arri\u00e8re sur le c\u00f4t\u00e9 genou pli\u00e9 \u00e0 90\u00b0 (rotation interne). Dos droit. Penche-toi doucement au-dessus du tibia avant pour accentuer, puis change de c\u00f4t\u00e9. Mobilit\u00e9 douce, jamais de douleur, tu souffles. Aucune jambe n\'est tendue.',consigne:'8 \u00e0 10 mouvements lents par c\u00f4t\u00e9 \u00b7 1 \u00e0 2 s\u00e9ries',phases:[{label:'Amplitude douce',presc:'2 \u00d7 8 / c\u00f4t\u00e9',crit:'sans douleur \u2192 aller plus loin'},{label:'Amplitude compl\u00e8te',presc:'3 \u00d7 10 / c\u00f4t\u00e9',crit:'hanches mobiles dans les deux sens'}]},
  {id:14,nom:'Rotation thoracique',cat:'mobilite',emoji:'🔄',desc:'Ouvre le coude vers le plafond.',consigne:'10 par côté · 1 à 2 séries',phases:[{label:'10/côté',presc:'2 séries',crit:'fluide'},{label:'15/côté',presc:'3 séries',crit:'gagnée'}]},
  {id:15,nom:'Gainage planche',cat:'gainage',emoji:'🔥',desc:'Corps aligné, dos neutre.',phases:[{label:'20 s',presc:'3 séries',crit:'20 s'},{label:'40 s',presc:'3 séries',crit:'40 s'}]},
- {id:16,nom:'Gainage anti-rotation',cat:'gainage',emoji:'🪵',desc:'Anti-rotation, version chien d\'arr\u00eat (bird-dog) — idéale pour ton dos. À quatre pattes, tends EN MÊME TEMPS un bras devant et la jambe OPPOSÉE derrière, bien à l\'horizontale, en gardant le bassin et les épaules à plat — sans laisser le corps pencher ni tourner. C\'est cette r\u00e9sistance à la rotation qui muscle les abdos profonds et stabilise le bas du dos. Tiens la position, puis change de côté. Lent, contrôlé, tu souffles. (Variante élastique : Pallof press.)',phases:[{label:'Court',presc:'3 × 10 s',crit:'fixe'},{label:'Long',presc:'3 × 20 s',crit:'stable'}]},
- {id:17,nom:'Vélo',cat:'cardio',emoji:'🚴',desc:'Cardio faible impact, doux pour les genoux.',consigne:'5 min · intensité douce (échauffement / retour au calme)',phases:[{label:'15 min',presc:'modéré',crit:'à l\'aise'},{label:'25 min',presc:'modéré',crit:'+'}]},
+ {id:16,nom:'Gainage anti-rotation',cat:'gainage',emoji:'🪵',desc:'Anti-rotation, version chien d\'arr\u00eat (bird-dog) — idéale pour ton dos. À quatre pattes, tends EN MÊME TEMPS un bras devant et la jambe OPPOSÉE derrière, bien à l\'horizontale, en gardant le bassin et les épaules à plat — sans laisser le corps pencher ni tourner. C\'est cette r\u00e9sistance à la rotation qui muscle les abdos profonds et stabilise le bas du dos. Lent, contrôlé, tu souffles. Le but n\'est PAS de tenir longtemps, mais de ne JAMAIS faire tourner le bassin. (Variante élastique : Pallof press.)',phases:[{label:'Stabilité',presc:'3 × 8 / côté · 2-3 s en haut',crit:'bassin à l\'horizontale, zéro rotation (test du verre d\'eau sur le bas du dos)'},{label:'Tempo lent',presc:'3 × 8 / côté · 3 s pour tendre, 3 s retour',crit:'colonne neutre, aucun affaissement'},{label:'Dynamique coude-genou',presc:'3 × 8 / côté · ramener le coude vers le genou sous le corps puis re-tendre',crit:'8 reps propres sans bouger le bassin'}]},
+ {id:17,nom:'Vélo (fractionné)',cat:'cardio',emoji:'🚴',desc:'Ta machine à HIIT. Sur vélo : genou + dos protégés, mais le cœur, lui, tu peux le mettre dans le rouge — ton cardiologue t\'a donné le feu vert TOTAL. Toujours 10 min d\'échauffement progressif avant, 5 min de récup souple après. Tu pousses FORT sur l\'effort, tu pédales souple sur la récup. 🎯 Le 4×4 norvégien est le roi pour faire exploser ton plafond cardio — c\'est LUI, ton « tenir longtemps ».',phases:[{label:'30/30 · 8 reps',presc:'éch. 10 min, puis 8 × (30 s FORT / 30 s souple)',crit:'8 reps, la dernière aussi forte que la 1ʳᵉ → +2 reps'},{label:'1/1 · 10 reps',presc:'10 × (1 min vif / 1 min souple)',crit:'10 reps tenues → passe au 4×4'},{label:'4×4 Norvégien 🎯',presc:'4 × (4 min à 90-95 % FCmax / 3 min souple)',crit:'4 blocs à intensité constante = VO2max qui grimpe'},{label:'Sprints 30 s × 6 (Wingate) 💪',presc:'6 × (30 s À FOND / 3-4 min récup complète)',crit:'puissance max — séance de brute'}]},
  {id:18,nom:'Swing golf à vide',cat:'rotation',emoji:'⛳',desc:'Swing sans club.',phases:[{label:'Demi',presc:'2 × 10',crit:'contrôlé'},{label:'Complet',presc:'3 × 10',crit:'fluide'}]},
- {id:19,nom:'Marche rapide',cat:'cardio',emoji:'🚶',desc:'Cardio doux sans impact.',consigne:'5 à 10 min · allure soutenue',phases:[{label:'10 min',presc:'soutenue',crit:'à l\'aise'},{label:'20 min',presc:'soutenue',crit:'+'}]},
- {id:20,nom:'Elliptique',cat:'cardio',emoji:'🏃',desc:'Cardio fluide, zéro impact.',consigne:'5 min · allure douce',phases:[{label:'10 min',presc:'moyenne',crit:'ok'},{label:'20 min',presc:'moyenne',crit:'+'}]},
- {id:22,nom:'Presse à cuisses',cat:'jambes',emoji:'🦿',desc:'Gros muscles jambes/fessiers sans flexion profonde du genou. Amplitude contrôlée.',phases:[{label:'Légère',presc:'3 × 12 · amplitude réduite',crit:'12 sans gêne'},{label:'Moyenne',presc:'3 × 12',crit:'12'},{label:'Soutenue',presc:'4 × 10',crit:'4×10'}]},
- {id:23,nom:'Footing',cat:'cardio',emoji:'🏃',desc:'Course tranquille en extérieur.',consigne:'15 à 20 min · allure conversation (tu peux parler)',phases:[{label:'20 min',presc:'allure conversation',crit:'à l\'aise'},{label:'30 min',presc:'allure conversation',crit:'+'}]},
+ {id:19,nom:'Marche rapide',cat:'cardio',emoji:'🚶',desc:'Cardio sans impact, parfait pour la dépense et le cœur. Bras actifs, allure soutenue. 🎯 Sur tapis, ajoute de la pente pour intensifier sans courir.',phases:[{label:'15 min',presc:'allure soutenue · Zone 2',crit:'à l\'aise → +10 min'},{label:'30 min',presc:'soutenue',crit:'à l\'aise → ajoute de la pente'},{label:'30 min + pente 6 %',presc:'tapis incliné',crit:'30 min tenus, FC maîtrisée'}]},
+ {id:20,nom:'Elliptique',cat:'cardio',emoji:'🌀',desc:'Cardio fluide, zéro impact (genou + dos tranquilles). Tu souffles. 🎯 Idéal pour la Zone 2 longue. Repère : 40 min en aisance = bon moteur.',phases:[{label:'15 min Zone 2',presc:'tu peux parler',crit:'à l\'aise → +10 min'},{label:'25 min Zone 2',presc:'continu',crit:'à l\'aise → +15 min'},{label:'40 min Zone 2 🎯',presc:'continu',crit:'40 min en aisance'}]},
+ {id:22,nom:'Presse à cuisses',cat:'jambes',emoji:'🦿',desc:'Quadriceps + fessiers, sans charge sur le dos (parfait pour toi). ⚠️ Amplitude 90° max (genou à angle droit, pas plus) — protège le ménisque. On souffle à la poussée, jamais en apnée ni à l\'échec. 🎯 Repère compétiteur (× ton poids de corps, ~85 kg) : 1× = solide · 1,5× = costaud · 2× = niveau athlète. Adapte les kg exacts à ta machine.',phases:[{label:'Découverte · 60 kg',presc:'3 × 12 · amplitude 90° contrôlée',crit:'12 reps sans gêne au genou → +15 kg'},{label:'Ton poids · 85 kg (1×)',presc:'3 × 12 · 90°, jamais à l\'échec',crit:'pousser ton poids de corps en contrôle → +15 kg'},{label:'Costaud · 130 kg (1,5×)',presc:'3 × 10 · contrôlé, on souffle',crit:'3×10 propres, genou OK → +20 kg'},{label:'Compétiteur · 170 kg (2×)',presc:'4 × 8 · contrôlé',crit:'2× ton poids de corps = niveau athlète 🎯'}]},
+ {id:23,nom:'Rameur',cat:'cardio',emoji:'🚣',desc:'Cardio complet, zéro impact (genou tranquille). ⚠️ DOS DROIT en permanence, jamais arrondi — la poussée vient des JAMBES, pas du dos. Tu souffles, jamais en apnée. Parfait pour les intervalles. 🎯 Repère : 20 min en continu Zone 2 = bonne base.',phases:[{label:'Découverte · 8 min',presc:'technique d\'abord · dos droit',crit:'geste propre → +4 min'},{label:'12 min Zone 2',presc:'allure conversation',crit:'à l\'aise → +4 min'},{label:'16 min Zone 2',presc:'continu',crit:'à l\'aise → +4 min'},{label:'20 min Zone 2 🎯',presc:'continu',crit:'20 min, dos droit, FC maîtrisée'},{label:'Intervalles',presc:'4-5 × (1 min soutenu / 2 min facile)',crit:'soutenu mais je peux parler — feu vert cardiologue'}]},
  {id:24,nom:'Padel (match)',cat:'rotation',emoji:'🎾',desc:'Match entre copains.',consigne:'Match ou practice · à ton rythme',phases:[]},
  {id:25,nom:'Golf (parcours)',cat:'rotation',emoji:'⛳',desc:'Parcours ou practice.',consigne:'Parcours ou practice · à ton rythme',phases:[]},
  {id:26,nom:'Rotation buste à genou (mur)',cat:'mobilite',emoji:'🌀',desc:'À genou (ou assis) près d\'un mur, tourne le buste et tends la main vers le mur derrière toi. On mesure la distance main-mur, des deux côtés.',phases:[{label:'Main à ~30 cm du mur',presc:'3 × 5 lentes / côté',crit:'30 cm à gauche ET à droite'},{label:'Main à ~20 cm',presc:'3 × 5 / côté',crit:'20 cm G + D'},{label:'Main à ~10 cm',presc:'3 × 5 / côté',crit:'10 cm G + D'},{label:'La main touche le mur',presc:'3 × 5 / côté',crit:'contact G + D'}]},
  {id:27,nom:'Rotation dos à quatre pattes',cat:'mobilite',emoji:'🐈',desc:'À quatre pattes, ouvre le bras vers le plafond puis passe-le sous le corps. Réveille le haut du dos. Exercice d\'entretien, sans mesure.',consigne:'8 à 10 par côté · 1 à 2 séries',phases:[]},
- {id:28,nom:'Course (tapis)',cat:'cardio',emoji:'🏃',desc:'Reprise en douceur après une pause (dos/genou) : on alterne course et marche, puis on allonge la course jusqu\'à 30 min continus à 8 km/h — et seulement après, on monte l\'allure jusqu\'à 12. Tapis pour caler l\'allure, montre pour la fréquence cardiaque. On passe un palier quand il se fait en aisance, FC maîtrisée, sans forcer le genou ni le dos.',phases:[{label:'1′ course / 1′ marche × 10',presc:'20 min · 8 km/h · tapis · montre FC',crit:'fini en aisance, FC maîtrisée, ×2 séances'},{label:'2′ course / 1′ marche',presc:'~21 min · 8 km/h',crit:'idem, en aisance ×2'},{label:'5′ course / 1′ marche',presc:'~24 min · 8 km/h',crit:'idem'},{label:'10′ course / 1′ marche',presc:'~30 min · 8 km/h',crit:'idem'},{label:'30 min course continue',presc:'8 km/h · sans marche',crit:'30 min d\'affilée, à l\'aise'},{label:'30 min à 8,5 km/h',presc:'30 min continu',crit:'30 min en aisance'},{label:'30 min à 9 km/h',presc:'30 min continu',crit:'idem'},{label:'30 min à 9,5 km/h',presc:'30 min continu',crit:'idem'},{label:'30 min à 10 km/h',presc:'30 min continu',crit:'idem'},{label:'30 min à 10,5 km/h',presc:'30 min continu',crit:'idem'},{label:'30 min à 11 km/h',presc:'30 min continu',crit:'idem'},{label:'30 min à 11,5 km/h',presc:'30 min continu',crit:'idem'},{label:'30 min à 12 km/h',presc:'30 min continu',crit:'objectif atteint 🎯'}]},
+ {id:28,nom:'Marche en pente (tapis)',cat:'cardio',emoji:'⛰️',desc:'Le substitut SÛR de la course : marche à 6 km/h en montant la PENTE — autant de cardio qu\'un footing, mais impact quasi nul (genou + dos protégés). Respire régulièrement, jamais en apnée. 🎯 Ton chiffre qui monte = le % de pente. Repère : 10 % à 6 km/h = bon moteur · 14 % = costaud.',phases:[{label:'Pente 4 % · 6 km/h',presc:'20-30 min · Zone 2 (tu peux parler)',crit:'fini à l\'aise → +2 %'},{label:'Pente 6 %',presc:'25-30 min · Zone 2',crit:'à l\'aise, FC maîtrisée → +2 %'},{label:'Pente 8 %',presc:'30 min · Zone 2',crit:'à l\'aise → +2 %'},{label:'Pente 10 % · Bon moteur 🎯',presc:'30 min',crit:'30 min tenus → +2 %'},{label:'Pente 12 %',presc:'30 min',crit:'à l\'aise → +2 %'},{label:'Pente 14 % · Costaud 💪',presc:'30 min',crit:'endurance au top, sans courir'}]},
  {id:29,nom:'Étirement fléchisseurs de hanche',cat:'souplesse',emoji:'🧎',desc:'En demi-agenouillé (coussin sous le genou), rentre le bassin et avance doucement : tu sens l\'avant de la hanche s\'étirer. Relâche le bas du dos. Quand les fléchisseurs sont raides, ils tirent sur les lombaires — d\'où l\'intérêt pour ton dos.',consigne:'2 à 3 fois 30 secondes par côté',phases:[]},
  {id:30,nom:'Étirement fessiers / piriforme',cat:'souplesse',emoji:'🪑',desc:'Assis ou allongé, ramène un genou vers l\'épaule opposée pour étirer le fessier. Soulage le bassin et le bas du dos. En douceur, sans forcer.',consigne:'2 à 3 fois 30 secondes par côté',phases:[]},
  {id:31,nom:'Étirement des mollets (mur)',cat:'souplesse',emoji:'🦵',desc:'Face à un mur, mains posées dessus. Une jambe loin derrière, talon au sol, genou tendu : tu étires le haut du mollet. Puis fléchis légèrement ce même genou (talon toujours au sol) : tu étires le bas du mollet et le tendon. Bassin droit, pas de cambrure, tu souffles. Important pour la course.',consigne:'2 × 30 s par jambe (genou tendu, puis genou fléchi)',phases:[]},
@@ -4812,21 +4837,21 @@ const EXOS=[
 const objs=[
  {id:1,nom:'Faire une traction',emoji:'💪',color:'#e5189c',exos:[1,2,3,4,5]},
  {id:2,nom:'M\'assouplir',emoji:'🧘',color:'#7048e8',exos:[8,9,10,13,26,27,29,30,31,32,33,34]},
- {id:4,nom:'Perdre du poids',emoji:'⚖️',color:'#6b8e23',type:'poids',start:85,current:85,target:75,exos:[17,19,20,22,12,15,5,23]},
- {id:5,nom:'Courir à 12 km/h',emoji:'🏃',color:'#0c8599',exos:[28]},
- {id:6,nom:'Défi pompes',emoji:'🤜',color:'#f76707',exos:[12]}
+ {id:4,nom:'Perdre du poids',emoji:'⚖️',color:'#6b8e23',type:'poids',start:85,current:85,target:75,exos:[17,19,20,22,12,15,5]},
+ {id:5,nom:'Padel — classé 1000',emoji:'🎾',color:'#0c8599',exos:[14,13,16,26,22,9,20,24]},
+ {id:6,nom:'Golf — index 10',emoji:'⛳',color:'#c2641e',exos:[14,13,18,16,15,27,19,25]}
 ];
 const seas=[
- {id:101,nom:'Traction (force)',color:'#e63946',exos:[17,10,27,14,1,2,5,4,12,15,9,8,32,19]},
- {id:105,nom:'Renfo & dépense',color:'#2a9d3f',exos:[17,10,27,22,12,5,16,15,8,9,34,33,31,32]},
- {id:103,nom:'Traction (volume)',color:'#3a86ff',exos:[19,10,27,13,1,3,4,5,12,16,9,8,32,20]},
- {id:106,nom:'Sport extérieur',color:'#1a1a1a',exos:[23,17,24,25]},
- {id:107,nom:'Course (endurance)',color:'#00b4d8',exos:[27,13,10,28,15,16,8,29,30,31,34,32,9]},
- {id:108,nom:'Course (fractionné)',color:'#f4c20d',exos:[27,13,10,28,8,29,30,31,34,32,9]}
+ {id:101,nom:'Traction (force)',color:'#e63946',exos:[9,14,10,13,1,2,3,4,5,15,16,8,30,29,32]},
+ {id:105,nom:'Renfo & dépense',color:'#2a9d3f',exos:[10,13,14,22,12,4,5,16,15,8,9,34,33,31,32]},
+ {id:103,nom:'Traction (volume)',color:'#3a86ff',exos:[10,14,13,1,3,4,5,12,16,22,8,34,33,32]},
+ {id:106,nom:'Activité (padel / golf / autre)',color:'#1a1a1a',exos:[24,25]},
+ {id:107,nom:'Cardio Zone 2 (endurance)',color:'#00b4d8',exos:[10,13,28,16,8,30,31,34,32]},
+ {id:108,nom:'Cardio Intervalles',color:'#f4c20d',exos:[10,13,17,16,8,29,30,32]}
 ];
 const prog={};
-const SUIVI=new Set([1,2,3,4,5,8,12,15,16,19,20,22,26,28]); // exercices mesurés (paliers)
-const ACT=new Set([24,25,17,23]); // activités libres (padel, golf, vélo, footing)
+const SUIVI=new Set([1,2,3,4,5,8,15,16,17,19,20,22,23,26,28]); // exercices mesurés (paliers) — pompes (12) retirées : exercice d'entretien, plus un objectif
+const ACT=new Set([24,25]); // activités libres (padel, golf, vélo, footing)
 function isSuivi(id){return SUIVI.has(id);}
 function exoBadge(id){const e=EXOS.find(x=>x.id===id);if(SUIVI.has(id)){const np=(e&&e.phases||[]).length,cur=curPhase(id);return `<span class="badge">Phase ${cur}/${np}</span>`;}if(ACT.has(id))return '<span class="badge" style="color:#9b5de5;background:#f1e9fb;border-color:#d9c4f0;">Activité</span>';return '<span class="badge" style="color:#5a7a8c;background:#eef4f8;border-color:#cfe0ea;">Entretien</span>';}
 /* historique d'exemple (mockup) : début, séances faites, progression chiffrée par exercice */
@@ -4835,7 +4860,7 @@ function weeksSince(isoDate){const[y,m,d]=isoDate.split('-').map(Number);const s
 function fmtStart(isoDate){const[y,m,d]=isoDate.split('-').map(Number);return d+' '+MOIS[m-1]+' '+y;}
 const JOURS=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
 const MOIS=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-let pattern={0:101,1:107,3:105,5:103,6:108}; // semaine type éditable : Lun Traction force · Mar Course endurance · Jeu Renfo · Sam Traction volume · Dim Course fractionné
+let pattern={0:105,1:107,2:101,4:108,5:103,6:106}; // semaine type éditable : Dim Renfo&dépense · Lun Cardio Z2 · Mar Traction force · Mer REPOS · Jeu Cardio Intervalles · Ven Traction volume · Sam Activité
 
 /* ===== PLANNING (seul modifiable) ===== */
 let events=[];   // {id,date:'YYYY-MM-DD',seaId,done?}
@@ -4905,12 +4930,14 @@ function startMove(id){moveMode={evId:id};closeDay();renderCal();renderMoveBar()
 function viewEvent(seaId){closeDay();openSeaById(seaId,'cal');}
 
 /* ---- prochaine séance ---- */
-const MAIN=new Set([1,2,3,4,5,12,15,16,22,26,28]); // cœur de séance (renfo, gainage, course)
-function exoMin(id){if(id===28)return 30;if([17,19,20,23].includes(id))return 5;if([10,13,14,27].includes(id))return 3;if([8,9,29,30].includes(id))return 3;if([15,16].includes(id))return 5;if([24,25].includes(id))return 45;if(id===18)return 4;return 6;}
+const MAIN=new Set([1,2,3,4,5,12,15,16,17,19,20,22,23,26,28]); // cœur de séance (renfo, gainage, course)
+function exoMin(id){if(id===20)return 40;if([17,28].includes(id))return 35;if([19,23].includes(id))return 30;if([24,25].includes(id))return 45;if([10,13,14,18,26,27].includes(id))return 3;if([8,9,29,30,31,32,33,34].includes(id))return 2;if([15,16].includes(id))return 6;return 7;}
 function blockMin(arr){return arr.reduce((t,id)=>t+exoMin(id),0);}
 function seaDuration(s){return blockMin(s.exos);}
+// séance "marqueur" = uniquement des activités libres (padel/golf/autre) → pas de durée, pas un vrai entraînement
+function seaIsActivite(s){return s&&s.exos.length>0&&s.exos.every(id=>ACT.has(id));}
 function splitBlocks(s){const ex=s.exos;let first=-1,last=-1;ex.forEach((id,i)=>{if(MAIN.has(id)){if(first<0)first=i;last=i;}});if(first<0)return{warm:[],corps:ex.slice(),cool:[]};return{warm:ex.slice(0,first),corps:ex.slice(first,last+1),cool:ex.slice(last+1)};}
-function renderToday(){const host=document.getElementById('today');const todayISO=isoOf(new Date());let next=null;const sorted=events.slice().sort((a,b)=>a.date<b.date?-1:1);for(const e of sorted){if(e.date>=todayISO){next=e;break;}}if(!next){host.innerHTML='<div class="card empty-mini">Aucune séance à venir. Touche un jour pour en ajouter.</div>';return;}const s=seaById(next.seaId);const off=next.date===todayISO?'Aujourd\'hui':fmtLong(next.date);const n=s?s.exos.length:0;const isToday=next.date===todayISO;const done=!!logs[next.id];host.innerHTML=`<div class="card" style="background:linear-gradient(150deg,#fff,#fbe9ec);border-color:var(--accent-light);cursor:pointer;" onclick="SP.openSeaById(${s?s.id:0},'cal')"><div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:${s?s.color:'var(--accent)'};">${off} · ~${s?seaDuration(s):0} min</div><div style="font-family:var(--disp);font-weight:800;font-size:23px;margin-top:5px;">📋 ${s?esc(s.nom):'—'}</div><div style="font-size:12.5px;color:var(--muted);margin-top:3px;">${n} exercice${n>1?'s':''} · touche pour voir</div>${s&&s.exos.length?'<div style="margin-top:10px;">'+repBarHTML(s)+'</div>':''}</div>`+(isToday?(done?`<button class="btn-ghost" style="margin-top:10px;" onclick="SP.viewRecap(${next.id})">✅ Séance réalisée — voir le récap</button>`:`<button class="btn-add" style="margin-top:10px;" onclick="SP.startWorkout(${next.id})">▶️ Commencer l'entraînement</button>`):'');}
+function renderToday(){const host=document.getElementById('today');const todayISO=isoOf(new Date());let next=null;const sorted=events.slice().sort((a,b)=>a.date<b.date?-1:1);for(const e of sorted){if(e.date>=todayISO){next=e;break;}}if(!next){host.innerHTML='<div class="card empty-mini">Aucune séance à venir. Touche un jour pour en ajouter.</div>';return;}const s=seaById(next.seaId);const off=next.date===todayISO?'Aujourd\'hui':fmtLong(next.date);const n=s?s.exos.length:0;const isToday=next.date===todayISO;const done=!!logs[next.id];host.innerHTML=`<div class="card" style="background:linear-gradient(150deg,#fff,#fbe9ec);border-color:var(--accent-light);cursor:pointer;" onclick="SP.openSeaById(${s?s.id:0},'cal')"><div style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:${s?s.color:'var(--accent)'};">${off}${!s?'':(seaIsActivite(s)?' · activité libre':' · ~'+seaDuration(s)+' min')}</div><div style="font-family:var(--disp);font-weight:800;font-size:23px;margin-top:5px;">📋 ${s?esc(s.nom):'—'}</div><div style="font-size:12.5px;color:var(--muted);margin-top:3px;">${n} exercice${n>1?'s':''} · touche pour voir</div>${s&&s.exos.length?'<div style="margin-top:10px;">'+repBarHTML(s)+'</div>':''}</div>`+(isToday?(done?`<button class="btn-ghost" style="margin-top:10px;" onclick="SP.viewRecap(${next.id})">✅ Séance réalisée — voir le récap</button>`:`<button class="btn-add" style="margin-top:10px;" onclick="SP.startWorkout(${next.id})">▶️ Commencer l'entraînement</button>`):'');}
 
 /* ---- référence lecture seule ---- */
 function pctOf(o){if(o.type==='poids'){if(o.start===o.target)return 0;return Math.max(0,Math.min(100,Math.round((o.start-o.current)/(o.start-o.target)*100)));}if(!o.exos.length)return 0;let tot=0,d=0;o.exos.forEach(id=>{const e=EXOS.find(x=>x.id===id);const np=(e&&e.phases||[]).length||1;tot+=np;d+=(Math.min(prog[id]||1,np)-1);});return tot?Math.round(d/tot*100):0;}
@@ -4918,7 +4945,7 @@ function exoObjs(id){return objs.filter(o=>o.exos.includes(id));}
 function repartition(s){const acc={};let total=0;const b=splitBlocks(s);const arr=(b.corps&&b.corps.length)?b.corps:s.exos;arr.forEach(id=>{const os=exoObjs(id);if(!os.length)return;const w=exoMin(id);os.forEach(o=>{acc[o.color]=(acc[o.color]||0)+w/os.length;});total+=w;});return{acc,total};}
 function repBarHTML(s){if(!s.exos.length)return '';const{acc,total}=repartition(s);const segs=Object.keys(acc).map(c=>`<i style="width:${Math.round(acc[c]/total*100)}%;background:${c};"></i>`).join('');const leg=objs.filter(o=>acc[o.color]).map(o=>`<span><b style="background:${o.color}"></b>${esc(o.nom)} ${Math.round(acc[o.color]/total*100)}%</span>`).join('');return `<div class="repbar">${segs}</div><div class="repleg">${leg}</div>`;}
 function renderRef(){
-  document.getElementById('ref-seas').innerHTML=seas.map(s=>{const n=s.exos.length;return `<div class="card" style="cursor:pointer;" onclick="SP.openSeaById(${s.id})"><div style="display:flex;align-items:center;gap:13px;"><div style="width:42px;height:42px;border-radius:11px;flex-shrink:0;background:${s.color};display:flex;align-items:center;justify-content:center;font-size:19px;">📋</div><div style="flex:1;min-width:0;"><div class="objname" style="font-size:17px;">${esc(s.nom)}</div><div class="objsub">${n} exercice${n>1?'s':''} · ~${seaDuration(s)} min</div></div><div style="color:var(--muted);font-size:20px;">›</div></div>${n?'<div style="margin-top:10px;">'+repBarHTML(s)+'</div>':''}</div>`;}).join('');
+  document.getElementById('ref-seas').innerHTML=seas.map(s=>{const n=s.exos.length;return `<div class="card" style="cursor:pointer;" onclick="SP.openSeaById(${s.id})"><div style="display:flex;align-items:center;gap:13px;"><div style="width:42px;height:42px;border-radius:11px;flex-shrink:0;background:${s.color};display:flex;align-items:center;justify-content:center;font-size:19px;">📋</div><div style="flex:1;min-width:0;"><div class="objname" style="font-size:17px;">${esc(s.nom)}</div><div class="objsub">${seaIsActivite(s)?'à noter quand tu l\'as fait':n+' exercice'+(n>1?'s':'')+' · ~'+seaDuration(s)+' min'}</div></div><div style="color:var(--muted);font-size:20px;">›</div></div>${n?'<div style="margin-top:10px;">'+repBarHTML(s)+'</div>':''}</div>`;}).join('');
   document.getElementById('ref-objs').innerHTML=objs.map(o=>{const p=pctOf(o),deg=Math.round(p*3.6);const sub=o.type==='poids'?`${o.current} → ${o.target} kg`:`${o.exos.length} exercices`;return `<div class="card objcard" style="cursor:pointer;" onclick="SP.openObjDetail(${o.id})"><div class="ring" style="background:conic-gradient(${o.color} ${deg}deg,#f0dede 0)"><div class="in" style="color:${o.color}">${p}%</div></div><div style="flex:1;min-width:0;"><div class="objname">${esc(o.nom)}</div><div class="objsub">${sub}</div></div><div style="color:var(--muted);font-size:20px;">›</div></div>`;}).join('');
 }
 let curObjD=-1;
@@ -4975,7 +5002,7 @@ let _refTab='objs';
 function refTab(t){_refTab=t;const o=t==='objs';document.getElementById('ref-objs-wrap').style.display=o?'block':'none';document.getElementById('ref-seas-wrap').style.display=o?'none':'block';document.getElementById('tab-objs').classList.toggle('on',o);document.getElementById('tab-seas').classList.toggle('on',!o);}
 function curPhase(id){const e=EXOS.find(x=>x.id===id);const np=(e&&e.phases||[]).length||1;return Math.min(prog[id]||1,np);}
 function renderSea(){const s=seaById(curSea);if(!s){go('ref');return;}document.getElementById('sea-ttl').textContent=s.nom;document.getElementById('sea-rep').innerHTML=s.exos.length?repBarHTML(s):'<div class="empty-mini">—</div>';const b=splitBlocks(s);function row(id){const e=EXOS.find(x=>x.id===id);if(!e)return '';const os=exoObjs(id);const dots=os.map(o=>`<span style="width:8px;height:8px;border-radius:50%;background:${o.color};display:inline-block;margin-left:3px;"></span>`).join('');return `<div class="exo" onclick="SP.openExo(${id})" style="cursor:pointer;"><div class="th">${e.emoji}</div><div class="nm">${esc(e.nom)} ${dots}</div>${exoBadge(id)}</div>`;}function block(title,emoji,arr,color){if(!arr.length)return '';return `<div style="border-left:3px solid ${color};padding-left:11px;margin:14px 0 6px;"><div style="display:flex;align-items:center;justify-content:space-between;margin:0 2px 8px;"><div class="klabel" style="color:${color};">${emoji} ${title}</div><span style="font-size:11.5px;color:var(--muted);font-weight:700;">~${blockMin(arr)} min</span></div>`+arr.map(row).join('')+`</div>`;}document.getElementById('sea-exos').innerHTML=block('Échauffement','🔥',b.warm,'#e8a33d')+block('Corps de la séance','💪',b.corps,'#c0616a')+block('Retour au calme','🧘',b.cool,'#457b9d');}
-function drawType(e){const id=e.id;if([1,2,3,4,5].includes(id))return'pull';if(id===12)return'push';if([15,16].includes(id))return'plank';if(id===10)return'catcow';if([14,18,24,25,26].includes(id))return'twist';if([28,23,19,20].includes(id))return'run';if(id===17)return'bike';if(id===22)return'press';return'stretch';}
+function drawType(e){const id=e.id;if([1,2,3,4,5].includes(id))return'pull';if(id===12)return'push';if([15,16].includes(id))return'plank';if(id===10)return'catcow';if([14,18,24,25,26].includes(id))return'twist';if([19,20].includes(id))return'run';if([17,23].includes(id))return'bike';if(id===22)return'press';return'stretch';}
 var EXOIMG={1:"images/suspension.png"};
 EXOIMG[2]="images/tractions-negatives.png";
 EXOIMG[3]="images/traction-assistee-machine.png";
@@ -5000,6 +5027,7 @@ EXOIMG[28]="images/course-tapis.png";
 EXOIMG[15]="images/gainage-planche.png";
 EXOIMG[19]="images/course-tapis.png";
 EXOIMG[16]="images/gainage-anti-rotation.png";
+EXOIMG[22]="images/presse-cuisses.png";
 function exoArt(e){const A='stroke="#b25a64" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"';const G='stroke="#e3d0d3" stroke-width="3" fill="none" stroke-linecap="round"';const H='fill="#b25a64"';let i='';switch(drawType(e)){
  case'catcow':i=`<text x="44" y="105" text-anchor="middle" font-size="10" fill="#9a8e90" font-family="Georgia,serif" font-style="italic">dos rond</text><text x="126" y="105" text-anchor="middle" font-size="10" fill="#9a8e90" font-family="Georgia,serif" font-style="italic">dos creux</text><line x1="12" y1="90" x2="76" y2="90" ${G}/><path d="M22 62 V88" ${A}/><path d="M36 62 V88" ${A}/><path d="M52 62 V88" ${A}/><path d="M66 62 V88" ${A}/><path d="M16 62 Q44 28 72 62" ${A}/><circle cx="13" cy="60" r="8" ${H}/><path d="M72 62 q10 -1 12 -11" ${A}/><line x1="92" y1="90" x2="156" y2="90" ${G}/><path d="M102 58 V88" ${A}/><path d="M116 58 V88" ${A}/><path d="M138 58 V88" ${A}/><path d="M152 58 V88" ${A}/><path d="M102 58 Q127 84 152 58" ${A}/><circle cx="99" cy="56" r="8" ${H}/><path d="M152 58 q10 2 12 11" ${A}/>`;break;
  case'pull':i=`<line x1="24" y1="22" x2="142" y2="22" ${A}/><path d="M68 22 L72 42" ${A}/><path d="M98 22 L94 42" ${A}/><circle cx="83" cy="50" r="9" ${H}/><path d="M83 59 V84" ${A}/><path d="M83 84 L73 102" ${A}/><path d="M83 84 L93 102" ${A}/>`;break;
@@ -5083,7 +5111,7 @@ function spWireWeight(){try{
 window.spInit=function(){
   spWireWeight();
   var had=spLoad();
-  if(!had||_loadedSeedV!==SPSEEDV){events=[];logs={};_eid=1;pattern={0:101,1:107,3:105,5:103,6:108};var now=new Date();seedMonth(now.getFullYear(),now.getMonth());var nx=new Date(now.getFullYear(),now.getMonth()+1,1);seedMonth(nx.getFullYear(),nx.getMonth());var _t=isoOf(new Date());events=events.filter(function(e){return e.date>_t;});_loadedSeedV=SPSEEDV;spSave();}
+  if(!had||_loadedSeedV!==SPSEEDV){events=[];logs={};_eid=1;pattern={0:105,1:107,2:101,4:108,5:103,6:106};var now=new Date();seedMonth(now.getFullYear(),now.getMonth());var nx=new Date(now.getFullYear(),now.getMonth()+1,1);seedMonth(nx.getFullYear(),nx.getMonth());var _t=isoOf(new Date());events=events.filter(function(e){return e.date>_t;});_loadedSeedV=SPSEEDV;spSave();}
   viewY=new Date().getFullYear();viewM=new Date().getMonth();
   go('cal');
 };
