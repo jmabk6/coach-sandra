@@ -347,11 +347,11 @@ window.SPORT_CATALOGUE = [
   "objectifs": [
    {
     "objectifId": "faire-une-traction",
-    "poids": "plein"
+    "poids": "moyen"
    },
    {
     "objectifId": "perdre-du-poids",
-    "poids": "plein"
+    "poids": "leger"
    }
   ],
   "legacy": {
@@ -460,7 +460,7 @@ window.SPORT_CATALOGUE = [
    },
    {
     "objectifId": "padel-classe-1000",
-    "poids": "plein"
+    "poids": "leger"
    }
   ],
   "legacy": {
@@ -524,7 +524,7 @@ window.SPORT_CATALOGUE = [
   "objectifs": [
    {
     "objectifId": "perdre-du-poids",
-    "poids": "plein"
+    "poids": "moyen"
    }
   ],
   "legacy": {
@@ -571,11 +571,11 @@ window.SPORT_CATALOGUE = [
    },
    {
     "objectifId": "padel-classe-1000",
-    "poids": "plein"
+    "poids": "moyen"
    },
    {
     "objectifId": "golf-index-10",
-    "poids": "plein"
+    "poids": "moyen"
    }
   ],
   "legacy": {
@@ -685,11 +685,11 @@ window.SPORT_CATALOGUE = [
   "objectifs": [
    {
     "objectifId": "perdre-du-poids",
-    "poids": "plein"
+    "poids": "leger"
    },
    {
     "objectifId": "golf-index-10",
-    "poids": "plein"
+    "poids": "leger"
    }
   ],
   "legacy": {
@@ -741,7 +741,7 @@ window.SPORT_CATALOGUE = [
    },
    {
     "objectifId": "golf-index-10",
-    "poids": "plein"
+    "poids": "moyen"
    }
   ],
   "legacy": {
@@ -929,7 +929,7 @@ window.SPORT_CATALOGUE = [
    },
    {
     "objectifId": "golf-index-10",
-    "poids": "plein"
+    "poids": "leger"
    }
   ],
   "legacy": {
@@ -981,7 +981,7 @@ window.SPORT_CATALOGUE = [
    },
    {
     "objectifId": "padel-classe-1000",
-    "poids": "plein"
+    "poids": "moyen"
    }
   ],
   "legacy": {
@@ -1054,11 +1054,11 @@ window.SPORT_CATALOGUE = [
   "objectifs": [
    {
     "objectifId": "perdre-du-poids",
-    "poids": "plein"
+    "poids": "moyen"
    },
    {
     "objectifId": "padel-classe-1000",
-    "poids": "plein"
+    "poids": "moyen"
    }
   ],
   "legacy": {
@@ -1249,11 +1249,11 @@ window.SPORT_CATALOGUE = [
   "objectifs": [
    {
     "objectifId": "m-assouplir",
-    "poids": "plein"
+    "poids": "moyen"
    },
    {
     "objectifId": "padel-classe-1000",
-    "poids": "plein"
+    "poids": "moyen"
    }
   ],
   "legacy": {
@@ -1285,11 +1285,11 @@ window.SPORT_CATALOGUE = [
   "objectifs": [
    {
     "objectifId": "m-assouplir",
-    "poids": "plein"
+    "poids": "moyen"
    },
    {
     "objectifId": "golf-index-10",
-    "poids": "plein"
+    "poids": "moyen"
    }
   ],
   "legacy": {
@@ -1517,7 +1517,7 @@ window.SPORT_CATALOGUE = [
   "objectifs": [
    {
     "objectifId": "m-assouplir",
-    "poids": "plein"
+    "poids": "moyen"
    }
   ],
   "legacy": {
