@@ -81,9 +81,8 @@ function vueGroupes() {
       <div class="ccount">${orphelins} exo${orphelins>1?'s':''}</div></div>` : '';
 
   return `
-  ${entete('Banque d\'exercices')}
-  <div class="sv-search"><input class="finput" placeholder="Rechercher dans les ${cat.length} exercices"
-       value="${esc(filtreTexte)}" oninput="SportUI.chercherGlobal(this.value)"></div>
+  ${enteteRacine('🏋️ Ma banque')}
+  ${barreRecherche('Rechercher parmi ' + cat.length + ' exercices…', 'chercherGlobal', filtreTexte)}
   <div class="cat-grid">${blocs}${tuileAutres}
     <div class="cat-tile add" onclick="SportUI.nouvelExercice()">
       <span class="emoji">➕</span><div class="cname">Nouvel</div>
@@ -122,13 +121,11 @@ function vueBanque() {
   const titre = filtreGroupe === '*' ? 'Recherche'
               : g ? g.emoji + ' ' + g.nom : 'Non classés';
   return `
-  ${entete(titre)}
-  <div class="sv-search"><input class="finput" placeholder="Filtrer cette liste"
-       value="${esc(filtreTexte)}" oninput="SportUI.chercher(this.value)"></div>
+  ${entete(titre, '<button class="sv-btn-cta" onclick="SportUI.nouvelExercice()">+ Créer</button>')}
+  ${barreRecherche('Rechercher…', 'chercher', filtreTexte)}
   <div class="sv-pills">${pillsObj}</div>
   <div class="sv-count">${liste.length} exercice${liste.length>1?'s':''}</div>
-  ${items}
-  <button class="btn-ghost" onclick="SportUI.nouvelExercice()">+ Créer un exercice</button>`;
+  ${items}`;
 }
 
 function resumeSeries(series) {
@@ -359,10 +356,24 @@ function vueObjectifs() {
    CHÂSSIS
    ====================================================================== */
 
-function entete(titre) {
-  return `<div class="top"><button class="back" onclick="SportUI.retour()">‹</button>
-          <div class="ttl">${esc(titre)}</div></div>`;
+/* Deux en-têtes, repris tels quels de l'écran Aliments.
+   Racine : grand titre sérif. Étage : « ‹ Retour », titre centré, action à droite. */
+function enteteRacine(titre, action) {
+  return `<div class="sv-h1">
+    <div class="sv-t1">${titre}</div>
+    ${action || `<button class="sv-btn-ghost" onclick="SportUI.fermer()">Fermer</button>`}
+  </div>`;
 }
+function entete(titre, action) {
+  return `<div class="sv-h2">
+    <button class="sv-btn-back" onclick="SportUI.retour()">‹ Retour</button>
+    <div class="sv-t2">${esc(titre)}</div>
+    ${action || '<span class="sv-spacer"></span>'}
+  </div>`;
+}
+const barreRecherche = (ph, fn, val) =>
+  `<div class="search-bar"><span style="color:var(--muted)">🔍</span>
+   <input type="text" placeholder="${esc(ph)}" value="${esc(val||'')}" oninput="SportUI.${fn}(this.value)"></div>`;
 
 const PILE = [];
 function aller(nom, arg) {
@@ -406,7 +417,7 @@ function ouvrirGroupe(id) { filtreGroupe = id; filtreTexte = ''; filtreObjectif 
 function chercherGlobal(v) {
   if (!v) { filtreTexte = ''; return rendre(); }
   filtreGroupe = '*'; filtreTexte = v; aller('banque');
-  const i = hote && hote.querySelector('.sv-search input');
+  const i = hote && hote.querySelector('.search-bar input');
   if (i) { i.focus(); i.setSelectionRange(v.length, v.length); }
 }
 
@@ -497,6 +508,19 @@ function saisirValeur(objId) {
 
 const CSS = `
 .sv{padding:4px 0}
+.sv .sv-h1{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px}
+.sv .sv-t1{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:28px}
+.sv .sv-h2{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px}
+.sv .sv-t2{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:20px;
+  text-align:center;flex:1;min-width:0}
+.sv .sv-btn-back{background:none;border:1px solid var(--border);border-radius:10px;
+  padding:7px 12px;font-size:14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.sv .sv-btn-ghost{background:none;border:1px solid var(--border);border-radius:10px;
+  padding:7px 12px;font-size:14px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.sv .sv-btn-cta{background:var(--accent);color:#fff;border:none;border-radius:10px;
+  padding:8px 14px;font-family:'Inter',sans-serif;font-weight:600;font-size:14px;
+  cursor:pointer;white-space:nowrap}
+.sv .sv-spacer{width:62px;flex:none}
 .sv .sv-row{display:flex;align-items:center;gap:10px}
 .sv .sv-grow{flex:1;min-width:0}
 .sv .sv-nm{font-weight:600;font-size:15px;line-height:1.25}
@@ -507,7 +531,6 @@ const CSS = `
 .sv .sv-chev{color:#d8bebc;font-size:18px}
 .sv .sv-x{background:none;border:0;color:#d8bebc;font-size:15px;cursor:pointer}
 .sv .sv-drag{color:#d8bebc;letter-spacing:-2px}
-.sv .sv-search{margin:6px 0 10px}
 .sv .sv-pills{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:4px}
 .sv .sv-pill{border:1px solid var(--border);background:var(--surface);color:var(--muted);
   border-radius:20px;padding:6px 12px;font-size:12.5px;white-space:nowrap;cursor:pointer}
