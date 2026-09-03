@@ -8,8 +8,8 @@
 const SportUI = (function () {
 
 const S = SportV2;
-let hote = null, ecran = 'banque', ctx = {};
-let filtreTexte = '', filtreFamille = null, filtreObjectif = null;
+let hote = null, ecran = 'groupes', ctx = {}, auFermer = null;
+let filtreTexte = '', filtreGroupe = null, filtreObjectif = null;
 
 const esc = s => String(s == null ? '' : s)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
@@ -34,7 +34,22 @@ const pastilles = ex => (ex.objectifs || []).map(l => {
 }).join('');
 
 const LIB_POIDS = { plein: 'plein', moyen: 'moyen', leger: 'léger' };
-const FAMILLES = [['haut','Haut'],['bas','Bas'],['tronc','Tronc'],['cardio','Cardio'],['mobilite','Mobilité']];
+
+/* Groupes d'entrée dans la banque. Une catégorie du catalogue ne peut
+   appartenir qu'à un seul groupe : pas de doublon dans la grille. */
+const GROUPES = [
+  { id:'dos',       nom:'Dos / Tractions', emoji:'🎯', cats:['dos'] },
+  { id:'epaules',   nom:'Épaules',         emoji:'🙌', cats:['epaules'] },
+  { id:'pectoraux', nom:'Pectoraux',       emoji:'🤜', cats:['pec','pecs'] },
+  { id:'bras',      nom:'Bras',            emoji:'💪', cats:['bras'] },
+  { id:'jambes',    nom:'Jambes',          emoji:'🦵', cats:['jambes'] },
+  { id:'gainage',   nom:'Gainage',         emoji:'🔥', cats:['gainage'] },
+  { id:'cardio',    nom:'Cardio',          emoji:'🚴', cats:['cardio'] },
+  { id:'mobilite',  nom:'Mobilité',        emoji:'🤸', cats:['mobilite','rotation'] },
+  { id:'souplesse', nom:'Souplesse',       emoji:'🧘', cats:['souplesse','stretching'] }
+];
+const groupeDe = ex => GROUPES.find(g => g.cats.includes(ex.cat)) || null;
+const groupeById = id => GROUPES.find(g => g.id === id) || null;
 
 function joursDepuis(iso) {
   if (!iso) return null;
@@ -47,16 +62,49 @@ const aujourdhui = () => new Date().toISOString().slice(0, 10);
    1. BANQUE D'EXERCICES
    ====================================================================== */
 
+/* Écran d'entrée : une grille par groupe musculaire. La recherche reste
+   accessible ici et court-circuite la grille. */
+function vueGroupes() {
+  const cat = S.catalogue();
+  const blocs = GROUPES.map(g => {
+    const n = cat.filter(e => (groupeDe(e) || {}).id === g.id).length;
+    if (!n) return '';
+    return `<div class="cat-tile" onclick="SportUI.ouvrirGroupe('${g.id}')">
+      <span class="emoji">${g.emoji}</span>
+      <div class="cname">${esc(g.nom)}</div>
+      <div class="ccount">${n} exo${n>1?'s':''}</div></div>`;
+  }).join('');
+
+  const orphelins = cat.filter(e => !groupeDe(e)).length;
+  const tuileAutres = orphelins ? `<div class="cat-tile" onclick="SportUI.ouvrirGroupe(null)">
+      <span class="emoji">📦</span><div class="cname">Non classés</div>
+      <div class="ccount">${orphelins} exo${orphelins>1?'s':''}</div></div>` : '';
+
+  return `
+  ${entete('Banque d\'exercices')}
+  <div class="sv-search"><input class="finput" placeholder="Rechercher dans les ${cat.length} exercices"
+       value="${esc(filtreTexte)}" oninput="SportUI.chercherGlobal(this.value)"></div>
+  <div class="cat-grid">${blocs}${tuileAutres}
+    <div class="cat-tile add" onclick="SportUI.nouvelExercice()">
+      <span class="emoji">➕</span><div class="cname">Nouvel</div>
+      <div class="ccount">exercice</div></div>
+  </div>`;
+}
+
 function vueBanque() {
   const cat = S.catalogue();
+  const g = groupeById(filtreGroupe);
   const liste = cat.filter(e => {
-    if (filtreFamille && e.famille !== filtreFamille) return false;
+    if (filtreGroupe !== undefined && filtreGroupe !== '*' ) {
+      const gr = groupeDe(e);
+      if (filtreGroupe === null) { if (gr) return false; }
+      else if (!gr || gr.id !== filtreGroupe) return false;
+    }
     if (filtreObjectif && !(e.objectifs || []).some(o => o.objectifId === filtreObjectif)) return false;
     if (filtreTexte && !e.nom.toLowerCase().includes(filtreTexte.toLowerCase())) return false;
     return true;
   });
 
-  const pills = f => `<button class="sv-pill${filtreFamille===f[0]?' on':''}" onclick="SportUI.filtrerFamille('${f[0]}')">${f[1]}</button>`;
   const pillsObj = S.etat().objectifs.map(o =>
     `<button class="sv-pill${filtreObjectif===o.id?' on':''}" onclick="SportUI.filtrerObjectif('${o.id}')">
        <span class="sv-dot" style="background:${o.couleur}"></span>${esc(o.nom.split('—')[0].trim())}</button>`).join('');
@@ -71,14 +119,12 @@ function vueBanque() {
       <span class="sv-chev">›</span></div>`;
   }).join('') || `<div class="sv-empty">Aucun exercice ne correspond. Change de filtre, ou crée-en un.</div>`;
 
+  const titre = filtreGroupe === '*' ? 'Recherche'
+              : g ? g.emoji + ' ' + g.nom : 'Non classés';
   return `
-  ${entete('Banque d\'exercices')}
-  <div class="sv-search"><input class="finput" placeholder="Rechercher un exercice"
+  ${entete(titre)}
+  <div class="sv-search"><input class="finput" placeholder="Filtrer cette liste"
        value="${esc(filtreTexte)}" oninput="SportUI.chercher(this.value)"></div>
-  <div class="sv-pills">
-    <button class="sv-pill${!filtreFamille?' on':''}" onclick="SportUI.filtrerFamille(null)">Tous</button>
-    ${FAMILLES.map(pills).join('')}
-  </div>
   <div class="sv-pills">${pillsObj}</div>
   <div class="sv-count">${liste.length} exercice${liste.length>1?'s':''}</div>
   ${items}
@@ -324,29 +370,45 @@ function aller(nom, arg) {
   ecran = nom; ctx = { arg };
   rendre();
 }
+/* Racine atteinte : on ferme au lieu de ne rien faire — c'est ce qui rendait
+   l'écran de test sans issue. */
 function retour() {
   const p = PILE.pop();
-  if (p) { ecran = p.ecran; ctx = p.ctx; }
+  if (!p) return fermer();
+  ecran = p.ecran; ctx = p.ctx;
   rendre();
+}
+function fermer() {
+  if (auFermer) return auFermer();
+  if (hote) hote.style.display = 'none';
 }
 
 function rendre() {
   if (!hote) return;
-  const v = ecran === 'banque'    ? vueBanque()
+  const v = ecran === 'groupes'   ? vueGroupes()
+          : ecran === 'banque'    ? vueBanque()
           : ecran === 'fiche'     ? vueFiche(ctx.arg)
           : ecran === 'modeles'   ? vueModeles()
           : ecran === 'modele'    ? vueModele(ctx.arg)
           : ecran === 'seance'    ? vueSeance(ctx.arg)
           : ecran === 'objectifs' ? vueObjectifs()
-          : vueBanque();
+          : vueGroupes();
   hote.innerHTML = `<div class="sv">${v}</div>`;
 }
 
 /* ---- actions ---- */
 
 const chercher = v => { filtreTexte = v; rendre(); };
-const filtrerFamille = f => { filtreFamille = (filtreFamille === f ? null : f); rendre(); };
 const filtrerObjectif = o => { filtreObjectif = (filtreObjectif === o ? null : o); rendre(); };
+/* Depuis la grille : on entre dans un groupe. null = les non classés. */
+function ouvrirGroupe(id) { filtreGroupe = id; filtreTexte = ''; filtreObjectif = null; aller('banque'); }
+/* Recherche depuis la grille : elle traverse tous les groupes. */
+function chercherGlobal(v) {
+  if (!v) { filtreTexte = ''; return rendre(); }
+  filtreGroupe = '*'; filtreTexte = v; aller('banque');
+  const i = hote && hote.querySelector('.sv-search input');
+  if (i) { i.focus(); i.setSelectionRange(v.length, v.length); }
+}
 
 const ORDRE_POIDS = ['plein', 'moyen', 'leger'];
 function cyclePoids(exId, objId) {
@@ -496,8 +558,11 @@ const CSS = `
 .sv .sv-invbar i{display:block;height:100%}
 `;
 
-function monter(el) {
+function monter(el, options) {
   hote = typeof el === 'string' ? document.getElementById(el) : el;
+  auFermer = (options && options.auFermer) || null;
+  ecran = 'groupes'; ctx = {}; PILE.length = 0;
+  filtreTexte = ''; filtreGroupe = null; filtreObjectif = null;
   if (!document.getElementById('sv-css')) {
     const st = document.createElement('style'); st.id = 'sv-css'; st.textContent = CSS;
     document.head.appendChild(st);
@@ -505,8 +570,8 @@ function monter(el) {
   rendre();
 }
 
-return { monter, aller, retour, rendre,
-         chercher, filtrerFamille, filtrerObjectif,
+return { monter, aller, retour, rendre, fermer,
+         chercher, chercherGlobal, ouvrirGroupe, filtrerObjectif,
          cyclePoids, poserObjectif, retirerObjectif, reglerPhase,
          nouvelExercice, nouveauModele, dupliquer, retirerDuModele, choisirPour,
          ajouterAuJour, lancer, saisir, basculer, terminer, reporter, saisirValeur };
