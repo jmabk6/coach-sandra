@@ -1324,7 +1324,7 @@ const firebaseConfig = {
 // === Données COMMUNES (catalogue partagé entre TOUS les comptes) ===
 const SHARED_KEYS = ['sandra_ingredients','sandra_categories','sandra_recettes','sandra_cat_aliments','sandra_cat_exos','sandra_exos_custom'];
 // === Données PRIVÉES (propres à chaque compte) ===
-const PRIVATE_KEYS = ['sandra_poids','sandra_objectif','sandra_journal','sandra_repas','sandra_profil','mc_seances','mc_planning','mc_resultats','mc_objectifs','mc_sport'];
+const PRIVATE_KEYS = ['sandra_poids','sandra_objectif','sandra_journal','sandra_repas','sandra_profil','mc_seances','mc_planning','mc_resultats','mc_objectifs','mc_sport','mc_sport_v2','mc_hist_v2'];
 const SYNC_KEYS = SHARED_KEYS.concat(PRIVATE_KEYS);
 function isSyncKey(k){ return SYNC_KEYS.includes(k); }
 function isShared(k){ return SHARED_KEYS.includes(k); }
@@ -5119,6 +5119,15 @@ window.SP={go:go,prevMonth:prevMonth,nextMonth:nextMonth,tapDay:tapDay,openDay:o
 
 })();
 </script>
+
+
+<!-- ===== Sport v2 — test à blanc (n'affecte pas le module Sport existant) ===== -->
+<script src="sport_catalogue.js?v=1"></script>
+<script src="sport_v2_core.js?v=1"></script>
+<script src="sport_v2_ui.js?v=1"></script>
+
+<div id="sv-test" style="display:none;position:fixed;inset:0;z-index:900;background:var(--bg);overflow:auto;padding:16px;max-width:430px;margin:0 auto;"></div>
+<button id="sv-test-btn" type="button" style="position:fixed;bottom:92px;right:14px;z-index:901;background:#c0616a;color:#fff;border:none;border-radius:22px;padding:10px 16px;font-size:13px;font-weight:800;letter-spacing:.5px;box-shadow:0 3px 10px rgba(0,0,0,.18);cursor:pointer;" onclick="document.getElementById('sv-test').style.display='block';SportUI.monter('sv-test');">V2</button>
 
 </body>
 </html>
