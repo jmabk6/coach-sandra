@@ -104,9 +104,23 @@ function vueBanque() {
     return true;
   });
 
-  const pillsObj = S.etat().objectifs.map(o =>
+  /* Un filtre d'objectif n'a de sens que s'il partage la liste. Dans un groupe
+     où tous les exercices portent le même objectif — ou aucun — il ne filtre
+     rien : on ne l'affiche pas. */
+  const base = cat.filter(e => {
+    const gr = groupeDe(e);
+    if (filtreGroupe === '*') return !filtreTexte || e.nom.toLowerCase().includes(filtreTexte.toLowerCase());
+    if (filtreGroupe === null) return !gr;
+    return gr && gr.id === filtreGroupe;
+  });
+  const utiles = S.etat().objectifs.filter(o => {
+    const n = base.filter(e => (e.objectifs || []).some(l => l.objectifId === o.id)).length;
+    return n > 0 && n < base.length;
+  });
+  const pillsObj = utiles.length ? `<div class="sv-pills">` + utiles.map(o =>
     `<button class="sv-pill${filtreObjectif===o.id?' on':''}" onclick="SportUI.filtrerObjectif('${o.id}')">
-       <span class="sv-dot" style="background:${o.couleur}"></span>${esc(o.nom.split('—')[0].trim())}</button>`).join('');
+       <span class="sv-dot" style="background:${o.couleur}"></span>${esc(o.nom.split('—')[0].trim())}</button>`).join('')
+    + `</div>` : '';
 
   const items = liste.map(e => {
     const d = S.derniereFois(e.id);
@@ -123,7 +137,7 @@ function vueBanque() {
   return `
   ${entete(titre, '<button class="sv-btn-cta" onclick="SportUI.nouvelExercice()">+ Créer</button>')}
   ${barreRecherche('Rechercher…', 'chercher', filtreTexte)}
-  <div class="sv-pills">${pillsObj}</div>
+  ${pillsObj}
   <div class="sv-count">${liste.length} exercice${liste.length>1?'s':''}</div>
   ${items}`;
 }
