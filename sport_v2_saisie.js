@@ -148,6 +148,9 @@ function vueSaisie(seanceId) {
 
   const vide = !s.exercices.length ? `<div class="ss-empty">Aucun exercice pour l'instant.
     Ajoute ce que tu as fait, dans l'ordre que tu veux.</div>` : '';
+  /* Sur une séance libre, ajouter est le seul geste possible : le bouton doit
+     être le plus visible de l'écran, pas une action secondaire en gris. */
+  const clsAjout = s.exercices.length ? 'ss-add' : 'ss-add ss-add-fort';
   const nb = s.exercices.filter(e => e.fait).length;
   return `
   ${entete(s.nomAffiche, `<button class="ss-cta" onclick="SportSaisie.valider('${s.id}')">Valider</button>`)}
@@ -155,10 +158,11 @@ function vueSaisie(seanceId) {
   ${s.modeleId ? `<div class="ss-astuce">Les valeurs viennent de ce qui était prévu. Décoche ce que tu
   n'as pas fait, corrige ce qui a changé, valide.</div>` : ''}
   ${vide}${blocs}
-  <button class="btn-ghost" onclick="SportSaisie.ajouter('${s.id}')">+ Ajouter un exercice</button>
+  <button class="${clsAjout}" onclick="SportSaisie.ajouter('${s.id}')">+ Ajouter un exercice</button>
   <div class="lbl">Durée</div>
   <div class="ss-chips">${choixDuree}</div>
-  <button class="ss-valid" onclick="SportSaisie.valider('${s.id}')">Enregistrer — ${nb} exercice${nb>1?'s':''}</button>
+  <button class="ss-valid${nb ? '' : ' ss-off-btn'}" onclick="SportSaisie.valider('${s.id}')">${
+    nb ? 'Enregistrer — ' + nb + ' exercice' + (nb>1?'s':'') : 'Rien à enregistrer'}</button>
   <button class="ss-suppr-l" onclick="SportSaisie.supprimer('${s.id}')">Supprimer cette séance</button>`;
 }
 
@@ -435,11 +439,17 @@ const CSS = `
   font-family:'Inter',sans-serif}
 .ss .ss-ferme{background:none;border:1px solid var(--border);border-radius:10px;padding:8px;
   font-size:13px;color:var(--muted);cursor:pointer}
+.ss .ss-add{display:block;width:100%;background:var(--surface);border:1.5px solid var(--accent);
+  border-radius:13px;padding:13px;font-size:15px;font-weight:600;color:var(--accent);
+  margin-top:10px;cursor:pointer;font-family:'Inter',sans-serif}
+.ss .ss-add-fort{background:var(--accent);color:#fff;border-color:var(--accent)}
+.ss .ss-add:active{opacity:.75}
 .ss .ss-suppr{background:none;border:1px solid #e8c4c7;border-radius:10px;padding:6px 11px;
   font-size:12px;color:#b8434f;cursor:pointer;flex:none}
 .ss .ss-suppr-l{display:block;width:100%;background:none;border:1.5px solid #e8c4c7;
   border-radius:13px;padding:12px;font-size:14px;font-weight:600;color:#b8434f;
   margin-top:8px;cursor:pointer}
+.ss .ss-valid.ss-off-btn{background:#e7d6d4;color:#fff}
 .ss .ss-valid{display:block;width:100%;background:var(--accent);color:#fff;border:0;
   border-radius:13px;padding:13px;text-align:center;font-weight:600;font-size:15px;
   margin-top:12px;cursor:pointer}
