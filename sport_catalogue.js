@@ -56,7 +56,11 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 1,
    "data": null
-  }
+  },
+  "metriques": [
+   "series",
+   "duree"
+  ]
  },
  {
   "id": "tractions-negatives",
@@ -104,7 +108,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 2,
    "data": null
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "duree"
+  ]
  },
  {
   "id": "traction-assistee-machine",
@@ -187,7 +196,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 3,
    "data": 10
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "tirage-vertical",
@@ -270,7 +284,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 4,
    "data": 8
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "tirage-horizontal",
@@ -357,7 +376,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 5,
    "data": 9
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "etirement-ischios-jambes-au-mur",
@@ -419,7 +443,11 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 8,
    "data": 36
-  }
+  },
+  "metriques": [
+   "series",
+   "duree"
+  ]
  },
  {
   "id": "ouverture-epaules-baton",
@@ -466,7 +494,11 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 9,
    "data": null
-  }
+  },
+  "metriques": [
+   "series",
+   "duree"
+  ]
  },
  {
   "id": "chat-vache",
@@ -498,7 +530,11 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 10,
    "data": null
-  }
+  },
+  "metriques": [
+   "series",
+   "duree"
+  ]
  },
  {
   "id": "pompes",
@@ -530,7 +566,11 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 12,
    "data": null
-  }
+  },
+  "metriques": [
+   "series",
+   "reps"
+  ]
  },
  {
   "id": "hanches-90-90",
@@ -581,7 +621,11 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 13,
    "data": null
-  }
+  },
+  "metriques": [
+   "series",
+   "duree"
+  ]
  },
  {
   "id": "rotation-thoracique",
@@ -628,7 +672,11 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 14,
    "data": null
-  }
+  },
+  "metriques": [
+   "series",
+   "duree"
+  ]
  },
  {
   "id": "gainage-planche",
@@ -695,7 +743,11 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 15,
    "data": 18
-  }
+  },
+  "metriques": [
+   "series",
+   "duree"
+  ]
  },
  {
   "id": "gainage-anti-rotation",
@@ -747,7 +799,11 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 16,
    "data": null
-  }
+  },
+  "metriques": [
+   "series",
+   "duree"
+  ]
  },
  {
   "id": "velo-fractionne",
@@ -820,7 +876,10 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 17,
    "data": 24
-  }
+  },
+  "metriques": [
+   "duree"
+  ]
  },
  {
   "id": "swing-golf-a-vide",
@@ -863,7 +922,11 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 18,
    "data": null
-  }
+  },
+  "metriques": [
+   "series",
+   "reps"
+  ]
  },
  {
   "id": "marche-rapide",
@@ -935,7 +998,10 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 19,
    "data": 23
-  }
+  },
+  "metriques": [
+   "duree"
+  ]
  },
  {
   "id": "elliptique",
@@ -987,7 +1053,10 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 20,
    "data": null
-  }
+  },
+  "metriques": [
+   "duree"
+  ]
  },
  {
   "id": "presse-a-cuisses",
@@ -1064,7 +1133,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 22,
    "data": 14
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "rameur",
@@ -1138,7 +1212,10 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 23,
    "data": 25
-  }
+  },
+  "metriques": [
+   "duree"
+  ]
  },
  {
   "id": "padel-match",
@@ -1170,7 +1247,10 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 24,
    "data": null
-  }
+  },
+  "metriques": [
+   "duree"
+  ]
  },
  {
   "id": "golf-parcours",
@@ -1202,7 +1282,10 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 25,
    "data": null
-  }
+  },
+  "metriques": [
+   "duree"
+  ]
  },
  {
   "id": "rotation-buste-a-genou-mur",
@@ -1259,7 +1342,11 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 26,
    "data": null
-  }
+  },
+  "metriques": [
+   "series",
+   "duree"
+  ]
  },
  {
   "id": "rotation-dos-a-quatre-pattes",
@@ -1295,7 +1382,11 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 27,
    "data": null
-  }
+  },
+  "metriques": [
+   "series",
+   "duree"
+  ]
  },
  {
   "id": "marche-en-pente-tapis",
@@ -1353,7 +1444,10 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 28,
    "data": null
-  }
+  },
+  "metriques": [
+   "duree"
+  ]
  },
  {
   "id": "etirement-flechisseurs-de-hanche",
@@ -1385,7 +1479,11 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 29,
    "data": null
-  }
+  },
+  "metriques": [
+   "series",
+   "duree"
+  ]
  },
  {
   "id": "etirement-fessiers-piriforme",
@@ -1431,7 +1529,11 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 30,
    "data": 39
-  }
+  },
+  "metriques": [
+   "series",
+   "duree"
+  ]
  },
  {
   "id": "etirement-des-mollets-mur",
@@ -1477,7 +1579,11 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 31,
    "data": 40
-  }
+  },
+  "metriques": [
+   "series",
+   "duree"
+  ]
  },
  {
   "id": "rotation-lombaire-allongee",
@@ -1523,7 +1629,11 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 32,
    "data": 30
-  }
+  },
+  "metriques": [
+   "series",
+   "duree"
+  ]
  },
  {
   "id": "etirement-adducteurs-papillon",
@@ -1568,7 +1678,11 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 33,
    "data": 38
-  }
+  },
+  "metriques": [
+   "series",
+   "duree"
+  ]
  },
  {
   "id": "etirement-quadriceps-debout",
@@ -1613,7 +1727,11 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": 34,
    "data": 34
-  }
+  },
+  "metriques": [
+   "series",
+   "duree"
+  ]
  },
  {
   "id": "developpe-couche",
@@ -1659,7 +1777,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 1
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "developpe-militaire",
@@ -1705,7 +1828,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 2
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "elevations-laterales",
@@ -1750,7 +1878,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 3
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "dips-machine",
@@ -1796,7 +1929,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 4
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "extension-triceps-poulie",
@@ -1839,7 +1977,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 5
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "ecartes-poulie",
@@ -1884,7 +2027,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 6
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "curl-halteres",
@@ -1929,7 +2077,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 7
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "face-pull-poulie",
@@ -1975,7 +2128,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 11
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "curl-marteau",
@@ -2021,7 +2179,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 12
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "oiseau-halteres",
@@ -2067,7 +2230,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 13
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "leg-extension",
@@ -2110,7 +2278,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 15
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "leg-curl-couche",
@@ -2155,7 +2328,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 16
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "mollets-machine",
@@ -2199,7 +2377,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 17
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "gainage-lateral",
@@ -2245,7 +2428,11 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 19
-  }
+  },
+  "metriques": [
+   "series",
+   "duree"
+  ]
  },
  {
   "id": "superman",
@@ -2292,7 +2479,11 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 20
-  }
+  },
+  "metriques": [
+   "series",
+   "reps"
+  ]
  },
  {
   "id": "epaules",
@@ -2333,7 +2524,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 26
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "triceps",
@@ -2374,7 +2570,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 27
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "pectoraux",
@@ -2415,7 +2616,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 28
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "biceps",
@@ -2456,7 +2662,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 29
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "dos-cote",
@@ -2497,7 +2708,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 31
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "lombaires-priere",
@@ -2538,7 +2754,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 32
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "abdominaux-cobra",
@@ -2578,7 +2799,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 33
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "quadriceps-fente",
@@ -2618,7 +2844,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 35
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  },
  {
   "id": "ischio-jambiers-assis",
@@ -2658,7 +2889,12 @@ window.SPORT_CATALOGUE = [
   "legacy": {
    "exos": null,
    "data": 37
-  }
+  },
+  "metriques": [
+   "series",
+   "reps",
+   "charge"
+  ]
  }
 ];
 window.SPORT_OBJECTIFS = [
@@ -3221,10 +3457,10 @@ window.SPORT_MODELES   = [
     "exercices": [
      {
       "exId": "marche-en-pente-tapis",
-      "series": null,
+      "series": 1,
       "reps": null,
       "charge": null,
-      "duree": null,
+      "duree": 1800,
       "note": ""
      },
      {
@@ -3319,10 +3555,10 @@ window.SPORT_MODELES   = [
     "exercices": [
      {
       "exId": "velo-fractionne",
-      "series": null,
+      "series": 1,
       "reps": null,
       "charge": null,
-      "duree": null,
+      "duree": 1500,
       "note": ""
      },
      {
@@ -3394,10 +3630,10 @@ window.SPORT_MODELES   = [
     "exercices": [
      {
       "exId": "marche-rapide",
-      "series": null,
+      "series": 1,
       "reps": null,
       "charge": null,
-      "duree": null,
+      "duree": 1800,
       "note": ""
      }
     ]
@@ -3442,58 +3678,58 @@ window.SPORT_MODELES   = [
     "exercices": [
      {
       "exId": "chat-vache",
-      "series": null,
+      "series": 2,
       "reps": null,
       "charge": null,
-      "duree": null,
+      "duree": 45,
       "note": ""
      },
      {
       "exId": "hanches-90-90",
-      "series": null,
+      "series": 2,
       "reps": null,
       "charge": null,
-      "duree": null,
+      "duree": 45,
       "note": ""
      },
      {
       "exId": "rotation-dos-a-quatre-pattes",
-      "series": null,
+      "series": 2,
       "reps": null,
       "charge": null,
-      "duree": null,
+      "duree": 45,
       "note": ""
      },
      {
       "exId": "rotation-lombaire-allongee",
-      "series": null,
+      "series": 2,
       "reps": null,
       "charge": null,
-      "duree": null,
+      "duree": 45,
       "note": ""
      },
      {
       "exId": "etirement-flechisseurs-de-hanche",
-      "series": null,
+      "series": 2,
       "reps": null,
       "charge": null,
-      "duree": null,
+      "duree": 45,
       "note": ""
      },
      {
       "exId": "etirement-ischios-jambes-au-mur",
-      "series": null,
+      "series": 2,
       "reps": null,
       "charge": null,
-      "duree": null,
+      "duree": 45,
       "note": ""
      },
      {
       "exId": "etirement-fessiers-piriforme",
-      "series": null,
+      "series": 2,
       "reps": null,
       "charge": null,
-      "duree": null,
+      "duree": 45,
       "note": ""
      }
     ]
@@ -3546,10 +3782,10 @@ window.SPORT_MODELES   = [
     "exercices": [
      {
       "exId": "padel-match",
-      "series": null,
+      "series": 1,
       "reps": null,
       "charge": null,
-      "duree": null,
+      "duree": 5400,
       "note": ""
      }
     ]
@@ -3619,10 +3855,10 @@ window.SPORT_MODELES   = [
     "exercices": [
      {
       "exId": "golf-parcours",
-      "series": null,
+      "series": 1,
       "reps": null,
       "charge": null,
-      "duree": null,
+      "duree": 12600,
       "note": ""
      }
     ]

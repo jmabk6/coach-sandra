@@ -208,7 +208,12 @@ function dureeEstimee(modele) {
     const ex = cat.find(e => e.id === ligne.exId); if (!ex) continue;
     const series = ligne.series || 3;
     const travail = ligne.duree || (ligne.reps || 8) * 3;
-    s += series * (travail + (ex.cat === 'cardio' ? 0 : ex.charges ? 90 : 30));
+    /* Le repos dépend de l'effort : rien après un étirement, longtemps après
+       une série lourde. Sans ça une séance de mobilité s'estimait au double. */
+    const repos = ex.cat === 'cardio' ? 0
+                : (ex.cat === 'souplesse' || ex.cat === 'mobilite') ? 10
+                : ex.charges ? 90 : 30;
+    s += series * (travail + repos);
   }
   return Math.round(s / 60);
 }
@@ -234,6 +239,65 @@ function instancier(modeleId, date) {
 }
 
 const seanceById = id => hist.seances.find(s => s.id === id) || null;
+
+/* --- Ce qui était prévu ---------------------------------------------------
+   Le planning explicite l'emporte sur la semaine type. */
+function prevuLe(iso) {
+  const p = etat.planning.find(x => x.date === iso);
+  if (p) return p.modeleId;
+  const jour = new Date(iso + 'T12:00').getDay();
+  return etat.semaineType[jour] || null;
+}
+const estRepos = iso => !prevuLe(iso);
+
+/* Les jours passés qui avaient une séance au programme et dont rien n'a été
+   noté. C'est la matière du rattrapage groupé. */
+function joursAConfirmer(depuis, jusqua) {
+  const fin = jusqua || new Date().toISOString().slice(0, 10);
+  const out = [];
+  for (let d = new Date(depuis + 'T12:00'); d.toISOString().slice(0, 10) <= fin; d.setDate(d.getDate() + 1)) {
+    const iso = d.toISOString().slice(0, 10);
+    if (seancesDe(iso).length) continue;
+    const modeleId = prevuLe(iso);
+    if (modeleId && modeleById(modeleId)) out.push({ date: iso, modeleId });
+  }
+  return out;
+}
+
+function marquerRepos(iso) {
+  const s = { id: 's' + (hist.prochainId++), date: iso, modeleId: null, type: 'repos',
+              nomAffiche: 'Repos', statut: 'repos', exercices: [] };
+  hist.seances.push(s); sauverHist();
+  return s;
+}
+
+/* Séance passée pré-remplie : tout est considéré fait, aux valeurs prévues.
+   Dans le cas courant — « je l'ai faite, j'ai juste oublié de la noter » —
+   il n'y a plus qu'à valider. */
+function instancierFaite(modeleId, date) {
+  const s = instancier(modeleId, date);
+  const cat = catalogue();
+  for (const ex of s.exercices) {
+    const e = cat.find(x => x.id === ex.exId); if (!e) continue;
+    /* Ce qu'on enregistre vient des métriques de l'exercice, pas de sa
+       catégorie : « Suspension à la barre » est un exercice de dos qui se
+       mesure en secondes. Sans ça, son palier ne se déclenchait jamais. */
+    const m = e.metriques || ['series','reps','charge'];
+    const p = ex.prevu || {};
+    const n = m.includes('series') ? (p.series || 3) : 1;
+    for (let i = 0; i < n; i++) {
+      const serie = {};
+      if (m.includes('reps'))   serie.reps   = p.reps   || 8;
+      if (m.includes('duree'))  serie.duree  = p.duree  || (m.includes('reps') ? 5 : 45);
+      if (m.includes('charge')) serie.charge = p.charge ?? null;
+      ex.series.push(serie);
+    }
+    ex.fait = true;
+  }
+  s.statut = 'en_cours';
+  sauverHist();
+  return s;
+}
 const seancesDe = iso => hist.seances.filter(s => s.date === iso);
 
 function ajouterExercice(seanceId, exId, bloc = 'corps') {
@@ -411,7 +475,8 @@ return { charger, etat: () => etat, hist: () => hist,
          types, typeById, famillesType, modelesDuType, alternatives,
          modeles, modeleById, enregistrerModele, dupliquerModele, supprimerModele,
          repartition, dureeEstimee,
-         instancier, seanceById, seancesDe, ajouterExercice, retirerExercice,
+         instancier, instancierFaite, seanceById, seancesDe, ajouterExercice, retirerExercice,
+         prevuLe, estRepos, joursAConfirmer, marquerRepos,
          noterSerie, ecarts, terminer, reporterDansModele,
          investissement, avancement, meilleurePerf, jamaisFaits, derniereFois, seancesRecentes };
 })();
