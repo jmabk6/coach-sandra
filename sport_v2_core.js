@@ -58,6 +58,7 @@ function charger() {
     etat.planning = (etat.planning || []).filter(p => p.ecart);
     sauverEtat();
   }
+  purgerBrouillons();
   return { etat, hist };
 }
 
@@ -250,7 +251,7 @@ function instancier(modeleId, date) {
    C'est le cas de la salle où l'on fait « ce qui vient ». */
 function seanceLibre(date, nom) {
   const s = { id: 's' + (hist.prochainId++), date, modeleId: null, type: null,
-              nomAffiche: nom || 'Séance libre', couleur: '#9a7878', statut: 'en_cours',
+              nomAffiche: nom || 'Séance libre', couleur: '#9a7878', statut: 'brouillon',
               exercices: [], dureeReelle: null, ressenti: null, commentaire: '' };
   hist.seances.push(s); sauverHist();
   return s;
@@ -414,11 +415,21 @@ function instancierFaite(modeleId, date) {
     }
     ex.fait = true;
   }
-  s.statut = 'en_cours';
+  s.statut = 'brouillon';
   sauverHist();
   return s;
 }
-const seancesDe = iso => hist.seances.filter(s => s.date === iso);
+/* Un brouillon est une séance en cours de saisie, pas encore validée. Il
+   n'existe pour aucun autre écran : ni calendrier, ni statistiques. Sans ça,
+   ouvrir un écran par curiosité laissait une séance vide derrière soi. */
+const seancesDe = iso => hist.seances.filter(s => s.date === iso && s.statut !== 'brouillon');
+const brouillons = () => hist.seances.filter(s => s.statut === 'brouillon');
+function purgerBrouillons(sauf) {
+  const avant = hist.seances.length;
+  hist.seances = hist.seances.filter(s => s.statut !== 'brouillon' || s.id === sauf);
+  if (hist.seances.length !== avant) sauverHist();
+  return avant - hist.seances.length;
+}
 
 function ajouterExercice(seanceId, exId, bloc = 'corps') {
   const s = seanceById(seanceId); if (!s) return null;
@@ -595,7 +606,7 @@ return { charger, etat: () => etat, hist: () => hist,
          types, typeById, famillesType, modelesDuType, alternatives,
          modeles, modeleById, enregistrerModele, dupliquerModele, supprimerModele,
          repartition, dureeEstimee,
-         instancier, instancierFaite, seanceLibre, seanceById, seancesDe, ajouterExercice, retirerExercice,
+         instancier, instancierFaite, seanceLibre, brouillons, purgerBrouillons, seanceById, seancesDe, ajouterExercice, retirerExercice,
          prevuLe, trameDe, estRepos, joursAConfirmer, marquerRepos,
          etatJour, moisJours, semaineDe, remplacerLeJour, reporter, ecartsDuMois,
          noterSerie, ecarts, terminer, supprimerSeance, reporterDansModele,

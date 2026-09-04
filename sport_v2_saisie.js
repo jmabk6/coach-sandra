@@ -234,12 +234,24 @@ function entete(titre, action) {
 }
 
 function aller(nom, arg) { PILE.push({ ecran, ctx }); ecran = nom; ctx = { arg }; rendre(); }
+/* Quitter une saisie sans valider annule le brouillon : on ne laisse jamais
+   une séance vide derrière une simple exploration. */
+function abandonner() {
+  if (ecran !== 'saisie') return;
+  const s = S.seanceById(ctx.arg);
+  if (s && s.statut === 'brouillon') S.supprimerSeance(s.id);
+}
 function retour() {
+  abandonner();
   const p = PILE.pop();
   if (!p) return fermer();
   ecran = p.ecran; ctx = p.ctx; rendre();
 }
-function fermer() { if (auFermer) return auFermer(); if (hote) hote.style.display = 'none'; }
+function fermer() {
+  abandonner();
+  if (auFermer) return auFermer();
+  if (hote) hote.style.display = 'none';
+}
 
 function rendre() {
   if (!hote) return;
@@ -321,7 +333,8 @@ function libre(iso) {
    saisie reprend là où elle en était. */
 function ajouter(seanceId) {
   if (!window.SportUI) return;
-  const retourIci = () => { SportSaisie.monter(hote, { auFermer }); ecran = 'saisie';
+  const garde = auFermer;
+  const retourIci = () => { SportSaisie.monter(hote, { auFermer: garde }); ecran = 'saisie';
                             ctx = { arg: seanceId }; rendre(); };
   SportUI.monter(hote, {
     auFermer: retourIci,
@@ -347,8 +360,14 @@ function ajouter(seanceId) {
 
 function valider(seanceId) {
   const s = S.seanceById(seanceId);
+  if (!s) return;
+  if (!s.exercices.some(e => e.fait)) {
+    alert("Aucun exercice n'est coché : il n'y a rien à enregistrer.");
+    return;
+  }
   S.terminer(seanceId, { dureeReelle: s.dureeReelle, ressenti: null });
-  fermer();
+  ecran = 'jour'; ctx = { arg: s.date }; PILE.length = 0;
+  rendre();
 }
 
 function cocher(date) { ctx.coches[date] = !(ctx.coches[date] !== false); rendre(); }
