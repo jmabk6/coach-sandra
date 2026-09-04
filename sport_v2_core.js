@@ -246,6 +246,16 @@ function instancier(modeleId, date) {
   return s;
 }
 
+/* Séance libre : aucun modèle derrière, on ajoute les exercices un par un.
+   C'est le cas de la salle où l'on fait « ce qui vient ». */
+function seanceLibre(date, nom) {
+  const s = { id: 's' + (hist.prochainId++), date, modeleId: null, type: null,
+              nomAffiche: nom || 'Séance libre', couleur: '#9a7878', statut: 'en_cours',
+              exercices: [], dureeReelle: null, ressenti: null, commentaire: '' };
+  hist.seances.push(s); sauverHist();
+  return s;
+}
+
 const seanceById = id => hist.seances.find(s => s.id === id) || null;
 
 /* --- Ce qui était prévu ---------------------------------------------------
@@ -569,7 +579,7 @@ return { charger, etat: () => etat, hist: () => hist,
          types, typeById, famillesType, modelesDuType, alternatives,
          modeles, modeleById, enregistrerModele, dupliquerModele, supprimerModele,
          repartition, dureeEstimee,
-         instancier, instancierFaite, seanceById, seancesDe, ajouterExercice, retirerExercice,
+         instancier, instancierFaite, seanceLibre, seanceById, seancesDe, ajouterExercice, retirerExercice,
          prevuLe, trameDe, estRepos, joursAConfirmer, marquerRepos,
          etatJour, moisJours, semaineDe, remplacerLeJour, reporter, ecartsDuMois,
          noterSerie, ecarts, terminer, reporterDansModele,

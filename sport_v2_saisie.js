@@ -99,8 +99,13 @@ function vueJour(iso) {
   ${bloc}
   <div class="lbl">Autre séance</div>
   <div class="ss-chips">${autres}</div>
-  ${deja.length ? '' : `<div class="lbl">Ou</div>
-  <button class="btn-ghost" onclick="SportSaisie.repos('${iso}')">Marquer comme jour de repos</button>`}`;
+  <div class="lbl">Ou</div>
+  <div class="card sv-row" onclick="SportSaisie.libre('${iso}')">
+    <span class="ss-ico" style="background:#9a7878">✏️</span>
+    <div class="sv-grow"><div class="sv-nm">Séance libre</div>
+      <div class="sv-meta">Je choisis les exercices un par un</div></div>
+    <span class="sv-chev">›</span></div>
+  ${deja.length ? '' : `<button class="btn-ghost" onclick="SportSaisie.repos('${iso}')">Marquer comme jour de repos</button>`}`;
 }
 
 /* =========================================================================
@@ -137,17 +142,19 @@ function vueSaisie(seanceId) {
     `<button class="ss-chip${s.dureeReelle===d?' on':''}" onclick="SportSaisie.duree(${d})">${
       d >= 60 ? (d/60 === 1 ? '1 h' : (d/60).toString().replace('.5','\u00a0h\u00a030').replace(/^(\\d+)$/,'$1 h')) : d + ' min'}</button>`).join('');
 
+  const vide = !s.exercices.length ? `<div class="ss-empty">Aucun exercice pour l'instant.
+    Ajoute ce que tu as fait, dans l'ordre que tu veux.</div>` : '';
   const nb = s.exercices.filter(e => e.fait).length;
   return `
   ${entete(s.nomAffiche, `<button class="ss-cta" onclick="SportSaisie.valider('${s.id}')">Valider</button>`)}
   <div class="sv-meta" style="margin:-4px 0 12px">${libelleDate(s.date)} · saisie a posteriori</div>
-  <div class="ss-astuce">Les valeurs viennent de ce qui était prévu. Décoche ce que tu n'as pas fait,
-  corrige ce qui a changé, valide.</div>
-  ${blocs}
+  ${s.modeleId ? `<div class="ss-astuce">Les valeurs viennent de ce qui était prévu. Décoche ce que tu
+  n'as pas fait, corrige ce qui a changé, valide.</div>` : ''}
+  ${vide}${blocs}
+  <button class="btn-ghost" onclick="SportSaisie.ajouter('${s.id}')">+ Ajouter un exercice</button>
   <div class="lbl">Durée</div>
   <div class="ss-chips">${choixDuree}</div>
-  <button class="ss-valid" onclick="SportSaisie.valider('${s.id}')">Enregistrer — ${nb} exercice${nb>1?'s':''}</button>
-  <button class="btn-ghost" onclick="SportSaisie.ajouter('${s.id}')">+ Ajouter un exercice non prévu</button>`;
+  <button class="ss-valid" onclick="SportSaisie.valider('${s.id}')">Enregistrer — ${nb} exercice${nb>1?'s':''}</button>`;
 }
 
 /* Éditeur inline : pas de clavier, on incrémente. */
@@ -290,7 +297,38 @@ function pas(i, quoi, delta) {
   sauver(); rendre();
 }
 function duree(min) { const s = S.seanceById(ctx.arg); s.dureeReelle = min; sauver(); rendre(); }
-function ajouter() { if (window.SportUI) SportUI.monter(hote, { auFermer: () => rendre() }); }
+function libre(iso) {
+  const s = S.seanceLibre(iso);
+  aller('saisie', s.id);
+}
+
+/* On ouvre la banque en mode choix ; l'exercice retenu revient ici et la
+   saisie reprend là où elle en était. */
+function ajouter(seanceId) {
+  if (!window.SportUI) return;
+  const retourIci = () => { SportSaisie.monter(hote, { auFermer }); ecran = 'saisie';
+                            ctx = { arg: seanceId }; rendre(); };
+  SportUI.monter(hote, {
+    auFermer: retourIci,
+    onChoisir: exId => {
+      const s = S.seanceById(seanceId);
+      const e = S.exoById(exId);
+      const bloc = (e && (e.cat === 'souplesse' || e.cat === 'mobilite')) ? 'echauffement' : 'corps';
+      S.ajouterExercice(seanceId, exId, bloc);
+      const ex = s.exercices[s.exercices.length - 1];
+      ex.fait = true;
+      const m = (e && e.metriques) || ['series','reps','charge'];
+      const serie = {};
+      if (m.includes('reps'))   serie.reps  = 8;
+      if (m.includes('duree'))  serie.duree = m.includes('reps') ? 5 : 45;
+      if (m.includes('charge')) serie.charge = null;
+      const n = m.includes('series') ? 3 : 1;
+      for (let i = 0; i < n; i++) ex.series.push({ ...serie });
+      sauver();
+      retourIci();
+    }
+  });
+}
 
 function valider(seanceId) {
   const s = S.seanceById(seanceId);
@@ -380,7 +418,7 @@ function monter(el, options) {
 }
 
 return { monter, jour, rattrapage, retour, fermer, rendre,
-         declarer, ouvrir, repos, basculer, editer, pas, duree, ajouter,
+         declarer, ouvrir, libre, repos, basculer, editer, pas, duree, ajouter,
          valider, cocher, validerRattrapage };
 })();
 if (typeof window !== 'undefined') window.SportSaisie = SportSaisie;

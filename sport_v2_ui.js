@@ -8,7 +8,7 @@
 const SportUI = (function () {
 
 const S = SportV2;
-let hote = null, ecran = 'groupes', ctx = {}, auFermer = null;
+let hote = null, ecran = 'groupes', ctx = {}, auFermer = null, onChoisir = null;
 let filtreTexte = '', filtreGroupe = null, filtreObjectif = null;
 
 const esc = s => String(s == null ? '' : s)
@@ -66,6 +66,8 @@ const aujourdhui = () => new Date().toISOString().slice(0, 10);
    accessible ici et court-circuite la grille. */
 function vueGroupes() {
   const cat = S.catalogue();
+  const bandeau = onChoisir
+    ? `<div class="sv-choix">Choisis un exercice à ajouter.</div>` : '';
   const blocs = GROUPES.map(g => {
     const n = cat.filter(e => (groupeDe(e) || {}).id === g.id).length;
     if (!n) return '';
@@ -81,7 +83,8 @@ function vueGroupes() {
       <div class="ccount">${orphelins} exo${orphelins>1?'s':''}</div></div>` : '';
 
   return `
-  ${enteteRacine('🏋️ Ma banque')}
+  ${enteteRacine(onChoisir ? '➕ Ajouter' : '🏋️ Ma banque')}
+  ${bandeau}
   ${barreRecherche('Rechercher parmi ' + cat.length + ' exercices…', 'chercherGlobal', filtreTexte)}
   <div class="cat-grid">${blocs}${tuileAutres}
     <div class="cat-tile add" onclick="SportUI.nouvelExercice()">
@@ -125,7 +128,8 @@ function vueBanque() {
   const items = liste.map(e => {
     const d = S.derniereFois(e.id);
     const meta = d ? esc(resumeSeries(d.series)) + ' · ' + joursDepuis(d.date) : 'jamais fait';
-    return `<div class="card sv-row" onclick="SportUI.aller('fiche','${e.id}')">
+    const geste = onChoisir ? `SportUI.choisir('${e.id}')` : `SportUI.aller('fiche','${e.id}')`;
+    return `<div class="card sv-row" onclick="${geste}">
       ${vignette(e)}
       <div class="sv-grow"><div class="sv-nm">${esc(e.nom)} ${pastilles(e)}</div>
         <div class="sv-meta">${meta}</div></div>
@@ -549,6 +553,8 @@ const CSS = `
 .sv .sv-pill{border:1px solid var(--border);background:var(--surface);color:var(--muted);
   border-radius:20px;padding:6px 12px;font-size:12.5px;white-space:nowrap;cursor:pointer}
 .sv .sv-pill.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.sv .sv-choix{background:#fbf4f3;border-radius:12px;padding:10px 13px;font-size:12.5px;
+  color:#7a5b59;margin-bottom:10px}
 .sv .sv-count{font-size:11.5px;color:var(--muted);margin:6px 0 8px}
 .sv .sv-empty{border:1.5px dashed var(--border);border-radius:14px;padding:16px;
   text-align:center;font-size:13px;color:var(--muted);margin-bottom:10px}
@@ -597,7 +603,10 @@ const CSS = `
 
 function monter(el, options) {
   hote = typeof el === 'string' ? document.getElementById(el) : el;
-  auFermer = (options && options.auFermer) || null;
+  auFermer  = (options && options.auFermer)  || null;
+  /* En mode choix, toucher un exercice le renvoie à l'appelant au lieu
+     d'ouvrir sa fiche. C'est ce qui permet de composer une séance libre. */
+  onChoisir = (options && options.onChoisir) || null;
   ecran = 'groupes'; ctx = {}; PILE.length = 0;
   filtreTexte = ''; filtreGroupe = null; filtreObjectif = null;
   if (!document.getElementById('sv-css')) {
@@ -607,7 +616,9 @@ function monter(el, options) {
   rendre();
 }
 
-return { monter, aller, retour, rendre, fermer,
+function choisir(exId) { const f = onChoisir; if (f) f(exId); }
+
+return { monter, aller, retour, rendre, fermer, choisir,
          chercher, chercherGlobal, ouvrirGroupe, filtrerObjectif,
          cyclePoids, poserObjectif, retirerObjectif, reglerPhase,
          nouvelExercice, nouveauModele, dupliquer, retirerDuModele, choisirPour,
