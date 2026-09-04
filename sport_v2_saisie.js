@@ -158,7 +158,6 @@ function vueSaisie(seanceId) {
   <div class="sv-meta" style="margin:-4px 0 12px">${libelleDate(s.date)} · saisie a posteriori</div>
   ${s.modeleId ? `<div class="ss-astuce">Les valeurs viennent de ce qui était prévu. Décoche ce que tu
   n'as pas fait, corrige ce qui a changé, valide.</div>` : ''}
-  ${s.exercices.length ? '' : boutonAjout}
   ${vide}${blocs}
   ${boutonAjout}
   <div class="lbl">Durée</div>

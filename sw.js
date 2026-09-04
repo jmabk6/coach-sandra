@@ -1,11 +1,11 @@
-const CACHE = 'coach-sandra-v17';
+const CACHE = 'coach-sandra-v18';
 const ASSETS = [
   './coach_sandra.html',
-  './sport_catalogue.js?v=14',
-  './sport_v2_core.js?v=14',
-  './sport_v2_saisie.js?v=14',
-  './sport_v2_ui.js?v=14',
-  './sport_v2_accueil.js?v=14',
+  './sport_catalogue.js?v=15',
+  './sport_v2_core.js?v=15',
+  './sport_v2_saisie.js?v=15',
+  './sport_v2_ui.js?v=15',
+  './sport_v2_accueil.js?v=15',
   './manifest.json',
   './icon-192.png?v=2',
   './icon-512.png?v=2',
