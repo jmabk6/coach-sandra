@@ -258,6 +258,22 @@ function seanceLibre(date, nom) {
 
 const seanceById = id => hist.seances.find(s => s.id === id) || null;
 
+/* Supprimer une séance notée par erreur. On retire aussi l'entrée de planning
+   du même jour si elle avait été posée par un remplacement : sinon le jour
+   garderait une trace de la correction. */
+function supprimerSeance(id) {
+  const s = seanceById(id);
+  if (!s) return false;
+  hist.seances = hist.seances.filter(x => x.id !== id);
+  sauverHist();
+  if (!seancesDe(s.date).length) {
+    const n = etat.planning.length;
+    etat.planning = etat.planning.filter(p => p.date !== s.date);
+    if (etat.planning.length !== n) sauverEtat();
+  }
+  return true;
+}
+
 /* --- Ce qui était prévu ---------------------------------------------------
    Le planning explicite l'emporte sur la semaine type. */
 /* Ce qui est prévu n'existe que dans le présent et l'avenir. Le passé, lui,
@@ -582,6 +598,6 @@ return { charger, etat: () => etat, hist: () => hist,
          instancier, instancierFaite, seanceLibre, seanceById, seancesDe, ajouterExercice, retirerExercice,
          prevuLe, trameDe, estRepos, joursAConfirmer, marquerRepos,
          etatJour, moisJours, semaineDe, remplacerLeJour, reporter, ecartsDuMois,
-         noterSerie, ecarts, terminer, reporterDansModele,
+         noterSerie, ecarts, terminer, supprimerSeance, reporterDansModele,
          investissement, avancement, meilleurePerf, jamaisFaits, derniereFois, seancesRecentes };
 })();

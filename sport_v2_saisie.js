@@ -68,12 +68,15 @@ function vueJour(iso) {
     <div class="lbl">Déjà noté ce jour-là</div>
     ${deja.map(s => {
       const t = S.typeById(s.type) || {};
-      return `<div class="card sv-row" onclick="SportSaisie.ouvrir('${s.id}')">
+      return `<div class="card sv-row">
         <span class="ss-ico" style="background:${t.couleur || '#9a7878'}">${t.emoji || '📋'}</span>
-        <div class="sv-grow"><div class="sv-nm">${esc(s.nomAffiche)}</div>
+        <div class="sv-grow" onclick="SportSaisie.ouvrir('${s.id}')">
+          <div class="sv-nm">${esc(s.nomAffiche)}</div>
           <div class="sv-meta">${s.statut === 'repos' ? 'jour de repos'
-            : s.exercices.filter(e => e.fait).length + ' exercices faits'}</div></div>
-        <span class="sv-chev">›</span></div>`; }).join('')}` : '';
+            : s.exercices.filter(e => e.fait).length + ' exercices faits'
+              + (s.dureeReelle ? ' · ' + s.dureeReelle + ' min' : '')}</div></div>
+        <button class="ss-suppr" onclick="SportSaisie.supprimer('${s.id}')">Supprimer</button>
+        </div>`; }).join('')}` : '';
 
   const bloc = prevu ? `
     <div class="lbl">Selon ta semaine type</div>
@@ -97,15 +100,16 @@ function vueJour(iso) {
   </div>
   ${faites}
   ${bloc}
-  <div class="lbl">Autre séance</div>
-  <div class="ss-chips">${autres}</div>
-  <div class="lbl">Ou</div>
+  <div class="lbl">Séance libre</div>
   <div class="card sv-row" onclick="SportSaisie.libre('${iso}')">
     <span class="ss-ico" style="background:#9a7878">✏️</span>
-    <div class="sv-grow"><div class="sv-nm">Séance libre</div>
-      <div class="sv-meta">Je choisis les exercices un par un</div></div>
+    <div class="sv-grow"><div class="sv-nm">Je choisis mes exercices</div>
+      <div class="sv-meta">Un par un, dans l'ordre que je veux</div></div>
     <span class="sv-chev">›</span></div>
-  ${deja.length ? '' : `<button class="btn-ghost" onclick="SportSaisie.repos('${iso}')">Marquer comme jour de repos</button>`}`;
+  <div class="lbl">Une de mes séances</div>
+  <div class="ss-chips">${autres}</div>
+  ${deja.length ? '' : `<div class="lbl">Ou</div>
+  <button class="btn-ghost" onclick="SportSaisie.repos('${iso}')">Marquer comme jour de repos</button>`}`;
 }
 
 /* =========================================================================
@@ -154,7 +158,8 @@ function vueSaisie(seanceId) {
   <button class="btn-ghost" onclick="SportSaisie.ajouter('${s.id}')">+ Ajouter un exercice</button>
   <div class="lbl">Durée</div>
   <div class="ss-chips">${choixDuree}</div>
-  <button class="ss-valid" onclick="SportSaisie.valider('${s.id}')">Enregistrer — ${nb} exercice${nb>1?'s':''}</button>`;
+  <button class="ss-valid" onclick="SportSaisie.valider('${s.id}')">Enregistrer — ${nb} exercice${nb>1?'s':''}</button>
+  <button class="ss-suppr-l" onclick="SportSaisie.supprimer('${s.id}')">Supprimer cette séance</button>`;
 }
 
 /* Éditeur inline : pas de clavier, on incrémente. */
@@ -257,6 +262,16 @@ function declarer(modeleId, iso) {
 const ouvrir = seanceId => aller('saisie', seanceId);
 
 function repos(iso) { S.marquerRepos(iso); rendre(); }
+
+/* Une séance notée par erreur doit pouvoir disparaître entièrement — sinon on
+   n'ose plus rien saisir de peur de se tromper. */
+function supprimer(seanceId) {
+  const s = S.seanceById(seanceId);
+  if (!s) return;
+  if (!confirm('Supprimer « ' + s.nomAffiche + ' » ? Cette séance sera effacée.')) return;
+  S.supprimerSeance(seanceId);
+  if (ecran === 'saisie') retour(); else rendre();
+}
 
 function basculer(i) {
   const s = S.seanceById(ctx.arg);
@@ -401,6 +416,11 @@ const CSS = `
   font-family:'Inter',sans-serif}
 .ss .ss-ferme{background:none;border:1px solid var(--border);border-radius:10px;padding:8px;
   font-size:13px;color:var(--muted);cursor:pointer}
+.ss .ss-suppr{background:none;border:1px solid #e8c4c7;border-radius:10px;padding:6px 11px;
+  font-size:12px;color:#b8434f;cursor:pointer;flex:none}
+.ss .ss-suppr-l{display:block;width:100%;background:none;border:1.5px solid #e8c4c7;
+  border-radius:13px;padding:12px;font-size:14px;font-weight:600;color:#b8434f;
+  margin-top:8px;cursor:pointer}
 .ss .ss-valid{display:block;width:100%;background:var(--accent);color:#fff;border:0;
   border-radius:13px;padding:13px;text-align:center;font-weight:600;font-size:15px;
   margin-top:12px;cursor:pointer}
@@ -418,7 +438,7 @@ function monter(el, options) {
 }
 
 return { monter, jour, rattrapage, retour, fermer, rendre,
-         declarer, ouvrir, libre, repos, basculer, editer, pas, duree, ajouter,
+         declarer, ouvrir, libre, repos, supprimer, basculer, editer, pas, duree, ajouter,
          valider, cocher, validerRattrapage };
 })();
 if (typeof window !== 'undefined') window.SportSaisie = SportSaisie;
