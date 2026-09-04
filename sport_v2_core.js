@@ -140,6 +140,28 @@ function retirerObjectif(exId, objectifId) {
    MODÈLES
 ------------------------------------------------------------------------------ */
 
+/* --- Types de séance ------------------------------------------------------
+   Neuf types en trois familles. Le repos n'en est pas un : c'est un état du
+   calendrier, il n'a pas de contenu à ouvrir. */
+const types    = () => window.SPORT_TYPES || [];
+const typeById = id => types().find(t => t.id === id) || null;
+function famillesType() {
+  const out = [];
+  for (const t of types()) {
+    let f = out.find(x => x.nom === t.famille);
+    if (!f) out.push(f = { nom: t.famille, types: [] });
+    f.types.push(t);
+  }
+  return out;
+}
+const modelesDuType = id => etat.modeles.filter(m => m.type === id);
+/* Les séances du même type, hors celle en cours : c'est ce que propose
+   « Changer » quand tu n'as qu'une demi-heure. */
+function alternatives(modeleId) {
+  const m = modeleById(modeleId);
+  return m ? modelesDuType(m.type).filter(x => x.id !== modeleId) : [];
+}
+
 const modeles = () => etat.modeles;
 const modeleById = id => etat.modeles.find(m => m.id === id) || null;
 
@@ -205,7 +227,7 @@ function instancier(modeleId, date) {
                      series: [], fait: false, note: '' });
   }
   const s = { id: 's' + (hist.prochainId++), date, modeleId, modeleVersion: m.version,
-              nomAffiche: m.nom, couleur: m.couleur, statut: 'planifiee',
+              nomAffiche: m.nom, couleur: m.couleur, type: m.type, statut: 'planifiee',
               exercices, dureeReelle: null, ressenti: null, commentaire: '' };
   hist.seances.push(s); sauverHist();
   return s;
@@ -386,6 +408,7 @@ charger();
 
 return { charger, etat: () => etat, hist: () => hist,
          catalogue, exoById, retoucher, reglerPhase, creerExercice, poserObjectif, retirerObjectif,
+         types, typeById, famillesType, modelesDuType, alternatives,
          modeles, modeleById, enregistrerModele, dupliquerModele, supprimerModele,
          repartition, dureeEstimee,
          instancier, seanceById, seancesDe, ajouterExercice, retirerExercice,

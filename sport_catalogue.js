@@ -2763,14 +2763,10 @@ window.SPORT_MODELES   = [
   "id": "m101",
   "nom": "Traction (force)",
   "couleur": "#e63946",
-  "icone": "📋",
+  "icone": "🏋️",
   "blocs": [
    {
     "type": "echauffement",
-    "exercices": []
-   },
-   {
-    "type": "corps",
     "exercices": [
      {
       "exId": "ouverture-epaules-baton",
@@ -2803,7 +2799,12 @@ window.SPORT_MODELES   = [
       "charge": null,
       "duree": null,
       "note": ""
-     },
+     }
+    ]
+   },
+   {
+    "type": "corps",
+    "exercices": [
      {
       "exId": "suspension-a-la-barre",
       "series": null,
@@ -2859,7 +2860,12 @@ window.SPORT_MODELES   = [
       "charge": null,
       "duree": null,
       "note": ""
-     },
+     }
+    ]
+   },
+   {
+    "type": "retour_calme",
+    "exercices": [
      {
       "exId": "etirement-ischios-jambes-au-mur",
       "series": null,
@@ -2893,38 +2899,23 @@ window.SPORT_MODELES   = [
       "note": ""
      }
     ]
-   },
-   {
-    "type": "retour_calme",
-    "exercices": []
    }
   ],
   "version": 1,
-  "legacy": 101
+  "legacy": 101,
+  "type": "force"
  },
  {
-  "id": "m105",
-  "nom": "Renfo & dépense",
-  "couleur": "#2a9d3f",
-  "icone": "📋",
+  "id": "m103",
+  "nom": "Traction (volume)",
+  "couleur": "#3a86ff",
+  "icone": "🔁",
   "blocs": [
    {
     "type": "echauffement",
-    "exercices": []
-   },
-   {
-    "type": "corps",
     "exercices": [
      {
       "exId": "chat-vache",
-      "series": null,
-      "reps": null,
-      "charge": null,
-      "duree": null,
-      "note": ""
-     },
-     {
-      "exId": "hanches-90-90",
       "series": null,
       "reps": null,
       "charge": null,
@@ -2940,95 +2931,7 @@ window.SPORT_MODELES   = [
       "note": ""
      },
      {
-      "exId": "presse-a-cuisses",
-      "series": null,
-      "reps": null,
-      "charge": null,
-      "duree": null,
-      "note": ""
-     },
-     {
-      "exId": "pompes",
-      "series": null,
-      "reps": null,
-      "charge": null,
-      "duree": null,
-      "note": ""
-     },
-     {
-      "exId": "tirage-vertical",
-      "series": null,
-      "reps": null,
-      "charge": null,
-      "duree": null,
-      "note": ""
-     },
-     {
-      "exId": "tirage-horizontal",
-      "series": null,
-      "reps": null,
-      "charge": null,
-      "duree": null,
-      "note": ""
-     },
-     {
-      "exId": "gainage-anti-rotation",
-      "series": null,
-      "reps": null,
-      "charge": null,
-      "duree": null,
-      "note": ""
-     },
-     {
-      "exId": "gainage-planche",
-      "series": null,
-      "reps": null,
-      "charge": null,
-      "duree": null,
-      "note": ""
-     },
-     {
-      "exId": "etirement-ischios-jambes-au-mur",
-      "series": null,
-      "reps": null,
-      "charge": null,
-      "duree": null,
-      "note": ""
-     },
-     {
-      "exId": "ouverture-epaules-baton",
-      "series": null,
-      "reps": null,
-      "charge": null,
-      "duree": null,
-      "note": ""
-     },
-     {
-      "exId": "etirement-quadriceps-debout",
-      "series": null,
-      "reps": null,
-      "charge": null,
-      "duree": null,
-      "note": ""
-     },
-     {
-      "exId": "etirement-adducteurs-papillon",
-      "series": null,
-      "reps": null,
-      "charge": null,
-      "duree": null,
-      "note": ""
-     },
-     {
-      "exId": "etirement-des-mollets-mur",
-      "series": null,
-      "reps": null,
-      "charge": null,
-      "duree": null,
-      "note": ""
-     },
-     {
-      "exId": "rotation-lombaire-allongee",
+      "exId": "hanches-90-90",
       "series": null,
       "reps": null,
       "charge": null,
@@ -3038,50 +2941,8 @@ window.SPORT_MODELES   = [
     ]
    },
    {
-    "type": "retour_calme",
-    "exercices": []
-   }
-  ],
-  "version": 1,
-  "legacy": 105
- },
- {
-  "id": "m103",
-  "nom": "Traction (volume)",
-  "couleur": "#3a86ff",
-  "icone": "📋",
-  "blocs": [
-   {
-    "type": "echauffement",
-    "exercices": []
-   },
-   {
     "type": "corps",
     "exercices": [
-     {
-      "exId": "chat-vache",
-      "series": null,
-      "reps": null,
-      "charge": null,
-      "duree": null,
-      "note": ""
-     },
-     {
-      "exId": "rotation-thoracique",
-      "series": null,
-      "reps": null,
-      "charge": null,
-      "duree": null,
-      "note": ""
-     },
-     {
-      "exId": "hanches-90-90",
-      "series": null,
-      "reps": null,
-      "charge": null,
-      "duree": null,
-      "note": ""
-     },
      {
       "exId": "suspension-a-la-barre",
       "series": null,
@@ -3137,7 +2998,12 @@ window.SPORT_MODELES   = [
       "charge": null,
       "duree": null,
       "note": ""
-     },
+     }
+    ]
+   },
+   {
+    "type": "retour_calme",
+    "exercices": [
      {
       "exId": "etirement-ischios-jambes-au-mur",
       "series": null,
@@ -3171,66 +3037,20 @@ window.SPORT_MODELES   = [
       "note": ""
      }
     ]
-   },
-   {
-    "type": "retour_calme",
-    "exercices": []
    }
   ],
   "version": 1,
-  "legacy": 103
+  "legacy": 103,
+  "type": "volume"
  },
  {
-  "id": "m106",
-  "nom": "Activité (padel / golf / autre)",
-  "couleur": "#1a1a1a",
-  "icone": "📋",
+  "id": "m105",
+  "nom": "Renfo & dépense",
+  "couleur": "#2a9d3f",
+  "icone": "💪",
   "blocs": [
    {
     "type": "echauffement",
-    "exercices": []
-   },
-   {
-    "type": "corps",
-    "exercices": [
-     {
-      "exId": "padel-match",
-      "series": null,
-      "reps": null,
-      "charge": null,
-      "duree": null,
-      "note": ""
-     },
-     {
-      "exId": "golf-parcours",
-      "series": null,
-      "reps": null,
-      "charge": null,
-      "duree": null,
-      "note": ""
-     }
-    ]
-   },
-   {
-    "type": "retour_calme",
-    "exercices": []
-   }
-  ],
-  "version": 1,
-  "legacy": 106
- },
- {
-  "id": "m107",
-  "nom": "Cardio Zone 2 (endurance)",
-  "couleur": "#00b4d8",
-  "icone": "📋",
-  "blocs": [
-   {
-    "type": "echauffement",
-    "exercices": []
-   },
-   {
-    "type": "corps",
     "exercices": [
      {
       "exId": "chat-vache",
@@ -3249,7 +3069,44 @@ window.SPORT_MODELES   = [
       "note": ""
      },
      {
-      "exId": "marche-en-pente-tapis",
+      "exId": "rotation-thoracique",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     }
+    ]
+   },
+   {
+    "type": "corps",
+    "exercices": [
+     {
+      "exId": "presse-a-cuisses",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "pompes",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "tirage-vertical",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "tirage-horizontal",
       "series": null,
       "reps": null,
       "charge": null,
@@ -3264,6 +3121,125 @@ window.SPORT_MODELES   = [
       "duree": null,
       "note": ""
      },
+     {
+      "exId": "gainage-planche",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     }
+    ]
+   },
+   {
+    "type": "retour_calme",
+    "exercices": [
+     {
+      "exId": "etirement-ischios-jambes-au-mur",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "ouverture-epaules-baton",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "etirement-quadriceps-debout",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "etirement-adducteurs-papillon",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "etirement-des-mollets-mur",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "rotation-lombaire-allongee",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     }
+    ]
+   }
+  ],
+  "version": 1,
+  "legacy": 105,
+  "type": "renfo"
+ },
+ {
+  "id": "m107",
+  "nom": "Cardio Zone 2 (endurance)",
+  "couleur": "#00b4d8",
+  "icone": "🚴",
+  "blocs": [
+   {
+    "type": "echauffement",
+    "exercices": [
+     {
+      "exId": "chat-vache",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "hanches-90-90",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     }
+    ]
+   },
+   {
+    "type": "corps",
+    "exercices": [
+     {
+      "exId": "marche-en-pente-tapis",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "gainage-anti-rotation",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     }
+    ]
+   },
+   {
+    "type": "retour_calme",
+    "exercices": [
      {
       "exId": "etirement-ischios-jambes-au-mur",
       "series": null,
@@ -3305,27 +3281,20 @@ window.SPORT_MODELES   = [
       "note": ""
      }
     ]
-   },
-   {
-    "type": "retour_calme",
-    "exercices": []
    }
   ],
   "version": 1,
-  "legacy": 107
+  "legacy": 107,
+  "type": "endurance"
  },
  {
   "id": "m108",
   "nom": "Cardio Intervalles",
   "couleur": "#f4c20d",
-  "icone": "📋",
+  "icone": "⚡",
   "blocs": [
    {
     "type": "echauffement",
-    "exercices": []
-   },
-   {
-    "type": "corps",
     "exercices": [
      {
       "exId": "chat-vache",
@@ -3342,7 +3311,12 @@ window.SPORT_MODELES   = [
       "charge": null,
       "duree": null,
       "note": ""
-     },
+     }
+    ]
+   },
+   {
+    "type": "corps",
+    "exercices": [
      {
       "exId": "velo-fractionne",
       "series": null,
@@ -3358,7 +3332,12 @@ window.SPORT_MODELES   = [
       "charge": null,
       "duree": null,
       "note": ""
-     },
+     }
+    ]
+   },
+   {
+    "type": "retour_calme",
+    "exercices": [
      {
       "exId": "etirement-ischios-jambes-au-mur",
       "series": null,
@@ -3392,17 +3371,352 @@ window.SPORT_MODELES   = [
       "note": ""
      }
     ]
+   }
+  ],
+  "version": 1,
+  "legacy": 108,
+  "type": "intervalles"
+ },
+ {
+  "id": "m111",
+  "nom": "Marche",
+  "type": "marche",
+  "icone": "🚶",
+  "couleur": "#8ab17d",
+  "version": 1,
+  "blocs": [
+   {
+    "type": "echauffement",
+    "exercices": []
+   },
+   {
+    "type": "corps",
+    "exercices": [
+     {
+      "exId": "marche-rapide",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     }
+    ]
+   },
+   {
+    "type": "retour_calme",
+    "exercices": [
+     {
+      "exId": "etirement-des-mollets-mur",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "etirement-ischios-jambes-au-mur",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "m110",
+  "nom": "Mobilité (15 min)",
+  "type": "mobilite",
+  "icone": "🧘",
+  "couleur": "#7b3fe0",
+  "version": 1,
+  "blocs": [
+   {
+    "type": "echauffement",
+    "exercices": []
+   },
+   {
+    "type": "corps",
+    "exercices": [
+     {
+      "exId": "chat-vache",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "hanches-90-90",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "rotation-dos-a-quatre-pattes",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "rotation-lombaire-allongee",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "etirement-flechisseurs-de-hanche",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "etirement-ischios-jambes-au-mur",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "etirement-fessiers-piriforme",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     }
+    ]
    },
    {
     "type": "retour_calme",
     "exercices": []
    }
-  ],
+  ]
+ },
+ {
+  "id": "m106",
+  "nom": "Padel (match)",
+  "type": "padel",
+  "icone": "🎾",
+  "couleur": "#0f7c8c",
   "version": 1,
-  "legacy": 108
+  "blocs": [
+   {
+    "type": "echauffement",
+    "exercices": [
+     {
+      "exId": "ouverture-epaules-baton",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "rotation-thoracique",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "hanches-90-90",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     }
+    ]
+   },
+   {
+    "type": "corps",
+    "exercices": [
+     {
+      "exId": "padel-match",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     }
+    ]
+   },
+   {
+    "type": "retour_calme",
+    "exercices": [
+     {
+      "exId": "etirement-ischios-jambes-au-mur",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "etirement-fessiers-piriforme",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     }
+    ]
+   }
+  ]
+ },
+ {
+  "id": "m109",
+  "nom": "Golf (parcours)",
+  "type": "golf",
+  "icone": "⛳",
+  "couleur": "#c4691c",
+  "version": 1,
+  "blocs": [
+   {
+    "type": "echauffement",
+    "exercices": [
+     {
+      "exId": "rotation-thoracique",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "hanches-90-90",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "swing-golf-a-vide",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     }
+    ]
+   },
+   {
+    "type": "corps",
+    "exercices": [
+     {
+      "exId": "golf-parcours",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     }
+    ]
+   },
+   {
+    "type": "retour_calme",
+    "exercices": [
+     {
+      "exId": "rotation-lombaire-allongee",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     },
+     {
+      "exId": "etirement-fessiers-piriforme",
+      "series": null,
+      "reps": null,
+      "charge": null,
+      "duree": null,
+      "note": ""
+     }
+    ]
+   }
+  ]
  }
 ];
 window.SPORT_SUIVI = ["suspension-a-la-barre","tractions-negatives","traction-assistee-machine","tirage-vertical","tirage-horizontal","etirement-ischios-jambes-au-mur","gainage-planche","gainage-anti-rotation","velo-fractionne","marche-rapide","elliptique","presse-a-cuisses","rameur","rotation-buste-a-genou-mur","marche-en-pente-tapis"];
 window.SPORT_SETS  = ["suspension-a-la-barre","tractions-negatives","traction-assistee-machine","tirage-vertical","tirage-horizontal","pompes","gainage-planche","gainage-anti-rotation","presse-a-cuisses","rotation-buste-a-genou-mur"];
 window.SPORT_ACT   = ["padel-match","golf-parcours"];
+window.SPORT_TYPES = [
+ {
+  "id": "force",
+  "nom": "Force",
+  "famille": "Musculation",
+  "emoji": "🏋️",
+  "couleur": "#e63946"
+ },
+ {
+  "id": "volume",
+  "nom": "Volume",
+  "famille": "Musculation",
+  "emoji": "🔁",
+  "couleur": "#3a86ff"
+ },
+ {
+  "id": "renfo",
+  "nom": "Renfo complet",
+  "famille": "Musculation",
+  "emoji": "💪",
+  "couleur": "#2a9d3f"
+ },
+ {
+  "id": "endurance",
+  "nom": "Endurance",
+  "famille": "Cardio",
+  "emoji": "🚴",
+  "couleur": "#00b4d8"
+ },
+ {
+  "id": "intervalles",
+  "nom": "Intervalles",
+  "famille": "Cardio",
+  "emoji": "⚡",
+  "couleur": "#f4c20d"
+ },
+ {
+  "id": "marche",
+  "nom": "Marche",
+  "famille": "Cardio",
+  "emoji": "🚶",
+  "couleur": "#8ab17d"
+ },
+ {
+  "id": "mobilite",
+  "nom": "Mobilité",
+  "famille": "Entretien & sport",
+  "emoji": "🧘",
+  "couleur": "#7b3fe0"
+ },
+ {
+  "id": "padel",
+  "nom": "Padel",
+  "famille": "Entretien & sport",
+  "emoji": "🎾",
+  "couleur": "#0f7c8c"
+ },
+ {
+  "id": "golf",
+  "nom": "Golf",
+  "famille": "Entretien & sport",
+  "emoji": "⛳",
+  "couleur": "#c4691c"
+ }
+];
 window.SPORT_LEGACY = { exos:{"1":"suspension-a-la-barre","2":"tractions-negatives","3":"traction-assistee-machine","4":"tirage-vertical","5":"tirage-horizontal","8":"etirement-ischios-jambes-au-mur","9":"ouverture-epaules-baton","10":"chat-vache","12":"pompes","13":"hanches-90-90","14":"rotation-thoracique","15":"gainage-planche","16":"gainage-anti-rotation","17":"velo-fractionne","18":"swing-golf-a-vide","19":"marche-rapide","20":"elliptique","22":"presse-a-cuisses","23":"rameur","24":"padel-match","25":"golf-parcours","26":"rotation-buste-a-genou-mur","27":"rotation-dos-a-quatre-pattes","28":"marche-en-pente-tapis","29":"etirement-flechisseurs-de-hanche","30":"etirement-fessiers-piriforme","31":"etirement-des-mollets-mur","32":"rotation-lombaire-allongee","33":"etirement-adducteurs-papillon","34":"etirement-quadriceps-debout"}, data:{"1":"developpe-couche","2":"developpe-militaire","3":"elevations-laterales","4":"dips-machine","5":"extension-triceps-poulie","6":"ecartes-poulie","7":"curl-halteres","8":"tirage-vertical","9":"tirage-horizontal","10":"traction-assistee-machine","11":"face-pull-poulie","12":"curl-marteau","13":"oiseau-halteres","14":"presse-a-cuisses","15":"leg-extension","16":"leg-curl-couche","17":"mollets-machine","18":"gainage-planche","19":"gainage-lateral","20":"superman","23":"marche-rapide","24":"velo-fractionne","25":"rameur","26":"epaules","27":"triceps","28":"pectoraux","29":"biceps","30":"rotation-lombaire-allongee","31":"dos-cote","32":"lombaires-priere","33":"abdominaux-cobra","34":"etirement-quadriceps-debout","35":"quadriceps-fente","36":"etirement-ischios-jambes-au-mur","37":"ischio-jambiers-assis","38":"etirement-adducteurs-papillon","39":"etirement-fessiers-piriforme","40":"etirement-des-mollets-mur"} };
