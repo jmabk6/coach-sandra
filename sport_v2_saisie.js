@@ -150,15 +150,17 @@ function vueSaisie(seanceId) {
     Ajoute ce que tu as fait, dans l'ordre que tu veux.</div>` : '';
   /* Sur une séance libre, ajouter est le seul geste possible : le bouton doit
      être le plus visible de l'écran, pas une action secondaire en gris. */
-  const clsAjout = s.exercices.length ? 'ss-add' : 'ss-add ss-add-fort';
+  const boutonAjout = `<button class="ss-add" onclick="SportSaisie.ajouter('${s.id}')">
+      <span class="ss-plus">+</span><span>Ajouter un exercice</span></button>`;
   const nb = s.exercices.filter(e => e.fait).length;
   return `
   ${entete(s.nomAffiche, `<button class="ss-cta" onclick="SportSaisie.valider('${s.id}')">Valider</button>`)}
   <div class="sv-meta" style="margin:-4px 0 12px">${libelleDate(s.date)} · saisie a posteriori</div>
   ${s.modeleId ? `<div class="ss-astuce">Les valeurs viennent de ce qui était prévu. Décoche ce que tu
   n'as pas fait, corrige ce qui a changé, valide.</div>` : ''}
+  ${s.exercices.length ? '' : boutonAjout}
   ${vide}${blocs}
-  <button class="${clsAjout}" onclick="SportSaisie.ajouter('${s.id}')">+ Ajouter un exercice</button>
+  ${boutonAjout}
   <div class="lbl">Durée</div>
   <div class="ss-chips">${choixDuree}</div>
   <button class="ss-valid${nb ? '' : ' ss-off-btn'}" onclick="SportSaisie.valider('${s.id}')">${
@@ -439,11 +441,17 @@ const CSS = `
   font-family:'Inter',sans-serif}
 .ss .ss-ferme{background:none;border:1px solid var(--border);border-radius:10px;padding:8px;
   font-size:13px;color:var(--muted);cursor:pointer}
-.ss .ss-add{display:block;width:100%;background:var(--surface);border:1.5px solid var(--accent);
-  border-radius:13px;padding:13px;font-size:15px;font-weight:600;color:var(--accent);
-  margin-top:10px;cursor:pointer;font-family:'Inter',sans-serif}
-.ss .ss-add-fort{background:var(--accent);color:#fff;border-color:var(--accent)}
-.ss .ss-add:active{opacity:.75}
+/* Le geste central de l'écran. Il est répété en haut quand la séance est vide,
+   et forcé en !important : les règles globales sur <button> de l'app le
+   ramenaient sinon à un lien gris de 13 px. */
+.ss button.ss-add{display:flex !important;align-items:center;justify-content:center;gap:10px;
+  width:100% !important;background:var(--accent) !important;color:#fff !important;
+  border:0 !important;border-radius:16px !important;padding:18px !important;
+  font-family:'Inter',sans-serif !important;font-size:17px !important;font-weight:700 !important;
+  margin:14px 0 !important;cursor:pointer;box-shadow:0 4px 14px rgba(192,97,106,.32);
+  letter-spacing:.01em;text-transform:none !important;line-height:1 !important}
+.ss button.ss-add .ss-plus{font-size:24px;font-weight:700;line-height:1;margin-top:-2px}
+.ss button.ss-add:active{transform:scale(.985);box-shadow:0 2px 8px rgba(192,97,106,.28)}
 .ss .ss-suppr{background:none;border:1px solid #e8c4c7;border-radius:10px;padding:6px 11px;
   font-size:12px;color:#b8434f;cursor:pointer;flex:none}
 .ss .ss-suppr-l{display:block;width:100%;background:none;border:1.5px solid #e8c4c7;
