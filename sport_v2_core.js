@@ -264,6 +264,80 @@ function joursAConfirmer(depuis, jusqua) {
   return out;
 }
 
+/* --- État d'un jour, pour le calendrier -----------------------------------
+   fait    : une séance terminée
+   repos   : repos déclaré, ou rien au programme
+   prevu   : une séance au programme, aujourd'hui ou plus tard
+   manque  : c'était prévu, c'est passé, rien n'a été noté */
+function etatJour(iso) {
+  const auj = new Date().toISOString().slice(0, 10);
+  const faites = seancesDe(iso);
+  const terminee = faites.find(s => s.statut === 'terminee');
+  const modeleId = prevuLe(iso);
+  if (terminee) return { statut: 'fait', seance: terminee, modeleId: terminee.modeleId };
+  if (faites.some(s => s.statut === 'repos')) return { statut: 'repos', modeleId: null };
+  const enCours = faites.find(s => s.statut === 'en_cours' || s.statut === 'planifiee');
+  if (enCours) return { statut: 'prevu', seance: enCours, modeleId: enCours.modeleId };
+  if (!modeleId) return { statut: 'repos', modeleId: null };
+  return { statut: iso < auj ? 'manque' : 'prevu', modeleId };
+}
+
+function moisJours(annee, mois) {
+  const out = [], d = new Date(annee, mois, 1);
+  while (d.getMonth() === mois) {
+    const iso = new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10);
+    out.push({ jour: d.getDate(), iso, ...etatJour(iso) });
+    d.setDate(d.getDate() + 1);
+  }
+  return out;
+}
+
+/* Semaine courante, du lundi au dimanche. */
+function semaineDe(iso) {
+  const d = new Date(iso + 'T12:00');
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  const out = [];
+  for (let i = 0; i < 7; i++) {
+    const j = new Date(d.getTime() + i * 864e5).toISOString().slice(0, 10);
+    out.push({ iso: j, ...etatJour(j) });
+  }
+  return out;
+}
+
+/* Remplacer la séance d'un jour. On note l'écart quand on change de type :
+   changer de séance dans le même type n'en est pas un. */
+function remplacerLeJour(iso, modeleId) {
+  const avant = prevuLe(iso), a = avant && modeleById(avant), b = modeleById(modeleId);
+  const ecart = !!(a && b && a.type !== b.type);
+  const i = etat.planning.findIndex(p => p.date === iso);
+  const entree = { id: 'p' + Date.now(), date: iso, modeleId, ecart };
+  if (i < 0) etat.planning.push(entree); else etat.planning[i] = entree;
+  sauverEtat();
+  return entree;
+}
+/* Reporter au premier jour libre suivant, sans écraser ce qui est déjà prévu. */
+function reporter(iso) {
+  const modeleId = prevuLe(iso);
+  if (!modeleId) return null;
+  const d = new Date(iso + 'T12:00');
+  for (let k = 1; k <= 7; k++) {
+    d.setDate(d.getDate() + 1);
+    const cible = d.toISOString().slice(0, 10);
+    if (!prevuLe(cible) && !seancesDe(cible).length) {
+      remplacerLeJour(cible, modeleId);
+      marquerRepos(iso);
+      return cible;
+    }
+  }
+  return null;
+}
+
+/* Combien de fois la trame a-t-elle été contournée ce mois-ci. */
+function ecartsDuMois(iso) {
+  const p = (iso || new Date().toISOString().slice(0, 10)).slice(0, 7);
+  return etat.planning.filter(x => x.ecart && x.date.slice(0, 7) === p).length;
+}
+
 function marquerRepos(iso) {
   const s = { id: 's' + (hist.prochainId++), date: iso, modeleId: null, type: 'repos',
               nomAffiche: 'Repos', statut: 'repos', exercices: [] };
@@ -477,6 +551,7 @@ return { charger, etat: () => etat, hist: () => hist,
          repartition, dureeEstimee,
          instancier, instancierFaite, seanceById, seancesDe, ajouterExercice, retirerExercice,
          prevuLe, estRepos, joursAConfirmer, marquerRepos,
+         etatJour, moisJours, semaineDe, remplacerLeJour, reporter, ecartsDuMois,
          noterSerie, ecarts, terminer, reporterDansModele,
          investissement, avancement, meilleurePerf, jamaisFaits, derniereFois, seancesRecentes };
 })();
