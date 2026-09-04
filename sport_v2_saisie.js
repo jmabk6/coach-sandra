@@ -58,7 +58,9 @@ function resume(exLog) {
    ====================================================================== */
 
 function vueJour(iso) {
-  const prevuId = S.prevuLe(iso);
+  /* Sur un jour passé, prevuLe() ne renvoie plus rien : on interroge la trame
+     pour proposer quand même la séance de ce jour de la semaine. */
+  const prevuId = S.prevuLe(iso) || S.trameDe(iso);
   const prevu = prevuId ? S.modeleById(prevuId) : null;
   const deja = S.seancesDe(iso);
 
@@ -74,14 +76,14 @@ function vueJour(iso) {
         <span class="sv-chev">›</span></div>`; }).join('')}` : '';
 
   const bloc = prevu ? `
-    <div class="lbl">C'était prévu</div>
+    <div class="lbl">Selon ta semaine type</div>
     <div class="card sv-row" onclick="SportSaisie.declarer('${prevu.id}','${iso}')">
       <span class="ss-ico" style="background:${typeDe(prevu).couleur}">${typeDe(prevu).emoji}</span>
       <div class="sv-grow"><div class="sv-nm">${esc(prevu.nom)}</div>
         <div class="sv-meta">${prevu.blocs.reduce((a,b)=>a+b.exercices.length,0)} exercices · ~${S.dureeEstimee(prevu)} min</div></div>
       <span class="sv-chev">›</span></div>` : `
-    <div class="lbl">C'était prévu</div>
-    <div class="ss-empty">Jour de repos au programme.</div>`;
+    <div class="lbl">Selon ta semaine type</div>
+    <div class="ss-empty">Ce jour-là était un jour de repos.</div>`;
 
   const autres = S.modeles().filter(m => m.id !== prevuId).map(m =>
     `<button class="ss-chip" onclick="SportSaisie.declarer('${m.id}','${iso}')">

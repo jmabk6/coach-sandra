@@ -63,12 +63,13 @@ function vueAccueil() {
   /* La semaine : plus parlant qu'un mois entier pour savoir où on en est. */
   const sem = S.semaineDe(iso);
   const faits = sem.filter(j => j.statut === 'fait').length;
-  const prevus = sem.filter(j => j.statut !== 'repos').length;
+  const prevus = sem.filter(j => j.statut === 'fait' || j.statut === 'prevu').length;
   const bande = sem.map(j => {
     const mm = j.modeleId ? S.modeleById(j.modeleId) : null;
     const t = mm ? typeDe(mm) : null;
-    const cls = j.statut === 'fait' ? ' fait' : j.statut === 'manque' ? ' manque'
-              : j.iso === iso ? ' now' : j.statut === 'repos' ? ' rep' : '';
+    const cls = j.statut === 'fait' ? ' fait'
+              : j.iso === iso ? ' now'
+              : (j.statut === 'repos' || j.statut === 'vide') ? ' rep' : '';
     return `<button class="sa-sj${cls}" onclick="SportAccueil.jour('${j.iso}')">
       <span class="d">${'LMMJVSD'[(new Date(j.iso+'T12:00').getDay()+6)%7]}</span>
       <span class="e">${t ? t.emoji : '🌙'}</span>
@@ -108,8 +109,7 @@ function calendrier() {
 
   const cases = '<div class="sa-day off"></div>'.repeat(decalage) + jours.map(j => {
     const mm = j.modeleId ? S.modeleById(j.modeleId) : null;
-    const cls = [j.statut === 'fait' ? 'fait' : '', j.statut === 'manque' ? 'manque' : '',
-                 j.iso === auj ? 'today' : ''].filter(Boolean).join(' ');
+    const cls = [j.statut === 'fait' ? 'fait' : '', j.iso === auj ? 'today' : ''].filter(Boolean).join(' ');
     const point = mm ? `<i class="p" style="background:${typeDe(mm).couleur}"></i>` : '';
     return `<button class="sa-day ${cls}" onclick="SportAccueil.jour('${j.iso}')">
       ${j.statut === 'fait' ? '<span class="chk">✓</span>' : ''}${j.jour}${point}</button>`;

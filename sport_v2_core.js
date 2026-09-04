@@ -42,13 +42,22 @@ function charger() {
       modeles:   structuredClone(window.SPORT_MODELES),
       retouches: {},                 // exId -> champs surchargés (phaseCourante, objectifs, nom…)
       ajouts:    [],                 // exercices créés par l'utilisateur
+      debut: '2026-09-01',           // rien avant : le programme commence ici
       semaineType: { 0:'m105', 1:'m107', 2:'m101', 4:'m108', 5:'m103', 6:'m106' },
-      planning:  []                  // { id, date:'YYYY-MM-DD', modeleId, seanceId? }
+      planning:  []                  // { id, date:'YYYY-MM-DD', modeleId, ecart }
     };
     reprendreAncienModule();
     ecrire(K_ETAT, etat);
   }
   if (!hist) { hist = { seances: [], prochainId: 1 }; ecrire(K_HIST, hist); }
+
+  /* Rattrapage des installations faites avant cette règle : on jette le
+     planning hérité, qui n'était que du remplissage automatique. */
+  if (!etat.debut) {
+    etat.debut = '2026-09-01';
+    etat.planning = (etat.planning || []).filter(p => p.ecart);
+    sauverEtat();
+  }
   return { etat, hist };
 }
 
@@ -63,9 +72,8 @@ function reprendreAncienModule() {
     etat.semaineType = {};
     for (const [jour, seaId] of Object.entries(v1.pattern)) etat.semaineType[jour] = 'm' + seaId;
   }
-  if (Array.isArray(v1.events)) {
-    etat.planning = v1.events.map(e => ({ id: e.id, date: e.date, modeleId: 'm' + e.seaId }));
-  }
+  /* On n'importe PAS v1.events : l'ancien module semait un mois de séances à
+     l'avance (seedMonth). Ce n'était pas un planning, c'était du remplissage. */
   if (v1.logs) {
     hist = { seances: [], prochainId: 1 };
     for (const lg of Object.values(v1.logs)) {
@@ -242,9 +250,20 @@ const seanceById = id => hist.seances.find(s => s.id === id) || null;
 
 /* --- Ce qui était prévu ---------------------------------------------------
    Le planning explicite l'emporte sur la semaine type. */
+/* Ce qui est prévu n'existe que dans le présent et l'avenir. Le passé, lui,
+   n'affiche que ce qui a réellement eu lieu : une séance non faite disparaît
+   du calendrier au lieu d'y rester comme un reproche. */
 function prevuLe(iso) {
+  if (etat.debut && iso < etat.debut) return null;
   const p = etat.planning.find(x => x.date === iso);
   if (p) return p.modeleId;
+  if (iso < new Date().toISOString().slice(0, 10)) return null;
+  const jour = new Date(iso + 'T12:00').getDay();
+  return etat.semaineType[jour] || null;
+}
+/* Ce que la semaine type dit d'un jour, sans borne de date. Sert à proposer
+   une séance quand on déclare a posteriori, pas à peupler le calendrier. */
+function trameDe(iso) {
   const jour = new Date(iso + 'T12:00').getDay();
   return etat.semaineType[jour] || null;
 }
@@ -253,12 +272,13 @@ const estRepos = iso => !prevuLe(iso);
 /* Les jours passés qui avaient une séance au programme et dont rien n'a été
    noté. C'est la matière du rattrapage groupé. */
 function joursAConfirmer(depuis, jusqua) {
+  if (etat.debut && depuis < etat.debut) depuis = etat.debut;
   const fin = jusqua || new Date().toISOString().slice(0, 10);
   const out = [];
   for (let d = new Date(depuis + 'T12:00'); d.toISOString().slice(0, 10) <= fin; d.setDate(d.getDate() + 1)) {
     const iso = d.toISOString().slice(0, 10);
     if (seancesDe(iso).length) continue;
-    const modeleId = prevuLe(iso);
+    const modeleId = prevuLe(iso) || trameDe(iso);
     if (modeleId && modeleById(modeleId)) out.push({ date: iso, modeleId });
   }
   return out;
@@ -278,8 +298,8 @@ function etatJour(iso) {
   if (faites.some(s => s.statut === 'repos')) return { statut: 'repos', modeleId: null };
   const enCours = faites.find(s => s.statut === 'en_cours' || s.statut === 'planifiee');
   if (enCours) return { statut: 'prevu', seance: enCours, modeleId: enCours.modeleId };
-  if (!modeleId) return { statut: 'repos', modeleId: null };
-  return { statut: iso < auj ? 'manque' : 'prevu', modeleId };
+  if (!modeleId) return { statut: iso < auj ? 'vide' : 'repos', modeleId: null };
+  return { statut: 'prevu', modeleId };
 }
 
 function moisJours(annee, mois) {
@@ -550,7 +570,7 @@ return { charger, etat: () => etat, hist: () => hist,
          modeles, modeleById, enregistrerModele, dupliquerModele, supprimerModele,
          repartition, dureeEstimee,
          instancier, instancierFaite, seanceById, seancesDe, ajouterExercice, retirerExercice,
-         prevuLe, estRepos, joursAConfirmer, marquerRepos,
+         prevuLe, trameDe, estRepos, joursAConfirmer, marquerRepos,
          etatJour, moisJours, semaineDe, remplacerLeJour, reporter, ecartsDuMois,
          noterSerie, ecarts, terminer, reporterDansModele,
          investissement, avancement, meilleurePerf, jamaisFaits, derniereFois, seancesRecentes };
