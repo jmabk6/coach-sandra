@@ -45,6 +45,15 @@ function resume(exLog) {
   const n = exLog.series.length;
   if (!n) return null;
   const s0 = exLog.series[0];
+  /* Un tapis à paliers : on résume le total et le plus dur, pas la moyenne. */
+  if (s0.vitesse != null || s0.fc != null) {
+    const tot = exLog.series.reduce((a, x) => a + (x.duree || 0), 0);
+    const fcMax = Math.max(...exLog.series.map(x => x.fc || 0));
+    const bits = [Math.round(tot / 60) + ' min'];
+    if (n > 1) bits.push(n + ' paliers');
+    if (fcMax) bits.push(fcMax + ' bpm max');
+    return bits.join(' · ');
+  }
   if (s0.duree != null && s0.reps == null) {
     const m = s0.duree >= 120 ? Math.round(s0.duree / 60) + ' min' : s0.duree + ' s';
     return n > 1 ? n + ' × ' + m : m;
@@ -171,21 +180,39 @@ function vueSaisie(seanceId) {
 /* Les champs affichés viennent des métriques de l'exercice. Une suspension se
    saisit en secondes même si c'est un exercice de dos. */
 const CHAMPS = {
-  series: { lib: 'séries',      pas: 1,   defaut: 3  },
-  reps:   { lib: 'répétitions', pas: 1,   defaut: 8  },
-  duree:  { lib: 'secondes',    pas: 15,  defaut: 45 },
-  charge: { lib: 'kilos',       pas: 2.5, defaut: 0  }
+  series:  { lib: 'séries',      pas: 1,   defaut: 3   },
+  reps:    { lib: 'répétitions', pas: 1,   defaut: 8   },
+  duree:   { lib: 'secondes',    pas: 15,  defaut: 45  },
+  charge:  { lib: 'kilos',       pas: 2.5, defaut: 0   },
+  vitesse: { lib: 'km/h',        pas: 0.5, defaut: 5   },
+  pente:   { lib: '% de pente',  pas: 1,   defaut: 0   },
+  fc:      { lib: 'bpm',         pas: 5,   defaut: 100 }
 };
+/* On édite une série à la fois. Un tapis se fait par paliers — 5 min à 4,5 puis
+   5 min à 5 % de pente — et chaque palier a ses propres valeurs. Modifier
+   toutes les séries d'un coup écrasait justement ce qu'il y a d'intéressant. */
 function editeur(ex, e, i) {
   const m = e.metriques || ['series','reps','charge'];
-  const s0 = ex.series[0] || {};
-  const val = q => q === 'series' ? (ex.series.length || 1) : (s0[q] ?? CHAMPS[q].defaut);
-  const pasDe = q => (q === 'duree' && val('duree') >= 300) ? 300 : CHAMPS[q].pas;
-  const lib = q => (q === 'duree' && val('duree') >= 300) ? 'minutes' : CHAMPS[q].lib;
-  const aff = q => (q === 'duree' && val('duree') >= 300) ? Math.round(val('duree')/60) : val(q);
+  if (!ex.series.length) ex.series.push({});
+  const k = Math.min(ctx.serie || 0, ex.series.length - 1);
+  const cur = ex.series[k];
+  const perSerie = m.filter(q => q !== 'series');
+
+  const val = q => cur[q] ?? CHAMPS[q].defaut;
+  const enMin = q => q === 'duree' && val('duree') >= 120;
+  const pasDe = q => enMin(q) ? 60 : CHAMPS[q].pas;
+  const lib   = q => enMin(q) ? 'minutes' : CHAMPS[q].lib;
+  const aff   = q => enMin(q) ? Math.round(val('duree') / 60 * 10) / 10 : val(q);
+
+  const onglets = ex.series.map((_, n) =>
+    `<button class="ss-onglet${n===k?' on':''}" onclick="SportSaisie.serie(${n})">${
+      m.includes('vitesse') || m.includes('fc') ? 'P' + (n+1) : 'S' + (n+1)}</button>`).join('')
+    + `<button class="ss-onglet plus" onclick="SportSaisie.plusSerie(${i})">+</button>`
+    + (ex.series.length > 1 ? `<button class="ss-onglet moins" onclick="SportSaisie.moinsSerie(${i})">−</button>` : '');
 
   return `<div class="ss-edit">
-    ${m.map(q => `
+    <div class="ss-onglets">${onglets}</div>
+    ${perSerie.map(q => `
     <div class="ss-step">
       <button onclick="SportSaisie.pas(${i},'${q}',${-pasDe(q)})">−</button>
       <div class="v">${aff(q)}<span class="u">${lib(q)}</span></div>
@@ -305,7 +332,7 @@ function basculer(i) {
   S.enregistrerSeance ? S.enregistrerSeance(s) : null;
   sauver(); rendre();
 }
-const editer = i => { ctx.edite = (ctx.edite === i ? null : i); rendre(); };
+const editer = i => { ctx.edite = (ctx.edite === i ? null : i); ctx.serie = 0; rendre(); };
 
 /* Un pas modifie toutes les séries à la fois : en saisie a posteriori on ne se
    souvient pas série par série, on se souvient d'un ordre de grandeur. */
@@ -315,17 +342,25 @@ function pas(i, quoi, delta) {
   const e = S.exoById(ex.exId);
   const m = (e && e.metriques) || ['series','reps','charge'];
   if (!m.includes(quoi)) return;
-  if (quoi === 'series') {
-    const n = Math.max(1, ex.series.length + delta);
-    while (ex.series.length > n) ex.series.pop();
-    while (ex.series.length < n) ex.series.push({ ...(ex.series[0] || { reps: 8 }) });
-  } else {
-    if (!ex.series.length) ex.series.push({});
-    for (const se of ex.series) {
-      const v = Math.max(0, Math.round(((se[quoi] ?? (quoi === 'duree' ? 45 : quoi === 'reps' ? 8 : 0)) + delta) * 10) / 10);
-      se[quoi] = v;
-    }
-  }
+  if (!ex.series.length) ex.series.push({});
+  const k = Math.min(ctx.serie || 0, ex.series.length - 1);
+  const se = ex.series[k];
+  const base = se[quoi] ?? CHAMPS[quoi].defaut;
+  se[quoi] = Math.max(0, Math.round((base + delta) * 10) / 10);
+  sauver(); rendre();
+}
+const serie = k => { ctx.serie = k; rendre(); };
+function plusSerie(i) {
+  const ex = S.seanceById(ctx.arg).exercices[i];
+  ex.series.push({ ...(ex.series[ex.series.length - 1] || {}) });
+  ctx.serie = ex.series.length - 1;
+  ex.fait = true; sauver(); rendre();
+}
+function moinsSerie(i) {
+  const ex = S.seanceById(ctx.arg).exercices[i];
+  if (ex.series.length <= 1) return;
+  ex.series.splice(Math.min(ctx.serie || 0, ex.series.length - 1), 1);
+  ctx.serie = Math.min(ctx.serie || 0, ex.series.length - 1);
   sauver(); rendre();
 }
 function duree(min) { const s = S.seanceById(ctx.arg); s.dureeReelle = min; sauver(); rendre(); }
@@ -431,6 +466,12 @@ const CSS = `
   white-space:nowrap;cursor:pointer;color:var(--text)}
 .ss .ss-mini.vide{color:var(--muted);background:none}
 .ss .ss-edit{display:flex;flex-direction:column;gap:8px;padding:10px 0 12px}
+.ss .ss-onglets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+.ss .ss-onglet{min-width:38px;padding:7px 10px;border-radius:10px;border:1px solid var(--border);
+  background:var(--surface);font-size:13px;color:var(--muted);cursor:pointer}
+.ss .ss-onglet.on{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+.ss .ss-onglet.plus{color:var(--accent);font-weight:700}
+.ss .ss-onglet.moins{color:#b8434f}
 .ss .ss-step{display:flex;align-items:center;gap:9px}
 .ss .ss-step button{width:38px;height:38px;border-radius:11px;border:1px solid var(--border);
   background:var(--surface);font-size:19px;color:var(--accent);flex:none;cursor:pointer}
@@ -475,6 +516,7 @@ function monter(el, options) {
 
 return { monter, jour, rattrapage, retour, fermer, rendre,
          declarer, ouvrir, libre, repos, supprimer, basculer, editer, pas, duree, ajouter,
+         serie, plusSerie, moinsSerie,
          valider, cocher, validerRattrapage };
 })();
 if (typeof window !== 'undefined') window.SportSaisie = SportSaisie;
