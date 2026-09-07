@@ -58,6 +58,19 @@ function charger() {
     etat.planning = (etat.planning || []).filter(p => p.ecart);
     sauverEtat();
   }
+  /* Conversion additive : on POSE les briques à côté des blocs, on ne les
+     remplace pas. Les écrans actuels continuent de lire `blocs` ; les
+     nouveaux liront `briques`. Rien ne casse entre A et I. */
+  if (window.SportBriques) {
+    let convertis = 0;
+    for (const m of etat.modeles) {
+      if (Array.isArray(m.briques)) continue;
+      const n = SportBriques.convertirModele(m, catalogue());
+      m.briques = n.briques; m.typeV3 = n.type; m.format = 2;
+      convertis++;
+    }
+    if (convertis) sauverEtat();
+  }
   purgerBrouillons();
   return { etat, hist };
 }
@@ -153,6 +166,9 @@ function retirerObjectif(exId, objectifId) {
    Neuf types en trois familles. Le repos n'en est pas un : c'est un état du
    calendrier, il n'a pas de contenu à ouvrir. */
 const types    = () => window.SPORT_TYPES || [];
+/* Les cinq types larges de la v3 vivent à côté des neuf anciens, le temps que
+   les écrans basculent. Aucun code existant ne change de comportement. */
+const typesV3  = () => (window.SportBriques ? SportBriques.TYPES : []);
 const typeById = id => types().find(t => t.id === id) || null;
 function famillesType() {
   const out = [];
@@ -232,10 +248,13 @@ function dureeEstimee(modele) {
    Instancier = copier. La séance du jour et le modèle ne se parlent plus.
 ------------------------------------------------------------------------------ */
 
+/* Instancier = copier. Le modèle dit ce qu'il faut faire aujourd'hui, la
+   séance réalisée dit ce qui a été fait — et ne bouge plus jamais.
+   Format 1, celui que lisent les écrans actuels. Inchangé. */
 function instancier(modeleId, date) {
   const m = modeleById(modeleId); if (!m) return null;
   const exercices = []; let ordre = 0;
-  for (const bloc of m.blocs) for (const l of bloc.exercices) {
+  for (const bloc of m.blocs || []) for (const l of bloc.exercices) {
     exercices.push({ exId: l.exId, ordre: ordre++, bloc: bloc.type, origine: 'modele',
                      prevu: { series: l.series, reps: l.reps, charge: l.charge, duree: l.duree },
                      series: [], fait: false, note: '' });
@@ -245,6 +264,56 @@ function instancier(modeleId, date) {
               exercices, dureeReelle: null, ressenti: null, commentaire: '' };
   hist.seances.push(s); sauverHist();
   return s;
+}
+
+/* Format 2, en briques. Utilisé par les écrans à venir (C et D).
+   Le conseil de progression n'est PAS écrit dans la séance : c'est un calcul,
+   il se refait à l'affichage. Le figer dans l'historique le rendrait faux le
+   jour où la règle change. */
+function instancierV3(modeleId, date) {
+  const m = modeleById(modeleId); if (!m || !Array.isArray(m.briques)) return null;
+  const s = { id: 's' + (hist.prochainId++), date, modeleId, modeleVersion: m.version,
+              nomAffiche: m.nom, couleur: m.couleur, type: m.typeV3 || m.type, format: 2,
+              statut: 'planifiee',
+              briques: SportBriques.instancierBriques(m),
+              dureeReelle: null, courbatures: null, sommeil: null,
+              gene: null, remarques: '' };
+  /* La charge du jour n'est appliquée que si le modèle n'a pas été édité à la
+     main depuis la dernière séance. Une charge posée délibérément l'emporte
+     toujours sur une progression calculée : jamais de modification
+     silencieuse de ce que l'utilisateur a écrit. */
+  for (const b of s.briques) {
+    if (b.nature !== 'exercice') continue;
+    const derniere = derniereBrique(b.exId);
+    const chargeFaite = derniere && (derniere.series.find(x => x.fait) || {}).charge;
+    const modeleTouche = chargeFaite != null && b.charge != null && b.charge !== chargeFaite;
+    if (modeleTouche) continue;
+    const v = SportBriques.verdictProgression(b, derniere);
+    if (v && v.action === 'charge') {
+      b.charge = v.charge;
+      b.series.forEach(x => { x.charge = v.charge; x.repsPrevu = v.reps; });
+    }
+  }
+  hist.seances.push(s); sauverHist();
+  return s;
+}
+
+/* Recalculé à chaque affichage, jamais stocké. */
+const conseilPour = brique =>
+  SportBriques.verdictProgression(brique, derniereBrique(brique.exId));
+
+/* La dernière fois que cet exercice a été travaillé, quelle que soit la
+   séance : c'est ce qui alimente la double progression. */
+function derniereBrique(exId) {
+  const faites = hist.seances
+    .filter(s => s.statut === 'terminee' && Array.isArray(s.briques))
+    .sort((a, b) => b.date.localeCompare(a.date));
+  for (const s of faites) {
+    const b = (s.briques || []).find(x => x.nature === 'exercice' && x.exId === exId
+                                          && x.series.some(y => y.fait));
+    if (b) return b;
+  }
+  return null;
 }
 
 /* Séance libre : aucun modèle derrière, on ajoute les exercices un par un.
@@ -452,6 +521,25 @@ function noterSerie(seanceId, index, serie) {
 /* Écarts délibérés seulement : ce que tu as ajouté, et ce que tu as retiré
    explicitement. Un exercice simplement pas encore fait n'est pas un écart —
    sinon toute séance partielle en déclencherait des dizaines. */
+const comptes = seance => estSeanceV2(seance) ? SportBriques.comptesSeance(seance) : null;
+const tonnage = seance => estSeanceV2(seance) ? SportBriques.tonnageReel(seance) : 0;
+
+/* Bilan d'une semaine : ce qu'on affiche avant de générer la suivante. */
+function bilanSemaine(iso) {
+  const jours = semaineDe(iso);
+  const faites = jours.map(j => j.seance).filter(s => s && s.statut === 'terminee');
+  let tg = 0, rpes = [];
+  for (const s of faites) {
+    tg += tonnage(s);
+    const c = comptes(s);
+    if (c.rpeMoyen != null) rpes.push(c.rpeMoyen);
+  }
+  return { faites: faites.length,
+           prevues: jours.filter(j => j.statut === 'fait' || j.statut === 'prevu').length,
+           tonnage: tg,
+           rpeMoyen: rpes.length ? Math.round(rpes.reduce((a, b) => a + b, 0) / rpes.length * 10) / 10 : null };
+}
+
 function ecarts(seance) {
   const m = seance.modeleId ? modeleById(seance.modeleId) : null;
   const ajouts = seance.exercices.filter(e => e.origine === 'ajout_du_jour').length;
@@ -460,11 +548,16 @@ function ecarts(seance) {
   const retires = m.blocs.flatMap(b => b.exercices).filter(l => !presents.has(l.exId)).length;
   return ajouts + retires;
 }
-function terminer(seanceId, { dureeReelle, ressenti, commentaire } = {}) {
+/* Le suivi de fin de séance est libre : ressenti et commentaire pour le
+   format 1, courbatures / sommeil / gêne / remarques pour le format 2. */
+function terminer(seanceId, suivi = {}) {
   const s = seanceById(seanceId); if (!s) return null;
-  Object.assign(s, { statut: 'terminee', dureeReelle, ressenti, commentaire, termineeLe: Date.now() });
+  Object.assign(s, { statut: 'terminee', termineeLe: Date.now() }, suivi);
   sauverHist(); return s;
 }
+/* Les deux formats coexistent dans l'historique : les séances saisies avant la
+   bascule gardent leur forme, on ne les réécrit pas. */
+const estSeanceV2 = s => s && s.format === 2 && Array.isArray(s.briques);
 /* Remontée explicite des ajustements du jour dans le modèle — jamais automatique. */
 function reporterDansModele(seanceId) {
   const s = seanceById(seanceId); if (!s || !s.modeleId) return null;
@@ -603,12 +696,14 @@ charger();
 
 return { charger, etat: () => etat, hist: () => hist,
          catalogue, exoById, retoucher, reglerPhase, creerExercice, poserObjectif, retirerObjectif,
-         types, typeById, famillesType, modelesDuType, alternatives,
+         types, typesV3, typeById, famillesType, modelesDuType, alternatives,
          modeles, modeleById, enregistrerModele, dupliquerModele, supprimerModele,
          repartition, dureeEstimee,
-         instancier, instancierFaite, seanceLibre, brouillons, purgerBrouillons, seanceById, seancesDe, ajouterExercice, retirerExercice,
+         instancier, instancierV3, conseilPour, instancierFaite, seanceLibre,
+         brouillons, purgerBrouillons, seanceById, seancesDe, ajouterExercice, retirerExercice,
          prevuLe, trameDe, estRepos, joursAConfirmer, marquerRepos,
          etatJour, moisJours, semaineDe, remplacerLeJour, reporter, ecartsDuMois,
          noterSerie, ecarts, terminer, supprimerSeance, reporterDansModele,
+         comptes, tonnage, estSeanceV2, bilanSemaine, derniereBrique,
          investissement, avancement, meilleurePerf, jamaisFaits, derniereFois, seancesRecentes };
 })();
