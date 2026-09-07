@@ -143,6 +143,13 @@ function vueSaisie(seanceId) {
   if (!s) return entete('Séance') + `<div class="ss-empty">Cette séance n'existe plus.</div>`;
   /* Les séances en briques appartiennent aux écrans C et D, qui n'existent pas
      encore. En attendant, on les montre en lecture au lieu de planter. */
+  /* Une séance en briques se modifie dans son propre écran. */
+  if (S.estSeanceV2 && S.estSeanceV2(s) && window.SportSeance) {
+    const garde = auFermer;
+    setTimeout(() => { window.SportSeance.monter(hote, { auFermer: garde });
+                       window.SportSeance.ouvrir(s.id); }, 0);
+    return `<div class="sv-meta">Ouverture…</div>`;
+  }
   if (S.estSeanceV2 && S.estSeanceV2(s)) return vueLecture(s);
   const cat = S.catalogue();
 

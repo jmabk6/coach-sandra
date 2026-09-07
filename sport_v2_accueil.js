@@ -215,9 +215,17 @@ const changer = iso => aller('changer', iso);
 
 function commencer(iso, modeleId) {
   const e = S.etatJour(iso);
+  const m = S.modeleById(modeleId);
+  /* Un modèle en briques donne une séance en briques, ouverte dans son écran. */
+  if (m && Array.isArray(m.briques) && m.briques.length && window.SportSeance) {
+    const s2 = (e.seance && e.seance.statut !== 'terminee') ? e.seance : S.instancierV3(modeleId, iso);
+    window.SportSeance.monter(hote, { auFermer: () => SportAccueil.monter(hote) });
+    window.SportSeance.ouvrir(s2.id);
+    return;
+  }
   const s = (e.seance && e.seance.statut !== 'terminee') ? e.seance : S.instancier(modeleId, iso);
-  if (window.SportSeance) { SportSeance.monter(hote, { auFermer: () => SportAccueil.monter(hote) });
-                            SportSeance.ouvrir(s.id); return; }
+  if (window.SportSeance) { window.SportSeance.monter(hote, { auFermer: () => SportAccueil.monter(hote) });
+                            window.SportSeance.ouvrir(s.id); return; }
   /* Tant que l'écran en direct n'existe pas, on retombe sur la saisie. */
   SportSaisie.monter(hote, { auFermer: () => SportAccueil.monter(hote) });
   SportSaisie.ouvrir(s.id);

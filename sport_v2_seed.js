@@ -15,7 +15,7 @@
 
 const SportSeed = (function () {
 
-const VERSION = 'v3-2026-09-07';
+const VERSION = 'v3.1-2026-09-07';
 
 /* --- 1. Les exercices qui manquaient -------------------------------------- */
 
@@ -232,7 +232,11 @@ function appliquer(S, options = {}) {
      — les modèles créés à la main ne sont jamais écrasés. */
   const nouveaux = modeles();
   const ids = new Set(nouveaux.map(m => m.id));
-  etat.modeles = etat.modeles.filter(m => !ids.has(m.id)).concat(nouveaux);
+  /* Les neuf séances converties de l'ancien module sont remplacées par la
+     version 3 : les garder à côté ferait une liste de quatorze entrées dont
+     neuf n'ont jamais servi. Les séances créées à la main sont conservées. */
+  const HERITEES = new Set(['m101','m103','m105','m106','m107','m108','m109','m110','m111']);
+  etat.modeles = etat.modeles.filter(m => !ids.has(m.id) && !HERITEES.has(m.id)).concat(nouveaux);
   etat.semaineType = { ...SEMAINE_TYPE };
   etat.debut = etat.debut || '2026-09-01';
 
