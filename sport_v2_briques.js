@@ -241,24 +241,59 @@ function comptesSeance(seance) {
 function verdictProgression(brique, dernieres) {
   if (!brique || brique.nature !== 'exercice') return null;
   if (brique.progression === 'aucune') return null;
-  if (!dernieres || !dernieres.series || !dernieres.series.length) {
-    return { action: 'inchange', texte: 'Première fois — trouve la charge qui donne 8/10 à la 3e série.' };
-  }
-  const faites = dernieres.series.filter(s => s.fait);
-  if (!faites.length) return { action: 'inchange', texte: null };
 
-  const attendues = nbSeries(dernieres);
-  const auHaut = faites.length >= attendues
-              && faites.every(s => (s.reps || 0) >= brique.repsMax);
+  const attendues = nbSeries(brique);          // ce que le MODÈLE demande
+  /* Le message de démarrage dépend de ce qu'on mesure : chercher « la charge »
+     n'a aucun sens sur un gainage qui se compte en secondes. */
+  const enSecondes = brique.unite === 'secondes';
+  const sansCharge = brique.progression === 'reps_seules' || brique.charge === 0;
+  const debut = { action: 'inchange',
+    texte: enSecondes
+      ? `Première fois — vise ${brique.repsMin} s et arrête-toi avant que la position se dégrade.`
+      : sansCharge
+        ? `Première fois — reste léger et monte les répétitions jusqu'à ${brique.repsMax}.`
+        : `Première fois — trouve la charge qui donne 8/10 à la ${attendues}e série.` };
+  if (!dernieres || !dernieres.series || !dernieres.series.length) return debut;
+
+  const faites = dernieres.series.filter(s => s.fait);
+  if (!faites.length) return debut;
+
+  /* Une seule série réussie ne prouve rien. On exige le compte du modèle,
+     pas celui de la dernière fois — sinon une série isolée déclenche une
+     hausse. */
+  if (faites.length < attendues) {
+    return { action: 'inchange',
+             texte: `Seulement ${faites.length} série${faites.length > 1 ? 's' : ''} la dernière fois sur ${attendues} attendues. Refais la séance complète avant de monter.` };
+  }
+
+  /* Des charges qui varient d'une série à l'autre, ce sont des séries
+     montantes : elles ne se comparent pas d'une semaine sur l'autre, et c'est
+     précisément ce que la charge fixe corrige. */
+  const charges = faites.map(s => s.charge);
+  const memeCharge = charges.every(c => c === charges[0]);
+  if (!memeCharge) {
+    return { action: 'inchange',
+             texte: `Séries montantes la dernière fois (${charges.join(', ')} kg). Fixe une charge sur les ${attendues} séries pour pouvoir comparer.` };
+  }
+
+  const charge = charges[0];
   const rpeMax = Math.max(...faites.map(s => s.rpe ?? 0));
-  const charge = faites[0].charge;
+
+  /* Une charge nulle ou inconnue — une barre à vide jamais pesée — ne peut pas
+     servir de base à une progression chiffrée. */
+  if (!(charge > 0) && brique.progression !== 'reps_seules') {
+    return { action: 'peser',
+             texte: 'Charge non renseignée. Pèse la barre une fois, sinon la progression et le tonnage sont faux.' };
+  }
+
+  const auHaut = faites.every(s => (s.reps || 0) >= brique.repsMax);
 
   if (auHaut && rpeMax <= RPE_PLAFOND) {
     if (brique.progression === 'reps_seules') {
       return { action: 'reps', repsMax: brique.repsMax + 3,
                texte: `${attendues} × ${brique.repsMax} atteint à ${rpeMax}/10 — monte la fourchette à ${brique.repsMax + 3} reps, pas les kilos.` };
     }
-    const suivante = (charge || 0) + (brique.increment || 5);
+    const suivante = charge + (brique.increment || 5);
     return { action: 'charge', charge: suivante, reps: brique.repsMin,
              texte: `${attendues} × ${brique.repsMax} à ${charge} kg, RPE max ${rpeMax} — passe à ${suivante} kg et repars à ${brique.repsMin} reps.` };
   }
