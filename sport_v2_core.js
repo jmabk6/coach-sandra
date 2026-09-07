@@ -212,7 +212,7 @@ function supprimerModele(id) {
 /* Répartition par objectif : elle décrit la composition, elle ne la dicte plus. */
 function repartition(modele) {
   const cat = catalogue(), total = {};
-  for (const bloc of modele.blocs) {
+  for (const bloc of (modele.blocs || [])) {
     for (const ligne of bloc.exercices) {
       const ex = cat.find(e => e.id === ligne.exId); if (!ex) continue;
       const u = unitesPrevues(ligne, ex);
@@ -227,14 +227,18 @@ function repartition(modele) {
     .filter(r => r.part > 0).sort((a, b) => b.part - a.part);
 }
 
+/* Les deux représentations coexistent : un modèle du seed n'a que des briques,
+   un modèle converti a les deux. On ne suppose ni l'une ni l'autre. */
 function dureeEstimee(modele) {
+  if (!modele) return 0;
+  if (!Array.isArray(modele.blocs) || !modele.blocs.length) {
+    return window.SportBriques ? SportBriques.dureeModele(modele) : 0;
+  }
   const cat = catalogue(); let s = 0;
   for (const bloc of modele.blocs) for (const ligne of bloc.exercices) {
     const ex = cat.find(e => e.id === ligne.exId); if (!ex) continue;
     const series = ligne.series || 3;
     const travail = ligne.duree || (ligne.reps || 8) * 3;
-    /* Le repos dépend de l'effort : rien après un étirement, longtemps après
-       une série lourde. Sans ça une séance de mobilité s'estimait au double. */
     const repos = ex.cat === 'cardio' ? 0
                 : (ex.cat === 'souplesse' || ex.cat === 'mobilite') ? 10
                 : ex.charges ? 90 : 30;
@@ -242,6 +246,23 @@ function dureeEstimee(modele) {
   }
   return Math.round(s / 60);
 }
+
+/* Combien d'éléments à faire dans un modèle, quelle que soit sa forme. */
+function nbElements(m) {
+  if (!m) return 0;
+  if (Array.isArray(m.briques) && m.briques.length) {
+    let n = 0;
+    for (const b of m.briques) {
+      if (b.nature === 'exercice') n += 1;
+      else if (b.nature === 'cardio') n += (b.blocs || []).length;
+      else n += 1;
+    }
+    return n;
+  }
+  return (m.blocs || []).reduce((a, b) => a + b.exercices.length, 0);
+}
+
+
 
 /* ---------------------------------------------------------------------------
    SÉANCES
@@ -698,7 +719,7 @@ return { charger, etat: () => etat, hist: () => hist,
          catalogue, exoById, retoucher, reglerPhase, creerExercice, poserObjectif, retirerObjectif,
          types, typesV3, typeById, famillesType, modelesDuType, alternatives,
          modeles, modeleById, enregistrerModele, dupliquerModele, supprimerModele,
-         repartition, dureeEstimee,
+         repartition, dureeEstimee, nbElements,
          instancier, instancierV3, conseilPour, instancierFaite, seanceLibre,
          brouillons, purgerBrouillons, seanceById, seancesDe, ajouterExercice, retirerExercice,
          prevuLe, trameDe, estRepos, joursAConfirmer, marquerRepos,

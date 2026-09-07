@@ -40,6 +40,18 @@ function vignette(ex, t = 34) {
     : `<div style="${st}background:#fdf0ef;display:flex;align-items:center;justify-content:center;font-size:${Math.round(t*.5)}px">${(ex&&ex.emoji)||'🏋️'}</div>`;
 }
 
+/* Résumé d'une séance, quel que soit son format. */
+function resumeSeance(s) {
+  if (s.statut === 'repos') return 'jour de repos';
+  const duree = s.dureeReelle ? ' · ' + s.dureeReelle + ' mn' : '';
+  if (S.estSeanceV2 && S.estSeanceV2(s)) {
+    const c = S.comptes(s) || {};
+    return [c.faites + ' sur ' + c.total,
+            c.tonnage ? c.tonnage.toLocaleString('fr') + ' kg' : null].filter(Boolean).join(' · ') + duree;
+  }
+  return (s.exercices || []).filter(e => e.fait).length + ' exercices faits' + duree;
+}
+
 /* Résumé d'un exercice réalisé, en une ligne courte. */
 function resume(exLog) {
   const n = exLog.series.length;
@@ -81,9 +93,7 @@ function vueJour(iso) {
         <span class="ss-ico" style="background:${t.couleur || '#9a7878'}">${t.emoji || '📋'}</span>
         <div class="sv-grow" onclick="SportSaisie.ouvrir('${s.id}')">
           <div class="sv-nm">${esc(s.nomAffiche)}</div>
-          <div class="sv-meta">${s.statut === 'repos' ? 'jour de repos'
-            : s.exercices.filter(e => e.fait).length + ' exercices faits'
-              + (s.dureeReelle ? ' · ' + s.dureeReelle + ' min' : '')}</div></div>
+          <div class="sv-meta">${resumeSeance(s)}</div></div>
         <button class="ss-suppr" onclick="SportSaisie.supprimer('${s.id}')">Supprimer</button>
         </div>`; }).join('')}` : '';
 
@@ -92,7 +102,7 @@ function vueJour(iso) {
     <div class="card sv-row" onclick="SportSaisie.declarer('${prevu.id}','${iso}')">
       <span class="ss-ico" style="background:${typeDe(prevu).couleur}">${typeDe(prevu).emoji}</span>
       <div class="sv-grow"><div class="sv-nm">${esc(prevu.nom)}</div>
-        <div class="sv-meta">${prevu.blocs.reduce((a,b)=>a+b.exercices.length,0)} exercices · ~${S.dureeEstimee(prevu)} min</div></div>
+        <div class="sv-meta">${S.nbElements(prevu)} exercices · ~${S.dureeEstimee(prevu)} min</div></div>
       <span class="sv-chev">›</span></div>` : `
     <div class="lbl">Selon ta semaine type</div>
     <div class="ss-empty">Ce jour-là était un jour de repos.</div>`;
@@ -131,6 +141,9 @@ const LIB_BLOC = { echauffement: ['🔥','Échauffement'], corps: ['💪','Corps
 function vueSaisie(seanceId) {
   const s = S.seanceById(seanceId);
   if (!s) return entete('Séance') + `<div class="ss-empty">Cette séance n'existe plus.</div>`;
+  /* Les séances en briques appartiennent aux écrans C et D, qui n'existent pas
+     encore. En attendant, on les montre en lecture au lieu de planter. */
+  if (S.estSeanceV2 && S.estSeanceV2(s)) return vueLecture(s);
   const cat = S.catalogue();
 
   const blocs = ['echauffement','corps','retour_calme'].map(bt => {
@@ -173,6 +186,47 @@ function vueSaisie(seanceId) {
   <div class="ss-chips">${choixDuree}</div>
   <button class="ss-valid${nb ? '' : ' ss-off-btn'}" onclick="SportSaisie.valider('${s.id}')">${
     nb ? 'Enregistrer — ' + nb + ' exercice' + (nb>1?'s':'') : 'Rien à enregistrer'}</button>
+  <button class="ss-suppr-l" onclick="SportSaisie.supprimer('${s.id}')">Supprimer cette séance</button>`;
+}
+
+/* Lecture d'une séance en briques, en attendant les écrans C et D. */
+function vueLecture(s) {
+  const blocs = (s.briques || []).map(b => {
+    if (b.nature === 'exercice') {
+      const lignes = (b.series || []).filter(x => x.fait).map((x, i) =>
+        `<div class="ss-line"><span class="ss-check on">✓</span>
+          <span class="sv-grow ss-sm">Série ${i + 1}</span>
+          <span class="ss-mini">${[x.charge ? x.charge + ' kg' : null,
+            x.reps != null ? x.reps + (b.unite === 'secondes' ? ' s' : ' reps') : null,
+            x.rpe != null ? 'RPE ' + x.rpe : null].filter(Boolean).join(' · ')}</span></div>`).join('');
+      return `<div class="lbl">${esc(b.nom)}</div><div class="card">${lignes ||
+        '<div class="sv-meta">Non fait</div>'}</div>`;
+    }
+    if (b.nature === 'cardio') {
+      const lignes = (b.blocs || []).map(x =>
+        `<div class="ss-line"><span class="sv-grow ss-sm">${esc(x.nom || 'Bloc')}</span>
+          <span class="ss-mini">${[Math.round((x.dureeReelle || x.duree || 0) / 60) + ' mn',
+            x.reglage && x.reglage.vitesse ? x.reglage.vitesse + ' km/h' : null,
+            x.reglage && x.reglage.pente ? x.reglage.pente + ' %' : null,
+            x.fcRelevee ? x.fcRelevee + ' bpm' : null].filter(Boolean).join(' · ')}</span></div>`).join('');
+      return `<div class="lbl">${esc(b.nom)}</div><div class="card">${lignes}</div>`;
+    }
+    const lignes = (b.items || []).map(i =>
+      `<div class="ss-line"><span class="ss-check${i.fait ? ' on' : ''}">${i.fait ? '✓' : ''}</span>
+        <span class="sv-grow ss-sm">${esc(i.texte)}</span></div>`).join('');
+    return `<div class="lbl">${esc(b.nom)}</div><div class="card">${lignes}</div>`;
+  }).join('');
+
+  const c = S.comptes(s) || {};
+  return `
+  ${entete(s.nomAffiche)}
+  <div class="sv-meta" style="margin:-4px 0 12px">${libelleDate(s.date)}${
+    s.dureeReelle ? ' · ' + s.dureeReelle + ' mn' : ''}${
+    c.tonnage ? ' · ' + c.tonnage.toLocaleString('fr') + ' kg' : ''}${
+    c.rpeMoyen != null ? ' · RPE ' + c.rpeMoyen : ''}</div>
+  <div class="ss-astuce">Séance au nouveau format. La modification arrivera avec
+  l'écran de séance ; pour l'instant elle est consultable.</div>
+  ${blocs}
   <button class="ss-suppr-l" onclick="SportSaisie.supprimer('${s.id}')">Supprimer cette séance</button>`;
 }
 

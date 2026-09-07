@@ -53,7 +53,7 @@ function vueAccueil() {
     <div class="sa-hero">
       <div class="sa-j">${libelleDate(iso)}</div>
       <div class="sa-t">${esc(m.nom)}</div>
-      <div class="sv-meta">${typeDe(m).nom} — ${m.blocs.reduce((a,b)=>a+b.exercices.length,0)} exercices · ~${S.dureeEstimee(m)} min</div>
+      <div class="sv-meta">${typeDe(m).nom} — ${S.nbElements(m)} exercices · ~${S.dureeEstimee(m)} min</div>
       <div class="sa-btns">
         <button class="sa-f" onclick="SportAccueil.commencer('${iso}','${m.id}')">Commencer</button>
         <button class="sa-o" onclick="SportAccueil.changer('${iso}')">Changer</button>
@@ -146,7 +146,7 @@ function vueChanger(iso) {
   const carte = (mm, action, sous) => `<div class="card sv-row" onclick="${action}">
     <span class="sa-ico" style="background:${typeDe(mm).couleur}">${typeDe(mm).emoji}</span>
     <div class="sv-grow"><div class="sv-nm">${esc(mm.nom)}</div>
-      <div class="sv-meta">${sous || (mm.blocs.reduce((a,b)=>a+b.exercices.length,0) + ' exercices · ~' + S.dureeEstimee(mm) + ' min')}</div></div>
+      <div class="sv-meta">${sous || (S.nbElements(mm) + ' exercices · ~' + S.dureeEstimee(mm) + ' min')}</div></div>
     <span class="sv-chev">›</span></div>`;
 
   const autres = S.famillesType().map(f => {
