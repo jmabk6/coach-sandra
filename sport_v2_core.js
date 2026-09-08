@@ -188,6 +188,19 @@ function alternatives(modeleId) {
 }
 
 const modeles = () => etat.modeles;
+
+/* Dans quelles séances cet exercice apparaît, quelle que soit leur forme. */
+function modelesContenant(exId) {
+  return etat.modeles.filter(m => {
+    if (Array.isArray(m.briques) && m.briques.length) {
+      return m.briques.some(b =>
+        (b.nature === 'exercice' && b.exId === exId)
+        || (b.nature === 'cardio' && (b.blocs || []).some(x => x.exId === exId))
+        || (b.nature === 'liste'  && (b.items || []).some(i => i.exId === exId)));
+    }
+    return (m.blocs || []).some(b => (b.exercices || []).some(l => l.exId === exId));
+  });
+}
 const modeleById = id => etat.modeles.find(m => m.id === id) || null;
 
 function enregistrerModele(modele) {
@@ -600,6 +613,33 @@ function reporterDansModele(seanceId) {
 
 const FENETRE = 4; // semaines
 
+/* Vue normalisée du travail d'une séance, quel que soit son format. Toutes les
+   statistiques passent par ici : sans ça, chaque fonction qui lisait
+   `seance.exercices` plantait sur une séance en briques. */
+function travauxDe(seance) {
+  if (!seance) return [];
+  if (Array.isArray(seance.briques)) {
+    const out = [];
+    for (const b of seance.briques) {
+      if (b.nature === 'exercice') {
+        out.push({ exId: b.exId, series: b.series || [], unite: b.unite,
+                   fait: (b.series || []).some(x => x.fait) });
+      } else if (b.nature === 'cardio') {
+        for (const x of b.blocs || []) {
+          if (!x.exId) continue;
+          out.push({ exId: x.exId, unite: 'secondes', fait: !!x.fait,
+                     series: [{ duree: x.dureeReelle ?? x.duree, fc: x.fcRelevee,
+                                fait: !!x.fait }] });
+        }
+      } else {
+        for (const i of b.items || []) if (i.exId) out.push({ exId: i.exId, series: [], fait: !!i.fait });
+      }
+    }
+    return out;
+  }
+  return (seance.exercices || []).map(e => ({ exId: e.exId, series: e.series || [], fait: !!e.fait }));
+}
+
 function unitesRealisees(exLog, ex) {
   if (!exLog.series || !exLog.series.length) return exLog.fait ? 1 : 0;
   if (ex.cat === 'cardio' || ex.cat === 'souplesse' || ex.cat === 'mobilite' || ex.cat === 'gainage') {
@@ -625,7 +665,7 @@ function investissement(semaines = FENETRE) {
   const cat = catalogue(), recentes = seancesRecentes(semaines);
   const brut = {}; etat.objectifs.forEach(o => (brut[o.id] = { u: 0, s: new Set() }));
 
-  for (const s of recentes) for (const exLog of s.exercices) {
+  for (const s of recentes) for (const exLog of travauxDe(s)) {
     const ex = cat.find(e => e.id === exLog.exId); if (!ex) continue;
     const u = unitesRealisees(exLog, ex); if (!u) continue;
     for (const l of ex.objectifs || []) {
@@ -646,7 +686,7 @@ function investissement(semaines = FENETRE) {
 
 function meilleurePerf(exId, metrique) {
   let max = null;
-  for (const s of hist.seances) for (const e of s.exercices) {
+  for (const s of hist.seances) for (const e of travauxDe(s)) {
     if (e.exId !== exId) continue;
     for (const serie of e.series || []) {
       const v = serie[metrique]; if (v == null) continue;
@@ -689,7 +729,7 @@ function avancement(objectif) {
   // couverture
   const rattaches = catalogue().filter(e => (e.objectifs || []).some(o => o.objectifId === objectif.id));
   const pratiques = new Set();
-  for (const s of hist.seances) for (const e of s.exercices) if (e.fait) pratiques.add(e.exId);
+  for (const s of hist.seances) for (const e of travauxDe(s)) if (e.fait) pratiques.add(e.exId);
   const n = rattaches.filter(e => pratiques.has(e.id)).length;
   return { type: 'pourcentage',
            pourcentage: rattaches.length ? Math.round((n / rattaches.length) * 100) : 0,
@@ -698,17 +738,18 @@ function avancement(objectif) {
 
 function jamaisFaits(objectifId = null) {
   const pratiques = new Set();
-  for (const s of hist.seances) for (const e of s.exercices) if (e.fait) pratiques.add(e.exId);
+  for (const s of hist.seances) for (const e of travauxDe(s)) if (e.fait) pratiques.add(e.exId);
   return catalogue().filter(e => !pratiques.has(e.id) &&
     (!objectifId || (e.objectifs || []).some(o => o.objectifId === objectifId)));
 }
 
 function derniereFois(exId) {
-  const s = hist.seances.filter(x => x.exercices.some(e => e.exId === exId && e.fait))
-                        .sort((a, b) => b.date.localeCompare(a.date))[0];
+  const s = hist.seances
+    .filter(x => travauxDe(x).some(e => e.exId === exId && e.fait))
+    .sort((a, b) => b.date.localeCompare(a.date))[0];
   if (!s) return null;
-  const e = s.exercices.find(e => e.exId === exId);
-  return { date: s.date, series: e.series };
+  const e = travauxDe(s).find(e => e.exId === exId);
+  return { date: s.date, series: e.series, unite: e.unite };
 }
 
 /* ------------------------------------------------------------------------- */
@@ -718,7 +759,7 @@ charger();
 return { charger, etat: () => etat, hist: () => hist,
          catalogue, exoById, retoucher, reglerPhase, creerExercice, poserObjectif, retirerObjectif,
          types, typesV3, typeById, famillesType, modelesDuType, alternatives,
-         modeles, modeleById, enregistrerModele, dupliquerModele, supprimerModele,
+         modeles, modeleById, modelesContenant, enregistrerModele, dupliquerModele, supprimerModele,
          repartition, dureeEstimee, nbElements,
          instancier, instancierV3, conseilPour, instancierFaite, seanceLibre,
          brouillons, purgerBrouillons, seanceById, seancesDe, ajouterExercice, retirerExercice,
@@ -726,5 +767,6 @@ return { charger, etat: () => etat, hist: () => hist,
          etatJour, moisJours, semaineDe, remplacerLeJour, reporter, ecartsDuMois,
          noterSerie, ecarts, terminer, supprimerSeance, reporterDansModele,
          comptes, tonnage, estSeanceV2, bilanSemaine, derniereBrique,
-         investissement, avancement, meilleurePerf, jamaisFaits, derniereFois, seancesRecentes };
+         investissement, avancement, meilleurePerf, jamaisFaits, derniereFois,
+         travauxDe, seancesRecentes };
 })();

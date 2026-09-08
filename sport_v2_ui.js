@@ -197,7 +197,7 @@ function vueFiche(exId) {
     return v == null ? '' : `<div class="sv-row"><span class="sv-grow">Meilleure ${m}</span><b>${v}</b></div>`;
   }).join('');
 
-  const dansModeles = S.modeles().filter(m => m.blocs.some(b => b.exercices.some(l => l.exId === e.id)));
+  const dansModeles = S.modelesContenant(e.id);
 
   const detail = [
     e.desc && `<div class="sv-txt">${esc(e.desc)}</div>`,
