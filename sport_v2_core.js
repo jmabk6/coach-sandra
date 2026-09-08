@@ -770,3 +770,4 @@ return { charger, etat: () => etat, hist: () => hist,
          investissement, avancement, meilleurePerf, jamaisFaits, derniereFois,
          travauxDe, seancesRecentes };
 })();
+if (typeof window !== 'undefined') window.SportV2 = SportV2;

@@ -242,12 +242,23 @@ function repos(iso) { S.marquerRepos(iso); retour(); }
 function exercices() {
   SportUI.monter(hote, { auFermer: () => SportAccueil.monter(hote) });
 }
+/* Pas de repli silencieux : tomber sur la banque quand le module manque donne
+   l'impression que le bouton est mal branché, alors que c'est un fichier
+   absent. Mieux vaut le dire. */
 function programme() {
   if (window.SportProgramme) {
     window.SportProgramme.monter(hote, { auFermer: () => SportAccueil.monter(hote) });
     return;
   }
-  SportUI.monter(hote, { auFermer: () => SportAccueil.monter(hote) });
+  hote.innerHTML = `<div class="sv sa">
+    ${entete('Mon programme')}
+    <div class="card"><div class="sv-nm">Module non chargé</div>
+      <div class="sv-meta" style="margin-top:6px">Le fichier <b>sport_v2_programme.js</b> n'est pas
+      arrivé jusqu'au navigateur. Vérifie qu'il est bien commité, référencé dans coach_sandra.html
+      avec le bon ?v, et présent dans ASSETS de sw.js.</div></div>
+    <div class="card"><div class="sv-meta">Modules chargés :<br>${
+      ['SportBriques','SportV2','SportSeed','SportUI','SportSeance','SportProgramme','SportSaisie','SportAccueil']
+        .map(n => (window[n] ? '✓ ' : '✗ ') + n).join('<br>')}</div></div>`;
 }
 
 /* ---- CSS ---- */
