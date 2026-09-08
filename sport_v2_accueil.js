@@ -243,7 +243,10 @@ function exercices() {
   SportUI.monter(hote, { auFermer: () => SportAccueil.monter(hote) });
 }
 function programme() {
-  if (window.SportProgramme) { SportProgramme.monter(hote, { auFermer: () => SportAccueil.monter(hote) }); return; }
+  if (window.SportProgramme) {
+    window.SportProgramme.monter(hote, { auFermer: () => SportAccueil.monter(hote) });
+    return;
+  }
   SportUI.monter(hote, { auFermer: () => SportAccueil.monter(hote) });
 }
 
